@@ -194,3 +194,36 @@ export interface BrokerFormData {
   useTls: boolean;
   topics: string;
 }
+
+// Report Types
+export interface ReportConfig {
+  chartType: 'line' | 'bar' | 'area' | 'pie';
+  title: string;
+  description: string;
+  query: {
+    topics: string[];
+    timeRange: { start: string; end: string };
+    aggregation: 'raw' | 'minute' | 'hour';
+    metric: 'value' | 'count' | 'avg' | 'min' | 'max';
+  };
+  visualization: {
+    xAxis: string;
+    yAxis: string;
+    series: string[];
+    colors?: string[];
+  };
+}
+
+export interface ChartDataPoint {
+  timestamp: string;
+  value: number;
+  topic?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface ReportResult {
+  config: ReportConfig;
+  data: ChartDataPoint[];
+  generatedAt: string;
+}

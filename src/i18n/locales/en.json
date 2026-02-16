@@ -57,6 +57,7 @@
     "discovery": "Discovery",
     "explorer": "Explorer",
     "assistant": "AI Assistant",
+    "reports": "Reports",
     "configuration": "Configuration",
     "users": "Users",
     "collapse": "Collapse",
@@ -223,6 +224,31 @@
     "aboutTip3": "Topics with wildcard (#) capture the entire message hierarchy",
     "aboutTip4": "You can connect multiple brokers simultaneously",
     "aboutTip5": "For local HiveMQ without authentication, leave username and password blank"
+  },
+  "reports": {
+    "title": "Smart Reports",
+    "subtitle": "Generate dynamic dashboards with natural language",
+    "placeholder": "Describe the report you want to generate...",
+    "generate": "Generate Report",
+    "generating": "Generating report...",
+    "error": "Error generating report",
+    "noData": "No data to display",
+    "noDataDesc": "No data found for the requested parameters.",
+    "unavailable": "AI service unavailable",
+    "unavailableDesc": "Make sure Ollama is running on the server.",
+    "suggestions": "Suggestions",
+    "suggestion1": "Show energy consumption in the last 24h",
+    "suggestion2": "Compare values from the last 30 minutes",
+    "suggestion3": "Message distribution by topic",
+    "clear": "Clear",
+    "chartTypes": {
+      "line": "Line",
+      "bar": "Bar",
+      "area": "Area",
+      "pie": "Pie"
+    },
+    "online": "Online",
+    "offline": "Offline"
   },
   "roles": {
     "admin": "Administrator",

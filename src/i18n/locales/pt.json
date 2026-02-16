@@ -57,6 +57,7 @@
     "discovery": "Discovery",
     "explorer": "Explorer",
     "assistant": "TupixIA",
+    "reports": "Relatorios",
     "configuration": "Configuracao",
     "users": "Usuarios",
     "collapse": "Recolher",
@@ -222,6 +223,31 @@
     "aboutTip3": "Topicos com wildcard (#) capturam toda a hierarquia de mensagens",
     "aboutTip4": "Voce pode conectar multiplos brokers simultaneamente",
     "aboutTip5": "Para HiveMQ local sem autenticacao, deixe usuario e senha em branco"
+  },
+  "reports": {
+    "title": "Relatorios Inteligentes",
+    "subtitle": "Gere dashboards dinamicos com linguagem natural",
+    "placeholder": "Descreva o relatorio que deseja gerar...",
+    "generate": "Gerar Relatorio",
+    "generating": "Gerando relatorio...",
+    "error": "Erro ao gerar relatorio",
+    "noData": "Sem dados para exibir",
+    "noDataDesc": "Nenhum dado encontrado para os parametros solicitados.",
+    "unavailable": "Servico de IA indisponivel",
+    "unavailableDesc": "Verifique se o Ollama esta rodando no servidor.",
+    "suggestions": "Sugestoes",
+    "suggestion1": "Mostre o consumo de energia nas ultimas 24h",
+    "suggestion2": "Compare os valores dos ultimos 30 minutos",
+    "suggestion3": "Distribuicao de mensagens por topico",
+    "clear": "Limpar",
+    "chartTypes": {
+      "line": "Linha",
+      "bar": "Barras",
+      "area": "Area",
+      "pie": "Pizza"
+    },
+    "online": "Online",
+    "offline": "Offline"
   },
   "roles": {
     "admin": "Administrador",

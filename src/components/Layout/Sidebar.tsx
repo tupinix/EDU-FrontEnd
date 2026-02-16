@@ -5,6 +5,7 @@ import {
   // Network, // TODO: Enable when Discovery page is ready
   Search,
   Bot,
+  FileBarChart,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   // { path: '/discovery', labelKey: 'sidebar.discovery', icon: Network }, // TODO: Enable when Discovery page is ready
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
   { path: '/assistant', labelKey: 'sidebar.assistant', icon: Bot },
+  { path: '/reports', labelKey: 'sidebar.reports', icon: FileBarChart },
   { path: '/configuration', labelKey: 'sidebar.configuration', icon: Settings },
   { path: '/users', labelKey: 'sidebar.users', icon: Users, adminOnly: true },
 ];

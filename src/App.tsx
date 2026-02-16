@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Assistant, Configuration, Login, Users } from './pages';
+import { Dashboard, Discovery, Explorer, Assistant, Reports, Configuration, Login, Users } from './pages';
 import { useAuthStore } from './hooks/useStore';
 
 // Create a client
@@ -63,6 +63,7 @@ function App() {
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
             <Route path="assistant" element={<Assistant />} />
+            <Route path="reports" element={<Reports />} />
             <Route path="configuration" element={<Configuration />} />
             <Route
               path="users"

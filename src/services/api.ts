@@ -12,6 +12,7 @@ import {
   HierarchyMapping,
   BrokerConfig,
   BrokerFormData,
+  ReportResult,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -348,6 +349,33 @@ export const aiApi = {
     const { data } = await apiClient.get<ApiResponse<AIStatus>>('/ai/status');
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to get AI status');
+    }
+    return data.data;
+  },
+};
+
+// ===========================================
+// Reports API
+// ===========================================
+
+export const reportsApi = {
+  generate: async (prompt: string): Promise<ReportResult> => {
+    // Longer timeout for AI requests (5 minutes for CPU-only Ollama)
+    const { data } = await apiClient.post<ApiResponse<ReportResult>>(
+      '/reports/generate',
+      { prompt },
+      { timeout: 300000 }
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to generate report');
+    }
+    return data.data;
+  },
+
+  getTopics: async (): Promise<string[]> => {
+    const { data } = await apiClient.get<ApiResponse<string[]>>('/reports/topics');
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to get available topics');
     }
     return data.data;
   },
