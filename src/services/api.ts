@@ -381,4 +381,105 @@ export const reportsApi = {
   },
 };
 
+// ===========================================
+// OPC-UA API
+// ===========================================
+
+import { OpcUaConnection, OpcUaSubscription } from '../types';
+
+export const opcuaApi = {
+  getConnections: async (): Promise<OpcUaConnection[]> => {
+    const { data } = await apiClient.get<ApiResponse<OpcUaConnection[]>>('/opcua/connections');
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch OPC-UA connections');
+    }
+    return data.data;
+  },
+
+  getConnectionById: async (id: string): Promise<OpcUaConnection> => {
+    const { data } = await apiClient.get<ApiResponse<OpcUaConnection>>(`/opcua/connections/${id}`);
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch OPC-UA connection');
+    }
+    return data.data;
+  },
+
+  createConnection: async (connection: {
+    name: string;
+    endpointUrl: string;
+    securityMode?: string;
+    username?: string;
+    password?: string;
+  }): Promise<OpcUaConnection> => {
+    const { data } = await apiClient.post<ApiResponse<OpcUaConnection>>('/opcua/connections', connection);
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to create OPC-UA connection');
+    }
+    return data.data;
+  },
+
+  deleteConnection: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/opcua/connections/${id}`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete OPC-UA connection');
+    }
+  },
+
+  connect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/opcua/connections/${id}/connect`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to connect to OPC-UA server');
+    }
+  },
+
+  disconnect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/opcua/connections/${id}/disconnect`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to disconnect from OPC-UA server');
+    }
+  },
+
+  browse: async (connectionId: string, nodeId?: string): Promise<unknown[]> => {
+    const params = nodeId ? { nodeId } : {};
+    const { data } = await apiClient.get<ApiResponse<unknown[]>>(
+      `/opcua/connections/${connectionId}/browse`,
+      { params }
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to browse OPC-UA nodes');
+    }
+    return data.data;
+  },
+
+  getSubscriptions: async (connectionId?: string): Promise<OpcUaSubscription[]> => {
+    const params = connectionId ? { connectionId } : {};
+    const { data } = await apiClient.get<ApiResponse<OpcUaSubscription[]>>('/opcua/subscriptions', { params });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch OPC-UA subscriptions');
+    }
+    return data.data;
+  },
+
+  createSubscription: async (
+    connectionId: string,
+    sub: { nodeId: string; mqttTopic: string; samplingIntervalMs?: number }
+  ): Promise<OpcUaSubscription> => {
+    const { data } = await apiClient.post<ApiResponse<OpcUaSubscription>>(
+      `/opcua/connections/${connectionId}/subscribe`,
+      sub
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to create OPC-UA subscription');
+    }
+    return data.data;
+  },
+
+  deleteSubscription: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/opcua/subscriptions/${id}`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete OPC-UA subscription');
+    }
+  },
+};
+
 export default apiClient;

@@ -227,3 +227,26 @@ export interface ReportResult {
   data: ChartDataPoint[];
   generatedAt: string;
 }
+
+// OPC-UA Types
+export interface OpcUaConnection {
+  id: string;
+  tenantId: string;
+  name: string;
+  endpointUrl: string;
+  securityMode: string;
+  username?: string;
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpcUaSubscription {
+  id: string;
+  connectionId: string;
+  nodeId: string;
+  mqttTopic: string;
+  samplingIntervalMs: number;
+  enabled: boolean;
+  createdAt: string;
+}

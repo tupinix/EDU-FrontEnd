@@ -23,6 +23,7 @@ import { brokersApi } from '../services/api';
 import { BrokerConfig, BrokerFormData } from '../types';
 import { clsx } from 'clsx';
 import { useQueryClient } from '@tanstack/react-query';
+import { OpcUaConnections } from '../components/OpcUa';
 
 const initialFormData: BrokerFormData = {
   name: '',
@@ -34,9 +35,12 @@ const initialFormData: BrokerFormData = {
   topics: '',
 };
 
+type ConfigTab = 'brokers' | 'opcua';
+
 export function Configuration() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<ConfigTab>('brokers');
   const [brokers, setBrokers] = useState<BrokerConfig[]>([]);
   const [activeBrokerId, setActiveBrokerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -234,25 +238,60 @@ export function Configuration() {
           <h1 className="text-2xl font-bold text-gray-900">{t('configuration.title')}</h1>
           <p className="text-gray-500 mt-1">{t('configuration.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={fetchBrokers}
-            className="btn btn-secondary flex items-center gap-2"
-            disabled={loading}
-          >
-            <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin")} />
-            {t('common.refresh')}
-          </button>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('configuration.newBroker')}
-          </button>
-        </div>
+        {activeTab === 'brokers' && (
+          <div className="flex gap-2">
+            <button
+              onClick={fetchBrokers}
+              className="btn btn-secondary flex items-center gap-2"
+              disabled={loading}
+            >
+              <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin")} />
+              {t('common.refresh')}
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {t('configuration.newBroker')}
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('brokers')}
+            className={clsx(
+              'pb-3 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'brokers'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            )}
+          >
+            MQTT Brokers
+          </button>
+          <button
+            onClick={() => setActiveTab('opcua')}
+            className={clsx(
+              'pb-3 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'opcua'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            )}
+          >
+            OPC-UA
+          </button>
+        </nav>
+      </div>
+
+      {/* OPC-UA Tab */}
+      {activeTab === 'opcua' && <OpcUaConnections />}
+
+      {/* Brokers Tab */}
+      {activeTab === 'brokers' && <>
       {/* Error Alert */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -546,6 +585,7 @@ export function Configuration() {
           <li>• {t('configuration.aboutTip5')}</li>
         </ul>
       </div>
+      </>}
     </div>
   );
 }
