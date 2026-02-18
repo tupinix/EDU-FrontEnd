@@ -225,7 +225,7 @@ export function Login() {
               </p>
               <div className="flex items-center justify-center gap-4 mt-2">
                 <code className="text-xs bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-[#10b981] font-mono">
-                  admin@edu.local
+                  admin@tupinix.com
                 </code>
                 <code className="text-xs bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-[#10b981] font-mono">
                   admin123

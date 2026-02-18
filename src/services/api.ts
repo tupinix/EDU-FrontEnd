@@ -270,7 +270,13 @@ export const brokersApi = {
   },
 
   create: async (broker: BrokerFormData): Promise<BrokerConfig> => {
-    const { data } = await apiClient.post<ApiResponse<BrokerConfig>>('/brokers', broker);
+    const payload = {
+      ...broker,
+      topics: typeof broker.topics === 'string'
+        ? broker.topics.split(',').map((t) => t.trim()).filter(Boolean)
+        : broker.topics,
+    };
+    const { data } = await apiClient.post<ApiResponse<BrokerConfig>>('/brokers', payload);
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to create broker');
     }
@@ -278,7 +284,13 @@ export const brokersApi = {
   },
 
   update: async (id: string, updates: Partial<BrokerFormData>): Promise<BrokerConfig> => {
-    const { data } = await apiClient.put<ApiResponse<BrokerConfig>>(`/brokers/${id}`, updates);
+    const payload = {
+      ...updates,
+      ...(typeof updates.topics === 'string' && {
+        topics: updates.topics.split(',').map((t) => t.trim()).filter(Boolean),
+      }),
+    };
+    const { data } = await apiClient.put<ApiResponse<BrokerConfig>>(`/brokers/${id}`, payload);
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to update broker');
     }

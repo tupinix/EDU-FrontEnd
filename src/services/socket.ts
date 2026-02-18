@@ -5,8 +5,9 @@ let socket: Socket | null = null;
 export function getSocket(): Socket {
   if (!socket) {
     const token = localStorage.getItem('edu_token');
-    const baseUrl = import.meta.env.VITE_API_URL
-      ? new URL(import.meta.env.VITE_API_URL).origin
+    const rawUrl = import.meta.env.VITE_API_URL;
+    const baseUrl = rawUrl
+      ? new URL(rawUrl, window.location.origin).origin
       : window.location.origin;
 
     socket = io(baseUrl, {
