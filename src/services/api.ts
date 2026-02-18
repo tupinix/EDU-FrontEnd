@@ -385,7 +385,7 @@ export const reportsApi = {
 // OPC-UA API
 // ===========================================
 
-import { OpcUaConnection, OpcUaSubscription } from '../types';
+import { OpcUaConnection, OpcUaSubscription, AlarmDefinition, AlarmEvent, AlarmSummary } from '../types';
 
 export const opcuaApi = {
   getConnections: async (): Promise<OpcUaConnection[]> => {
@@ -479,6 +479,80 @@ export const opcuaApi = {
     if (!data.success) {
       throw new Error(data.error || 'Failed to delete OPC-UA subscription');
     }
+  },
+};
+
+// ===========================================
+// Alarms API
+// ===========================================
+
+export interface AlarmEventFilters {
+  alarmId?: string;
+  state?: string;
+  priority?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export interface CreateAlarmInput {
+  name: string;
+  topic: string;
+  conditionType: 'threshold' | 'bad_quality';
+  conditionConfig: Record<string, unknown>;
+  priority?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  enabled?: boolean;
+}
+
+export const alarmsApi = {
+  getDefinitions: async (): Promise<AlarmDefinition[]> => {
+    const { data } = await apiClient.get<ApiResponse<AlarmDefinition[]>>('/alarms/definitions');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm definitions');
+    return data.data;
+  },
+
+  createDefinition: async (input: CreateAlarmInput): Promise<AlarmDefinition> => {
+    const { data } = await apiClient.post<ApiResponse<AlarmDefinition>>('/alarms/definitions', input);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create alarm');
+    return data.data;
+  },
+
+  updateDefinition: async (id: string, updates: Partial<CreateAlarmInput>): Promise<AlarmDefinition> => {
+    const { data } = await apiClient.put<ApiResponse<AlarmDefinition>>(`/alarms/definitions/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update alarm');
+    return data.data;
+  },
+
+  deleteDefinition: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/alarms/definitions/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete alarm');
+  },
+
+  getActiveAlarms: async (): Promise<AlarmDefinition[]> => {
+    const { data } = await apiClient.get<ApiResponse<AlarmDefinition[]>>('/alarms/events/active');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch active alarms');
+    return data.data;
+  },
+
+  getSummary: async (): Promise<AlarmSummary> => {
+    const { data } = await apiClient.get<ApiResponse<AlarmSummary>>('/alarms/summary');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm summary');
+    return data.data;
+  },
+
+  getEvents: async (filters?: AlarmEventFilters): Promise<AlarmEvent[]> => {
+    const { data } = await apiClient.get<ApiResponse<AlarmEvent[]>>('/alarms/events', { params: filters });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm events');
+    return data.data;
+  },
+
+  acknowledgeEvent: async (id: string, notes?: string): Promise<AlarmEvent> => {
+    const { data } = await apiClient.post<ApiResponse<AlarmEvent>>(
+      `/alarms/events/${id}/acknowledge`,
+      { notes }
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to acknowledge alarm');
+    return data.data;
   },
 };
 

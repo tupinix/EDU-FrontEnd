@@ -228,6 +228,59 @@ export interface ReportResult {
   generatedAt: string;
 }
 
+// Alarm Management Types (ISA-18.2)
+export type AlarmState = 'normal' | 'active_unack' | 'active_ack' | 'rtn_unack';
+export type AlarmPriority = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type AlarmConditionType = 'threshold' | 'bad_quality';
+
+export interface ThresholdConfig {
+  operator: '>' | '<' | '>=' | '<=';
+  value: number;
+  deadband?: number;
+}
+
+export interface BadQualityConfig {
+  timeoutSeconds: number;
+}
+
+export interface AlarmDefinition {
+  id: string;
+  name: string;
+  topic: string;
+  conditionType: AlarmConditionType;
+  conditionConfig: ThresholdConfig | BadQualityConfig;
+  priority: AlarmPriority;
+  enabled: boolean;
+  currentState?: AlarmState;
+  lastTriggeredAt?: string;
+  lastValue?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AlarmEvent {
+  id: string;
+  alarmId: string;
+  alarmName: string;
+  topic: string;
+  priority: AlarmPriority;
+  state: AlarmState;
+  triggeredValue?: number;
+  triggeredAt: string;
+  acknowledgedBy?: string;
+  acknowledgedAt?: string;
+  notes?: string;
+}
+
+export interface AlarmSummary {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  info: number;
+  total: number;
+}
+
 // OPC-UA Types
 export interface OpcUaConnection {
   id: string;
