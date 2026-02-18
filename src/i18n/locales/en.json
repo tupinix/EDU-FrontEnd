@@ -60,6 +60,7 @@
     "reports": "Reports",
     "configuration": "Configuration",
     "users": "Users",
+    "alarms": "Alarms",
     "collapse": "Collapse",
     "expand": "Expand menu"
   },
@@ -249,6 +250,63 @@
     },
     "online": "Online",
     "offline": "Offline"
+  },
+  "alarms": {
+    "title": "Alarms",
+    "subtitle": "Industrial alarm management (ISA-18.2)",
+    "active": "Active",
+    "history": "History",
+    "configuration": "Configuration",
+    "acknowledge": "Acknowledge",
+    "noActiveAlarms": "No active alarms",
+    "events": "event(s)",
+    "notesRequired": "Notes required for critical alarms",
+    "notesOptional": "Optional notes...",
+    "states": {
+      "active_unack": "Active",
+      "active_ack": "Acknowledged",
+      "rtn_unack": "Returned",
+      "normal": "Normal"
+    },
+    "priorities": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "info": "Info"
+    },
+    "conditionTypes": {
+      "threshold": "Threshold",
+      "bad_quality": "Bad Quality"
+    },
+    "filters": {
+      "allPriorities": "All priorities",
+      "allStates": "All states"
+    },
+    "fields": {
+      "alarm": "Alarm",
+      "topic": "Topic",
+      "value": "Value",
+      "notes": "Notes",
+      "priority": "Priority",
+      "conditionType": "Condition Type",
+      "state": "State"
+    },
+    "config": {
+      "subtitle": "Define alarm conditions for MQTT topics",
+      "new": "New Alarm",
+      "edit": "Edit Alarm",
+      "noDefinitions": "No alarms configured",
+      "noDefinitionsHint": "Create an alarm to monitor your MQTT topics",
+      "disabled": "Disabled",
+      "namePlaceholder": "E.g.: High Temperature Line 1",
+      "operator": "Operator",
+      "threshold": "Threshold",
+      "deadband": "Deadband",
+      "timeoutSeconds": "Timeout (seconds)",
+      "enabled": "Enabled",
+      "enabledHint": "Alarm will be evaluated in real-time"
+    }
   },
   "roles": {
     "admin": "Administrator",

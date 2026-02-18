@@ -13,6 +13,7 @@ import {
   LogOut,
   Shield,
   Wrench,
+  Bell,
 } from 'lucide-react';
 import { useUIStore, useAuthStore } from '../../hooks/useStore';
 import { clsx } from 'clsx';
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { path: '/', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
   // { path: '/discovery', labelKey: 'sidebar.discovery', icon: Network }, // TODO: Enable when Discovery page is ready
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
+  { path: '/alarms', labelKey: 'sidebar.alarms', icon: Bell },
   { path: '/assistant', labelKey: 'sidebar.assistant', icon: Bot },
   { path: '/reports', labelKey: 'sidebar.reports', icon: FileBarChart },
   { path: '/configuration', labelKey: 'sidebar.configuration', icon: Settings },

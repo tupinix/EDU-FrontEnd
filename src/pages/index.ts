@@ -6,3 +6,4 @@ export { Reports } from './Reports';
 export { Configuration } from './Configuration';
 export { Login } from './Login';
 export { Users } from './Users';
+export { Alarms } from './Alarms';

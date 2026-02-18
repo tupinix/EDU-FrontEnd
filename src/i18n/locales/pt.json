@@ -60,6 +60,7 @@
     "reports": "Relatorios",
     "configuration": "Configuracao",
     "users": "Usuarios",
+    "alarms": "Alarmes",
     "collapse": "Recolher",
     "expand": "Expandir menu"
   },
@@ -248,6 +249,63 @@
     },
     "online": "Online",
     "offline": "Offline"
+  },
+  "alarms": {
+    "title": "Alarmes",
+    "subtitle": "Gerenciamento de alarmes industriais (ISA-18.2)",
+    "active": "Ativos",
+    "history": "Historico",
+    "configuration": "Configuracao",
+    "acknowledge": "Reconhecer",
+    "noActiveAlarms": "Nenhum alarme ativo",
+    "events": "evento(s)",
+    "notesRequired": "Notas obrigatorias para alarmes criticos",
+    "notesOptional": "Notas opcionais...",
+    "states": {
+      "active_unack": "Ativo",
+      "active_ack": "Reconhecido",
+      "rtn_unack": "Normalizado",
+      "normal": "Normal"
+    },
+    "priorities": {
+      "critical": "Critico",
+      "high": "Alto",
+      "medium": "Medio",
+      "low": "Baixo",
+      "info": "Info"
+    },
+    "conditionTypes": {
+      "threshold": "Limiar",
+      "bad_quality": "Qualidade Ruim"
+    },
+    "filters": {
+      "allPriorities": "Todas as prioridades",
+      "allStates": "Todos os estados"
+    },
+    "fields": {
+      "alarm": "Alarme",
+      "topic": "Topico",
+      "value": "Valor",
+      "notes": "Notas",
+      "priority": "Prioridade",
+      "conditionType": "Tipo de Condicao",
+      "state": "Estado"
+    },
+    "config": {
+      "subtitle": "Defina condicoes de alarme para topicos MQTT",
+      "new": "Novo Alarme",
+      "edit": "Editar Alarme",
+      "noDefinitions": "Nenhum alarme configurado",
+      "noDefinitionsHint": "Crie um alarme para monitorar seus topicos MQTT",
+      "disabled": "Desabilitado",
+      "namePlaceholder": "Ex: Temperatura Alta Linha 1",
+      "operator": "Operador",
+      "threshold": "Limiar",
+      "deadband": "Deadband",
+      "timeoutSeconds": "Timeout (segundos)",
+      "enabled": "Habilitado",
+      "enabledHint": "Alarme sera avaliado em tempo real"
+    }
   },
   "roles": {
     "admin": "Administrador",
