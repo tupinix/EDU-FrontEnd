@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard, Discovery, Explorer, Assistant, Reports, Configuration, Login, Users } from './pages';
 import { useAuthStore } from './hooks/useStore';
+import { SocketProvider } from './providers/SocketProvider';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -45,6 +46,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <SocketProvider>
       <BrowserRouter>
         <Routes>
           {/* Public route */}
@@ -76,6 +78,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </SocketProvider>
     </QueryClientProvider>
   );
 }

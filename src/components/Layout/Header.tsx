@@ -1,11 +1,13 @@
-import { Bell, User, LogOut, ServerOff } from 'lucide-react';
+import { Bell, User, LogOut, ServerOff, Wifi, WifiOff } from 'lucide-react';
 import { useActiveBroker } from '../../hooks/useMetrics';
 import { useAuthStore } from '../../hooks/useStore';
+import { useSocketStatus } from '../../hooks/useSocket';
 import { clsx } from 'clsx';
 
 export function Header() {
   const { data: activeBroker, isLoading } = useActiveBroker();
   const { user, clearAuth } = useAuthStore();
+  const { isConnected: wsConnected, mode } = useSocketStatus();
 
   // Determine status based on active broker
   const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
@@ -68,6 +70,20 @@ export function Header() {
 
       {/* Right side - User menu */}
       <div className="flex items-center gap-4">
+        {/* WebSocket Status */}
+        <div className={clsx(
+          'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+          wsConnected
+            ? 'bg-green-50 text-green-700'
+            : 'bg-yellow-50 text-yellow-700'
+        )}>
+          {wsConnected ? (
+            <Wifi className="w-3.5 h-3.5" />
+          ) : (
+            <WifiOff className="w-3.5 h-3.5" />
+          )}
+          {mode === 'realtime' ? 'Real-time' : 'Polling'}
+        </div>
         {/* Notifications */}
         <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative">
           <Bell className="w-5 h-5" />

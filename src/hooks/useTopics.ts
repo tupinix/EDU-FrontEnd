@@ -1,13 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { topicsApi } from '../services/api';
 import { TopicNode, TopicDetail, TopicHistory, TopicStats } from '../types';
+import { useSocketContext } from '../providers/SocketProvider';
+
+// When WebSocket is connected, reduce polling frequency (WS pushes invalidations)
+// When disconnected, fall back to normal polling intervals
 
 export function useTopicTree() {
+  const { isConnected } = useSocketContext();
   return useQuery<TopicNode[], Error>({
     queryKey: ['topics-tree'],
     queryFn: topicsApi.getTree,
-    refetchInterval: 6000, // 6 seconds
-    staleTime: 3000,
+    refetchInterval: isConnected ? 30000 : 6000, // 30s with WS, 6s without
+    staleTime: isConnected ? 10000 : 3000,
     refetchOnWindowFocus: true,
   });
 }
@@ -21,23 +26,25 @@ export function useTopicList() {
 }
 
 export function useTopicDetails(topic: string | null) {
+  const { isConnected } = useSocketContext();
   return useQuery<TopicDetail, Error>({
     queryKey: ['topic-details', topic],
     queryFn: () => topicsApi.getDetails(topic!),
     enabled: !!topic,
-    refetchInterval: 10000, // 10 seconds when selected
-    staleTime: 5000,
+    refetchInterval: isConnected ? 30000 : 10000,
+    staleTime: isConnected ? 15000 : 5000,
     refetchOnWindowFocus: true,
   });
 }
 
 export function useTopicHistory(topic: string | null, limit = 100) {
+  const { isConnected } = useSocketContext();
   return useQuery<TopicHistory[], Error>({
     queryKey: ['topic-history', topic, limit],
     queryFn: () => topicsApi.getHistory(topic!, limit),
     enabled: !!topic,
-    refetchInterval: 10000,
-    staleTime: 5000,
+    refetchInterval: isConnected ? 30000 : 10000,
+    staleTime: isConnected ? 15000 : 5000,
     refetchOnWindowFocus: true,
   });
 }
