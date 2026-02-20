@@ -13,6 +13,10 @@ import {
   BrokerConfig,
   BrokerFormData,
   ReportResult,
+  Rule,
+  RuleExecution,
+  CreateRuleInput,
+  AnomalyDetection,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -655,3 +659,95 @@ export const oeeApi = {
 };
 
 export default apiClient;
+
+// ===========================================
+// Rules API
+// ===========================================
+
+export interface RuleFilters {
+  enabled?: boolean;
+}
+
+export const rulesApi = {
+  getAll: async (): Promise<Rule[]> => {
+    const { data } = await apiClient.get<ApiResponse<Rule[]>>('/rules');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch rules');
+    return data.data;
+  },
+
+  create: async (input: CreateRuleInput): Promise<Rule> => {
+    const { data } = await apiClient.post<ApiResponse<Rule>>('/rules', input);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create rule');
+    return data.data;
+  },
+
+  update: async (id: string, updates: Partial<CreateRuleInput>): Promise<Rule> => {
+    const { data } = await apiClient.put<ApiResponse<Rule>>(`/rules/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update rule');
+    return data.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/rules/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete rule');
+  },
+
+  getExecutions: async (ruleId: string, limit = 100): Promise<RuleExecution[]> => {
+    const { data } = await apiClient.get<ApiResponse<RuleExecution[]>>(
+      `/rules/${ruleId}/executions`,
+      { params: { limit } },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch executions');
+    return data.data;
+  },
+
+  getAllExecutions: async (limit = 100): Promise<RuleExecution[]> => {
+    const { data } = await apiClient.get<ApiResponse<RuleExecution[]>>(
+      '/rules/executions/all',
+      { params: { limit } },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch executions');
+    return data.data;
+  },
+};
+
+// ===========================================
+// Anomalies API
+// ===========================================
+
+export const anomaliesApi = {
+  getAll: async (params?: { limit?: number; topic?: string; acknowledged?: boolean }): Promise<AnomalyDetection[]> => {
+    const { data } = await apiClient.get<ApiResponse<AnomalyDetection[]>>('/anomalies', { params });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch anomalies');
+    return data.data;
+  },
+
+  acknowledge: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/anomalies/${id}/acknowledge`);
+    if (!data.success) throw new Error(data.error || 'Failed to acknowledge anomaly');
+  },
+};
+
+// ===========================================
+// Export API (returns download URLs)
+// ===========================================
+
+export const exportApi = {
+  topicCsvUrl: (topic: string, params?: { from?: string; to?: string; limit?: number }) => {
+    const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/topics/${encodeURIComponent(topic)}/csv`;
+    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return base + qs;
+  },
+
+  alarmsCsvUrl: (params?: { from?: string; to?: string; priority?: string }) => {
+    const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/alarms/csv`;
+    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return base + qs;
+  },
+
+  oeeCsvUrl: (equipmentId: string, params?: { from?: string; to?: string }) => {
+    const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/oee/${equipmentId}/csv`;
+    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    return base + qs;
+  },
+};

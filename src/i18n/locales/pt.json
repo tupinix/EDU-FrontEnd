@@ -39,7 +39,10 @@
     "leaveBlankToKeep": "deixe em branco para manter",
     "newPassword": "Nova senha (opcional)",
     "enterPassword": "Digite a senha",
-    "cannotDeleteSelf": "Nao pode excluir a si mesmo"
+    "cannotDeleteSelf": "Nao pode excluir a si mesmo",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "confirmDelete": "Confirmar exclusao"
   },
   "auth": {
     "login": "Entrar",
@@ -63,6 +66,7 @@
     "users": "Usuarios",
     "alarms": "Alarmes",
     "oee": "OEE",
+    "rules": "Regras",
     "collapse": "Recolher",
     "expand": "Expandir menu"
   },
@@ -370,6 +374,33 @@
         "enabled": "Habilitado"
       }
     }
+  },
+  "rules": {
+    "pageTitle": "Regras de Automacao",
+    "pageSubtitle": "Execute acoes automaticamente baseado em condicoes dos seus topicos",
+    "title": "Regras",
+    "history": "Historico",
+    "newRule": "Nova Regra",
+    "editRule": "Editar Regra",
+    "name": "Nome da Regra",
+    "description": "Descricao",
+    "logic": "Logica",
+    "throttle": "Throttle",
+    "enabled": "Habilitada",
+    "conditions": "condicoes",
+    "actions": "acoes",
+    "addCondition": "Adicionar condicao",
+    "addAction": "Adicionar acao",
+    "topic": "Topico",
+    "operator": "Operador",
+    "value": "Valor",
+    "triggered": "disparada",
+    "lastTrigger": "ultimo disparo",
+    "viewHistory": "Ver historico",
+    "empty": "Nenhuma regra cadastrada. Crie a primeira!",
+    "noExecutions": "Nenhuma execucao registrada ainda",
+    "selectRule": "Selecione uma regra para ver o historico",
+    "executionHistory": "Execucoes da regra"
   },
   "roles": {
     "admin": "Administrador",

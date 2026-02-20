@@ -39,7 +39,10 @@
     "leaveBlankToKeep": "leave blank to keep",
     "newPassword": "New password (optional)",
     "enterPassword": "Enter password",
-    "cannotDeleteSelf": "Cannot delete yourself"
+    "cannotDeleteSelf": "Cannot delete yourself",
+    "enable": "Enable",
+    "disable": "Disable",
+    "confirmDelete": "Confirm delete"
   },
   "auth": {
     "login": "Login",
@@ -63,6 +66,7 @@
     "users": "Users",
     "alarms": "Alarms",
     "oee": "OEE",
+    "rules": "Rules",
     "collapse": "Collapse",
     "expand": "Expand menu"
   },
@@ -371,6 +375,33 @@
         "enabled": "Enabled"
       }
     }
+  },
+  "rules": {
+    "pageTitle": "Automation Rules",
+    "pageSubtitle": "Automatically execute actions based on conditions from your topics",
+    "title": "Rules",
+    "history": "History",
+    "newRule": "New Rule",
+    "editRule": "Edit Rule",
+    "name": "Rule Name",
+    "description": "Description",
+    "logic": "Logic",
+    "throttle": "Throttle",
+    "enabled": "Enabled",
+    "conditions": "conditions",
+    "actions": "actions",
+    "addCondition": "Add condition",
+    "addAction": "Add action",
+    "topic": "Topic",
+    "operator": "Operator",
+    "value": "Value",
+    "triggered": "triggered",
+    "lastTrigger": "last trigger",
+    "viewHistory": "View history",
+    "empty": "No rules yet. Create the first one!",
+    "noExecutions": "No executions recorded yet",
+    "selectRule": "Select a rule to view its history",
+    "executionHistory": "Rule executions"
   },
   "roles": {
     "admin": "Administrator",

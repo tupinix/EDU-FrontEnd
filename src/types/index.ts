@@ -359,3 +359,75 @@ export interface NodeLiveValue {
   timestamp: string;
   updateCount: number;
 }
+
+// ==========================================================
+// Rule Engine Types
+// ==========================================================
+
+export type RuleOperator = '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains' | 'between';
+export type RuleLogic = 'AND' | 'OR';
+export type RuleActionType = 'alarm' | 'webhook' | 'mqtt_publish' | 'log';
+
+export interface RuleCondition {
+  topic: string;
+  operator: RuleOperator;
+  value: number | string | boolean;
+  value2?: number;
+}
+
+export interface RuleAction {
+  type: RuleActionType;
+  config: Record<string, unknown>;
+}
+
+export interface Rule {
+  id: string;
+  name: string;
+  description?: string;
+  conditions: RuleCondition[];
+  logic: RuleLogic;
+  actions: RuleAction[];
+  throttleSeconds: number;
+  enabled: boolean;
+  lastTriggeredAt?: string;
+  triggerCount: number;
+  createdAt: string;
+}
+
+export interface RuleExecution {
+  id: string;
+  ruleId: string;
+  triggeredAt: string;
+  conditionValues: Record<string, unknown>;
+  actionsExecuted: { type: string; success: boolean; error?: string }[];
+}
+
+export interface CreateRuleInput {
+  name: string;
+  description?: string;
+  conditions: RuleCondition[];
+  logic: RuleLogic;
+  actions: RuleAction[];
+  throttleSeconds?: number;
+  enabled?: boolean;
+}
+
+// ==========================================================
+// Anomaly Detection Types
+// ==========================================================
+
+export type AnomalyType = 'zscore' | 'rate_of_change' | 'flatline';
+
+export interface AnomalyDetection {
+  id: string;
+  topic: string;
+  detectedAt: string;
+  type: AnomalyType;
+  value?: number;
+  zScore?: number;
+  mean?: number;
+  stdDev?: number;
+  message: string;
+  acknowledged: boolean;
+}
+
