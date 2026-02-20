@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Assistant, Reports, Configuration, Login, Users, Alarms } from './pages';
+import { Dashboard, Discovery, Explorer, Assistant, Reports, Configuration, Login, Users, Alarms, OEE } from './pages';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
 
@@ -65,6 +65,7 @@ function App() {
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
             <Route path="alarms" element={<Alarms />} />
+            <Route path="oee" element={<OEE />} />
             <Route path="assistant" element={<Assistant />} />
             <Route path="reports" element={<Reports />} />
             <Route path="configuration" element={<Configuration />} />

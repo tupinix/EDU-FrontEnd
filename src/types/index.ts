@@ -281,6 +281,50 @@ export interface AlarmSummary {
   total: number;
 }
 
+// OEE Calculator Types
+export interface OEEDefinition {
+  id: string;
+  tenantId?: string;
+  name: string;
+  statusTopic: string;
+  statusRunningValue: string;
+  statusFormat: 'numeric' | 'string';
+  countTopic?: string;
+  idealCycleSeconds: number;
+  rejectTopic?: string;
+  plannedHoursPerDay: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OEEMetrics {
+  equipmentId: string;
+  name: string;
+  currentStatus: 'running' | 'stopped' | 'fault' | 'unknown';
+  availability: number;
+  performance: number | null;
+  quality: number;
+  oee: number;
+  runMinutes: number;
+  plannedMinutes: number;
+  totalCount: number;
+  goodCount: number;
+  since: string;
+}
+
+export interface OEESnapshot {
+  time: string;
+  equipmentId: string;
+  availability: number;
+  performance: number | null;
+  quality: number;
+  oee: number;
+  runMinutes: number;
+  totalCount: number;
+  goodCount: number;
+}
+
 // OPC-UA Types
 export interface OpcUaConnection {
   id: string;
@@ -301,5 +345,17 @@ export interface OpcUaSubscription {
   mqttTopic: string;
   samplingIntervalMs: number;
   enabled: boolean;
+  brokerId?: string;
   createdAt: string;
+}
+
+export interface NodeLiveValue {
+  connectionId: string;
+  nodeId: string;
+  displayName: string;
+  value: unknown;
+  dataType: string;
+  quality: string;
+  timestamp: string;
+  updateCount: number;
 }

@@ -31,6 +31,7 @@
     "saving": "Salvando...",
     "default": "Padrao",
     "active": "Ativo",
+    "inactive": "Inativo",
     "user": "Usuario",
     "createdAt": "Criado em",
     "newUser": "Novo Usuario",
@@ -61,6 +62,7 @@
     "configuration": "Configuracao",
     "users": "Usuarios",
     "alarms": "Alarmes",
+    "oee": "OEE",
     "collapse": "Recolher",
     "expand": "Expandir menu"
   },
@@ -305,6 +307,68 @@
       "timeoutSeconds": "Timeout (segundos)",
       "enabled": "Habilitado",
       "enabledHint": "Alarme sera avaliado em tempo real"
+    }
+  },
+  "oee": {
+    "title": "OEE — Eficiencia Global",
+    "subtitle": "Disponibilidade × Performance × Qualidade por equipamento",
+    "availability": "Disponib.",
+    "performance": "Performance",
+    "quality": "Qualidade",
+    "since": "Desde",
+    "pieces": "Pecas",
+    "rejects": "Rejeitos",
+    "running": "Rodando",
+    "noEquipment": "Nenhum equipamento configurado",
+    "noEquipmentHint": "Va para Configuracao para adicionar equipamentos",
+    "tab": {
+      "overview": "Visao Geral",
+      "history": "Historico",
+      "configuration": "Configuracao"
+    },
+    "status": {
+      "running": "Rodando",
+      "stopped": "Parado",
+      "fault": "Falha",
+      "unknown": "Desconhecido"
+    },
+    "history": {
+      "today": "Hoje",
+      "7d": "7 dias",
+      "30d": "30 dias",
+      "noData": "Nenhum dado historico encontrado"
+    },
+    "config": {
+      "subtitle": "Configure equipamentos para calculo de OEE",
+      "new": "Novo Equipamento",
+      "edit": "Editar Equipamento",
+      "noDefinitions": "Nenhum equipamento configurado",
+      "optional": "Opcional",
+      "numeric": "Numerico",
+      "string": "Texto",
+      "col": {
+        "name": "Nome",
+        "statusTopic": "Topico de Status",
+        "format": "Formato",
+        "planned": "Horas/dia"
+      },
+      "section": {
+        "availability": "Disponibilidade",
+        "performance": "Performance",
+        "quality": "Qualidade"
+      },
+      "field": {
+        "name": "Nome do Equipamento",
+        "namePlaceholder": "Ex: CNC Linha 1",
+        "statusTopic": "Topico de Status",
+        "format": "Formato do Payload",
+        "runningValue": "Valor = Rodando",
+        "plannedHours": "Horas Planejadas por Dia",
+        "countTopic": "Topico de Contagem de Pecas",
+        "idealCycle": "Ciclo Ideal",
+        "rejectTopic": "Topico de Rejeitos",
+        "enabled": "Habilitado"
+      }
     }
   },
   "roles": {

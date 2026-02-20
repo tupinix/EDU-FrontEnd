@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Server, Plus, Plug, Unplug, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Server, Plus, Plug, Unplug, Trash2, Loader2, AlertCircle, Activity } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useOpcUaConnections, useConnectOpcUa, useDisconnectOpcUa, useDeleteOpcUaConnection } from '../../hooks/useOpcUa';
 import { OpcUaForm } from './OpcUaForm';
 import { OpcUaBrowser } from './OpcUaBrowser';
+import { OpcUaMonitor } from './OpcUaMonitor';
 import { OpcUaConnection } from '../../types';
 
 export function OpcUaConnections() {
@@ -13,6 +14,7 @@ export function OpcUaConnections() {
   const deleteMutation = useDeleteOpcUaConnection();
   const [showForm, setShowForm] = useState(false);
   const [browsingConnection, setBrowsingConnection] = useState<OpcUaConnection | null>(null);
+  const [monitoringConnection, setMonitoringConnection] = useState<OpcUaConnection | null>(null);
 
   if (isLoading) {
     return (
@@ -36,6 +38,15 @@ export function OpcUaConnections() {
       <OpcUaBrowser
         connection={browsingConnection}
         onBack={() => setBrowsingConnection(null)}
+      />
+    );
+  }
+
+  if (monitoringConnection) {
+    return (
+      <OpcUaMonitor
+        connection={monitoringConnection}
+        onBack={() => setMonitoringConnection(null)}
       />
     );
   }
@@ -103,6 +114,14 @@ export function OpcUaConnections() {
                         className="px-3 py-1.5 text-sm bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
                       >
                         Browse
+                      </button>
+                      <button
+                        onClick={() => setMonitoringConnection(conn)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                        title="Monitor ao vivo"
+                      >
+                        <Activity className="w-3.5 h-3.5" />
+                        Monitor
                       </button>
                       <button
                         onClick={() => disconnectMutation.mutate(conn.id)}

@@ -397,7 +397,7 @@ export const reportsApi = {
 // OPC-UA API
 // ===========================================
 
-import { OpcUaConnection, OpcUaSubscription, AlarmDefinition, AlarmEvent, AlarmSummary } from '../types';
+import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot } from '../types';
 
 export const opcuaApi = {
   getConnections: async (): Promise<OpcUaConnection[]> => {
@@ -474,7 +474,7 @@ export const opcuaApi = {
 
   createSubscription: async (
     connectionId: string,
-    sub: { nodeId: string; mqttTopic: string; samplingIntervalMs?: number }
+    sub: { nodeId: string; mqttTopic: string; samplingIntervalMs?: number; brokerId?: string }
   ): Promise<OpcUaSubscription> => {
     const { data } = await apiClient.post<ApiResponse<OpcUaSubscription>>(
       `/opcua/connections/${connectionId}/subscribe`,
@@ -491,6 +491,27 @@ export const opcuaApi = {
     if (!data.success) {
       throw new Error(data.error || 'Failed to delete OPC-UA subscription');
     }
+  },
+
+  getLiveValues: async (connectionId: string): Promise<NodeLiveValue[]> => {
+    const { data } = await apiClient.get<ApiResponse<NodeLiveValue[]>>(
+      `/opcua/connections/${connectionId}/values`
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch live values');
+    }
+    return data.data;
+  },
+
+  readNode: async (connectionId: string, nodeId: string): Promise<NodeLiveValue> => {
+    const { data } = await apiClient.get<ApiResponse<NodeLiveValue>>(
+      `/opcua/connections/${connectionId}/read`,
+      { params: { nodeId } }
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to read node');
+    }
+    return data.data;
   },
 };
 
@@ -564,6 +585,71 @@ export const alarmsApi = {
       { notes }
     );
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to acknowledge alarm');
+    return data.data;
+  },
+};
+
+// ===========================================
+// OEE API
+// ===========================================
+
+export interface CreateOEEInput {
+  name: string;
+  statusTopic: string;
+  statusRunningValue?: string;
+  statusFormat?: 'numeric' | 'string';
+  countTopic?: string;
+  idealCycleSeconds?: number;
+  rejectTopic?: string;
+  plannedHoursPerDay?: number;
+  enabled?: boolean;
+}
+
+export interface OEEHistoryFilters {
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export const oeeApi = {
+  getDefinitions: async (): Promise<OEEDefinition[]> => {
+    const { data } = await apiClient.get<ApiResponse<OEEDefinition[]>>('/oee/definitions');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE definitions');
+    return data.data;
+  },
+
+  createDefinition: async (input: CreateOEEInput): Promise<OEEDefinition> => {
+    const { data } = await apiClient.post<ApiResponse<OEEDefinition>>('/oee/definitions', input);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create OEE definition');
+    return data.data;
+  },
+
+  updateDefinition: async (id: string, updates: Partial<CreateOEEInput>): Promise<OEEDefinition> => {
+    const { data } = await apiClient.put<ApiResponse<OEEDefinition>>(`/oee/definitions/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update OEE definition');
+    return data.data;
+  },
+
+  deleteDefinition: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/oee/definitions/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete OEE definition');
+  },
+
+  getCurrentOEE: async (): Promise<OEEMetrics[]> => {
+    const { data } = await apiClient.get<ApiResponse<OEEMetrics[]>>('/oee/current');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch current OEE');
+    return data.data;
+  },
+
+  getCurrentOEEById: async (id: string): Promise<OEEMetrics> => {
+    const { data } = await apiClient.get<ApiResponse<OEEMetrics>>(`/oee/current/${id}`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE');
+    return data.data;
+  },
+
+  getHistory: async (id: string, filters?: OEEHistoryFilters): Promise<OEESnapshot[]> => {
+    const { data } = await apiClient.get<ApiResponse<OEESnapshot[]>>(`/oee/history/${id}`, { params: filters });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE history');
     return data.data;
   },
 };
