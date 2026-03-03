@@ -1,6 +1,8 @@
 import { Server, Wifi, WifiOff, AlertTriangle, Radio, Lock } from 'lucide-react';
 import { BrokerConfig } from '../../types';
-import { clsx } from 'clsx';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -11,14 +13,14 @@ const statusIcons = {
   error: AlertTriangle,
 };
 
-const statusColors = {
-  connected: 'text-green-600 bg-green-100',
-  connecting: 'text-yellow-600 bg-yellow-100',
-  disconnected: 'text-gray-600 bg-gray-100',
-  error: 'text-red-600 bg-red-100',
+const statusBadgeVariant: Record<string, 'success' | 'warning' | 'secondary' | 'destructive'> = {
+  connected: 'success',
+  connecting: 'warning',
+  disconnected: 'secondary',
+  error: 'destructive',
 };
 
-const statusText = {
+const statusText: Record<string, string> = {
   connected: 'Conectado',
   connecting: 'Conectando',
   disconnected: 'Desconectado',
@@ -33,83 +35,71 @@ interface BrokersStatusProps {
 export function BrokersStatus({ brokers, activeBrokerId }: BrokersStatusProps) {
   if (brokers.length === 0) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <h3 className="font-semibold text-gray-900">Status dos Brokers</h3>
-        </div>
-        <div className="p-8 text-center text-gray-500">
-          <Server className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Status dos Brokers</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-8 text-muted-foreground">
+          <Server className="h-12 w-12 mx-auto mb-2 opacity-30" />
           <p>Nenhum broker configurado</p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="font-semibold text-gray-900">Status dos Brokers</h3>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {brokers.map((broker) => {
-          const StatusIcon = statusIcons[broker.status];
-          const isActive = broker.id === activeBrokerId;
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Status dos Brokers</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y">
+          {brokers.map((broker) => {
+            const StatusIcon = statusIcons[broker.status];
+            const isActive = broker.id === activeBrokerId;
 
-          return (
-            <div
-              key={broker.id}
-              className={clsx(
-                'p-4 flex items-center gap-4',
-                isActive && 'bg-primary-50 border-l-4 border-primary-500'
-              )}
-            >
-              <div className={clsx(
-                'p-2 rounded-lg',
-                isActive ? 'bg-primary-100' : 'bg-gray-100'
-              )}>
-                <Server className={clsx(
-                  'w-5 h-5',
-                  isActive ? 'text-primary-600' : 'text-gray-600'
-                )} />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-gray-900 truncate">{broker.name}</p>
-                  {broker.useTls && (
-                    <Lock className="w-3 h-3 text-green-600" />
-                  )}
-                  {isActive && (
-                    <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">
-                      Ativo
-                    </span>
-                  )}
+            return (
+              <div
+                key={broker.id}
+                className={cn(
+                  'px-6 py-4 flex items-center gap-4',
+                  isActive && 'bg-primary-50/50 border-l-4 border-l-primary-500'
+                )}
+              >
+                <div className={cn('p-2 rounded-lg', isActive ? 'bg-primary-100' : 'bg-muted')}>
+                  <Server className={cn('h-5 w-5', isActive ? 'text-primary-600' : 'text-muted-foreground')} />
                 </div>
-                <p className="text-sm text-gray-500 truncate font-mono">
-                  {broker.host}:{broker.port}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {broker.lastConnected
-                    ? `Última conexão: ${formatDistanceToNow(new Date(broker.lastConnected), { addSuffix: true, locale: ptBR })}`
-                    : 'Nunca conectado'}
-                  {(broker.messageCount ?? 0) > 0 && ` • ${(broker.messageCount ?? 0).toLocaleString('pt-BR')} msgs`}
-                </p>
-              </div>
 
-              <div className={clsx(
-                'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium',
-                statusColors[broker.status]
-              )}>
-                <StatusIcon className={clsx(
-                  'w-4 h-4',
-                  broker.status === 'connecting' && 'animate-pulse'
-                )} />
-                <span>{statusText[broker.status]}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">{broker.name}</p>
+                    {broker.useTls && <Lock className="h-3 w-3 text-green-600" />}
+                    {isActive && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono truncate">
+                    {broker.host}:{broker.port}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {broker.lastConnected
+                      ? `Última conexão: ${formatDistanceToNow(new Date(broker.lastConnected), { addSuffix: true, locale: ptBR })}`
+                      : 'Nunca conectado'}
+                    {(broker.messageCount ?? 0) > 0 && ` · ${(broker.messageCount ?? 0).toLocaleString('pt-BR')} msgs`}
+                  </p>
+                </div>
+
+                <Badge variant={statusBadgeVariant[broker.status]} className="gap-1.5 shrink-0">
+                  <StatusIcon className={cn('h-3 w-3', broker.status === 'connecting' && 'animate-pulse')} />
+                  {statusText[broker.status]}
+                </Badge>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

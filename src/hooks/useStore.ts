@@ -45,6 +45,8 @@ interface UIStore {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  sidebarGroupsOpen: Record<string, boolean>;
+  toggleSidebarGroup: (key: string) => void;
   selectedTopic: string | null;
   setSelectedTopic: (topic: string | null) => void;
   toasts: ToastMessage[];
@@ -58,6 +60,14 @@ export const useUIStore = create<UIStore>()(
       sidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      sidebarGroupsOpen: { protocols: true, monitoring: true, intelligence: true, system: true },
+      toggleSidebarGroup: (key) =>
+        set((state) => ({
+          sidebarGroupsOpen: {
+            ...state.sidebarGroupsOpen,
+            [key]: !state.sidebarGroupsOpen[key],
+          },
+        })),
       selectedTopic: null,
       setSelectedTopic: (topic) => set({ selectedTopic: topic }),
       toasts: [],
@@ -75,7 +85,10 @@ export const useUIStore = create<UIStore>()(
     }),
     {
       name: 'edu-ui',
-      partialize: (state) => ({ sidebarCollapsed: state.sidebarCollapsed }),
+      partialize: (state) => ({
+        sidebarCollapsed: state.sidebarCollapsed,
+        sidebarGroupsOpen: state.sidebarGroupsOpen,
+      }),
     }
   )
 );

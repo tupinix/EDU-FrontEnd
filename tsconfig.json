@@ -23,7 +23,8 @@
       "@services/*": ["services/*"],
       "@pages/*": ["pages/*"],
       "@types/*": ["types/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@/lib/*": ["lib/*"]
     }
   },
   "include": ["src"],

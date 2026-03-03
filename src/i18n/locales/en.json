@@ -67,9 +67,17 @@
     "alarms": "Alarms",
     "oee": "OEE",
     "rules": "Rules",
+    "mqtt": "MQTT",
     "modbus": "Modbus TCP",
+    "opcua": "OPC-UA",
     "collapse": "Collapse",
-    "expand": "Expand menu"
+    "expand": "Expand menu",
+    "groups": {
+      "protocols": "Protocols",
+      "monitoring": "Monitoring",
+      "intelligence": "Intelligence",
+      "system": "System"
+    }
   },
   "assistant": {
     "title": "AI Assistant",

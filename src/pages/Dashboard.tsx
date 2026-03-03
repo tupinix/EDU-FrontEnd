@@ -4,6 +4,9 @@ import { HealthStatus, MetricsCards, BrokersStatus } from '../components/Dashboa
 import { Loader2, RefreshCw, ServerOff } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '../components/ui/page-header';
+import { Button } from '../components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -19,63 +22,57 @@ export function Dashboard() {
     refetch();
   };
 
-  // Check if there's an active and connected broker
   const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{t('dashboard.errorLoading')}: {error.message}</p>
-        <button
-          onClick={handleRefresh}
-          className="mt-2 btn btn-sm btn-outline text-red-600 border-red-300 hover:bg-red-100"
-        >
-          {t('common.tryAgain')}
-        </button>
-      </div>
+      <Card className="border-destructive/50">
+        <CardContent className="p-6">
+          <p className="text-destructive">{t('dashboard.errorLoading')}: {error.message}</p>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="mt-2">
+            {t('common.tryAgain')}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('dashboard.overview')}</p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          className="btn btn-secondary flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          {t('common.refresh')}
-        </button>
-      </div>
+      <PageHeader
+        title={t('dashboard.title')}
+        description={t('dashboard.overview')}
+        actions={
+          <Button variant="outline" onClick={handleRefresh} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            {t('common.refresh')}
+          </Button>
+        }
+      />
 
       {/* No Active Broker Warning */}
       {!hasActiveBroker && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <ServerOff className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-          <h3 className="font-semibold text-yellow-800 mb-2">{t('dashboard.noBroker')}</h3>
-          <p className="text-yellow-700 mb-4">
-            {t('dashboard.noBrokerDesc')}
-          </p>
-          <Link to="/configuration" className="btn btn-primary">
-            {t('dashboard.configureBrokers')}
-          </Link>
-        </div>
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-6 text-center">
+            <ServerOff className="h-12 w-12 mx-auto mb-3 text-yellow-500" />
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">{t('dashboard.noBroker')}</h3>
+            <p className="text-sm text-yellow-700 mb-4">{t('dashboard.noBrokerDesc')}</p>
+            <Button asChild>
+              <Link to="/configuration">{t('dashboard.configureBrokers')}</Link>
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Health Status - Only show if active broker */}
+      {/* Health Status */}
       {hasActiveBroker && metrics && (
         <HealthStatus
           status={metrics.system.brokerStatus}
@@ -83,7 +80,7 @@ export function Dashboard() {
         />
       )}
 
-      {/* Metrics Cards - Only show if active broker */}
+      {/* Metrics Cards */}
       {hasActiveBroker && metrics && (
         <MetricsCards
           messagesPerDay={metrics.system.messagesPerDay}
@@ -95,7 +92,6 @@ export function Dashboard() {
 
       {/* Two column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Brokers Status - Always show */}
         {brokersData && (
           <BrokersStatus
             brokers={brokersData.brokers}
@@ -103,50 +99,36 @@ export function Dashboard() {
           />
         )}
 
-        {/* Top Topics - Only show if active broker */}
+        {/* Top Topics */}
         {hasActiveBroker && metrics && metrics.topTopics.length > 0 && (
-          <div className="card">
-            <div className="card-header">
-              <h3 className="font-semibold text-gray-900">{t('dashboard.topActiveTopics')}</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {metrics.topTopics.slice(0, 10).map((topic, index) => (
-                <div key={topic.topic} className="p-4 flex items-center gap-3">
-                  <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate font-mono">{topic.topic}</p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t('dashboard.topActiveTopics')}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {metrics.topTopics.slice(0, 10).map((topic, index) => (
+                  <div key={topic.topic} className="px-6 py-3 flex items-center gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-primary-700 text-xs font-medium">
+                      {index + 1}
+                    </span>
+                    <p className="flex-1 min-w-0 text-sm font-mono truncate">{topic.topic}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {topic.count.toLocaleString('pt-BR')} {t('dashboard.msgs')}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {topic.count.toLocaleString('pt-BR')} msgs
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* Knowledge Graph - Commented for now */}
-      {/*
-      {hasActiveBroker && (
-        <KnowledgeGraph />
-      )}
-      */}
-
-      {/* TimeSeries - Commented for now */}
-      {/*
-      {hasActiveBroker && (
-        <TimeSeries />
-      )}
-      */}
-
-      {/* Uptime - Only show if active broker */}
+      {/* Uptime */}
       {hasActiveBroker && metrics && (
-        <div className="text-center text-sm text-gray-400">
+        <p className="text-center text-xs text-muted-foreground">
           {t('dashboard.systemOnline')} {formatUptime(metrics.system.uptime)}
-        </div>
+        </p>
       )}
     </div>
   );

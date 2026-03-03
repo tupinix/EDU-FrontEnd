@@ -1,11 +1,28 @@
 import { useState } from 'react';
 import { Cpu, Plus, Plug, Unplug, Trash2, Loader2, AlertCircle, Activity, ListChecks } from 'lucide-react';
-import { clsx } from 'clsx';
 import { useModbusConnections, useConnectModbus, useDisconnectModbus, useDeleteModbusConnection } from '../../hooks/useModbus';
 import { ModbusForm } from './ModbusForm';
 import { ModbusRegisterConfig } from './ModbusRegisterConfig';
 import { ModbusMonitor } from './ModbusMonitor';
 import { ModbusConnection } from '../../types';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
+
+const statusBadgeVariant: Record<string, 'success' | 'warning' | 'destructive' | 'secondary'> = {
+  connected: 'success',
+  connecting: 'warning',
+  error: 'destructive',
+  disconnected: 'secondary',
+};
+
+const statusLabel: Record<string, string> = {
+  connected: 'Conectado',
+  connecting: 'Conectando...',
+  error: 'Erro',
+  disconnected: 'Desconectado',
+};
 
 export function ModbusConnections() {
   const { data: connections, isLoading, error } = useModbusConnections();
@@ -19,17 +36,19 @@ export function ModbusConnections() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 p-4 bg-red-50 rounded-lg text-red-700">
-        <AlertCircle className="w-5 h-5" />
-        <span>Erro ao carregar conexões Modbus: {error.message}</span>
-      </div>
+      <Card className="border-destructive/50">
+        <CardContent className="p-4 flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <span>Erro ao carregar conexões Modbus: {error.message}</span>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -51,38 +70,17 @@ export function ModbusConnections() {
     );
   }
 
-  const statusColor = (status: string) => {
-    switch (status) {
-      case 'connected': return 'bg-green-500';
-      case 'connecting': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-400';
-    }
-  };
-
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case 'connected': return 'Conectado';
-      case 'connecting': return 'Conectando...';
-      case 'error': return 'Erro';
-      default: return 'Desconectado';
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-primary-500" />
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Cpu className="h-5 w-5 text-primary" />
           Conexões Modbus TCP
         </h3>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
-        >
-          <Plus className="w-4 h-4" />
+        <Button onClick={() => setShowForm(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
           Nova Conexão
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -90,99 +88,110 @@ export function ModbusConnections() {
       )}
 
       {(!connections || connections.length === 0) ? (
-        <div className="text-center py-8 text-gray-500">
-          <Cpu className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p>Nenhuma conexão Modbus TCP configurada</p>
-          <p className="text-sm mt-1">Adicione um dispositivo Modbus TCP para começar a coletar dados</p>
-        </div>
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Cpu className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p>Nenhuma conexão Modbus TCP configurada</p>
+            <p className="text-sm mt-1">Adicione um dispositivo Modbus TCP para começar a coletar dados</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-3">
           {connections.map((conn) => (
-            <div
-              key={conn.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-primary-200 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={clsx('w-2.5 h-2.5 rounded-full', statusColor(conn.status))} />
-                  <div>
-                    <p className="font-medium text-gray-900">{conn.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {conn.host}:{conn.port} — Unit ID: {conn.unitId}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Timeout: {conn.timeoutMs}ms &bull; {statusLabel(conn.status)}
-                    </p>
+            <Card key={conn.id} className="hover:border-primary/30 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'h-2.5 w-2.5 rounded-full',
+                        conn.status === 'connected' && 'bg-green-500',
+                        conn.status === 'connecting' && 'bg-yellow-500',
+                        conn.status === 'error' && 'bg-red-500',
+                        conn.status === 'disconnected' && 'bg-gray-400'
+                      )}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{conn.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {conn.host}:{conn.port} — Unit ID: {conn.unitId}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">Timeout: {conn.timeoutMs}ms</span>
+                        <Badge variant={statusBadgeVariant[conn.status] || 'secondary'} className="text-[10px]">
+                          {statusLabel[conn.status] || conn.status}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  {conn.status === 'connected' ? (
-                    <>
-                      <button
-                        onClick={() => setConfiguringConn(conn)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
-                        title="Configurar registradores"
-                      >
-                        <ListChecks className="w-3.5 h-3.5" />
-                        Registradores
-                      </button>
-                      <button
-                        onClick={() => setMonitoringConn(conn)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
-                        title="Monitor ao vivo"
-                      >
-                        <Activity className="w-3.5 h-3.5" />
-                        Monitor
-                      </button>
-                      <button
-                        onClick={() => disconnectMutation.mutate(conn.id)}
-                        disabled={disconnectMutation.isPending}
-                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-                        title="Desconectar"
-                      >
-                        <Unplug className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setConfiguringConn(conn)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                        title="Configurar registradores"
-                      >
-                        <ListChecks className="w-3.5 h-3.5" />
-                        Registradores
-                      </button>
-                      <button
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfiguringConn(conn)}
+                      className="gap-1.5"
+                    >
+                      <ListChecks className="h-3.5 w-3.5" />
+                      Registradores
+                    </Button>
+
+                    {conn.status === 'connected' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMonitoringConn(conn)}
+                          className="gap-1.5"
+                        >
+                          <Activity className="h-3.5 w-3.5" />
+                          Monitor
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => disconnectMutation.mutate(conn.id)}
+                          disabled={disconnectMutation.isPending}
+                          title="Desconectar"
+                        >
+                          <Unplug className="h-4 w-4 text-yellow-600" />
+                        </Button>
+                      </>
+                    )}
+
+                    {conn.status !== 'connected' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => connectMutation.mutate(conn.id)}
                         disabled={connectMutation.isPending}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         title="Conectar"
                       >
                         {connectMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Plug className="w-4 h-4" />
+                          <Plug className="h-4 w-4 text-green-600" />
                         )}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      if (confirm('Tem certeza que deseja excluir esta conexão?')) {
-                        deleteMutation.mutate(conn.id);
-                      }
-                    }}
-                    disabled={deleteMutation.isPending}
-                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Excluir"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm('Tem certeza que deseja excluir esta conexão?')) {
+                          deleteMutation.mutate(conn.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

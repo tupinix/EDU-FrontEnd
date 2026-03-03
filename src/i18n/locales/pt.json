@@ -67,9 +67,17 @@
     "alarms": "Alarmes",
     "oee": "OEE",
     "rules": "Regras",
+    "mqtt": "MQTT",
     "modbus": "Modbus TCP",
+    "opcua": "OPC-UA",
     "collapse": "Recolher",
-    "expand": "Expandir menu"
+    "expand": "Expandir menu",
+    "groups": {
+      "protocols": "Protocolos",
+      "monitoring": "Monitoramento",
+      "intelligence": "Inteligencia",
+      "system": "Sistema"
+    }
   },
   "assistant": {
     "title": "TupixIA",

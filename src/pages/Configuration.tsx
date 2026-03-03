@@ -12,7 +12,6 @@ import {
   Lock,
   Unlock,
   Radio,
-  Settings,
   AlertCircle,
   RefreshCw,
   Power,
@@ -23,7 +22,10 @@ import { brokersApi } from '../services/api';
 import { BrokerConfig, BrokerFormData } from '../types';
 import { clsx } from 'clsx';
 import { useQueryClient } from '@tanstack/react-query';
-import { OpcUaConnections } from '../components/OpcUa';
+import { PageHeader } from '../components/ui/page-header';
+import { Button } from '../components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 
 const initialFormData: BrokerFormData = {
   name: '',
@@ -35,12 +37,9 @@ const initialFormData: BrokerFormData = {
   topics: '',
 };
 
-type ConfigTab = 'brokers' | 'opcua';
-
 export function Configuration() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<ConfigTab>('brokers');
   const [brokers, setBrokers] = useState<BrokerConfig[]>([]);
   const [activeBrokerId, setActiveBrokerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +49,6 @@ export function Configuration() {
   const [formData, setFormData] = useState<BrokerFormData>(initialFormData);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Fetch brokers from API
   const fetchBrokers = useCallback(async () => {
     try {
       setError(null);
@@ -137,10 +135,8 @@ export function Configuration() {
   const handleConnect = async (id: string) => {
     setActionLoading(id);
     try {
-      // Connect and activate the broker (so data shows immediately)
       await brokersApi.activate(id);
       await fetchBrokers();
-      // Force immediate refetch of all data
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['active-broker'], type: 'all' }),
         queryClient.refetchQueries({ queryKey: ['brokers-status'], type: 'all' }),
@@ -161,7 +157,6 @@ export function Configuration() {
     try {
       await brokersApi.disconnect(id);
       await fetchBrokers();
-      // Force immediate refetch
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['active-broker'], type: 'all' }),
         queryClient.refetchQueries({ queryKey: ['brokers-status'], type: 'all' }),
@@ -179,8 +174,6 @@ export function Configuration() {
     try {
       await brokersApi.activate(id);
       await fetchBrokers();
-
-      // Force immediate refetch of all broker-related queries
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['active-broker'], type: 'all' }),
         queryClient.refetchQueries({ queryKey: ['brokers-status'], type: 'all' }),
@@ -222,370 +215,325 @@ export function Configuration() {
     }
   };
 
+  const statusBadgeVariant = (status: string): 'success' | 'warning' | 'destructive' | 'secondary' => {
+    switch (status) {
+      case 'connected': return 'success';
+      case 'connecting': return 'warning';
+      case 'error': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('configuration.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('configuration.subtitle')}</p>
-        </div>
-        {activeTab === 'brokers' && (
+      <PageHeader
+        title="MQTT Brokers"
+        description={t('configuration.subtitle')}
+        actions={
           <div className="flex gap-2">
-            <button
-              onClick={fetchBrokers}
-              className="btn btn-secondary flex items-center gap-2"
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={fetchBrokers} disabled={loading} className="gap-2">
               <RefreshCw className={clsx("w-4 h-4", loading && "animate-spin")} />
               {t('common.refresh')}
-            </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="btn btn-primary flex items-center gap-2"
-            >
+            </Button>
+            <Button onClick={() => setShowForm(true)} className="gap-2">
               <Plus className="w-4 h-4" />
               {t('configuration.newBroker')}
-            </button>
+            </Button>
           </div>
-        )}
-      </div>
+        }
+      />
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-6">
-          <button
-            onClick={() => setActiveTab('brokers')}
-            className={clsx(
-              'pb-3 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'brokers'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            )}
-          >
-            MQTT Brokers
-          </button>
-          <button
-            onClick={() => setActiveTab('opcua')}
-            className={clsx(
-              'pb-3 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'opcua'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            )}
-          >
-            OPC-UA
-          </button>
-        </nav>
-      </div>
-
-      {/* OPC-UA Tab */}
-      {activeTab === 'opcua' && <OpcUaConnections />}
-
-      {/* Brokers Tab */}
-      {activeTab === 'brokers' && <>
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-red-800">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <Card className="border-destructive/50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+            <p className="text-destructive flex-1">{error}</p>
+            <Button variant="ghost" size="icon" onClick={() => setError(null)}>
+              <X className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Broker Form */}
       {showForm && (
-        <div className="card">
-          <div className="card-header flex items-center justify-between">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary-600" />
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Server className="w-5 h-5 text-primary" />
               {editingId ? t('configuration.editBroker') : t('configuration.newBroker')}
-            </h3>
-            <button
-              onClick={handleCancel}
-              className="p-1 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <form onSubmit={handleSubmit} className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('configuration.brokerName')} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="input"
-                  placeholder="Ex: HiveMQ Local, Mosquitto"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('configuration.host')} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="input font-mono"
-                  placeholder="192.168.1.34"
-                  value={formData.host}
-                  onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('configuration.port')} *
-                </label>
-                <input
-                  type="number"
-                  required
-                  className="input"
-                  placeholder="1883"
-                  value={formData.port}
-                  onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+            </CardTitle>
+            <Button variant="ghost" size="icon" onClick={handleCancel}>
+              <X className="w-4 h-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('configuration.brokerName')} *
+                  </label>
                   <input
-                    type="checkbox"
-                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
-                    checked={formData.useTls}
-                    onChange={(e) => setFormData({ ...formData, useTls: e.target.checked })}
+                    type="text"
+                    required
+                    className="input"
+                    placeholder="Ex: HiveMQ Local, Mosquitto"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
-                  <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                    {formData.useTls ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                    {t('configuration.useTls')}
-                  </span>
-                </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('configuration.host')} *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="input font-mono"
+                    placeholder="192.168.1.34"
+                    value={formData.host}
+                    onChange={(e) => setFormData({ ...formData, host: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('configuration.port')} *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    className="input"
+                    placeholder="1883"
+                    value={formData.port}
+                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                      checked={formData.useTls}
+                      onChange={(e) => setFormData({ ...formData, useTls: e.target.checked })}
+                    />
+                    <span className="text-sm font-medium flex items-center gap-1">
+                      {formData.useTls ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                      {t('configuration.useTls')}
+                    </span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('configuration.username')}
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder={t('common.optional')}
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {t('common.password')}
+                  </label>
+                  <input
+                    type="password"
+                    className="input"
+                    placeholder={t('common.optional')}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">
+                    {t('configuration.topicsSubscription')}
+                  </label>
+                  <input
+                    type="text"
+                    className="input font-mono"
+                    placeholder="topic/#, other/topic/#"
+                    value={formData.topics}
+                    onChange={(e) => setFormData({ ...formData, topics: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('configuration.topicsHint')}
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('configuration.username')}
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder={t('common.optional')}
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                />
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" type="button" onClick={handleCancel}>
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" disabled={actionLoading === 'submit'} className="gap-2">
+                  {actionLoading === 'submit' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  {editingId ? t('configuration.saveChanges') : t('configuration.addBroker')}
+                </Button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('common.password')}
-                </label>
-                <input
-                  type="password"
-                  className="input"
-                  placeholder={t('common.optional')}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('configuration.topicsSubscription')}
-                </label>
-                <input
-                  type="text"
-                  className="input font-mono"
-                  placeholder="topic/#, other/topic/#"
-                  value={formData.topics}
-                  onChange={(e) => setFormData({ ...formData, topics: e.target.value })}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('configuration.topicsHint')}
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn btn-secondary"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary flex items-center gap-2"
-                disabled={actionLoading === 'submit'}
-              >
-                {actionLoading === 'submit' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4" />
-                )}
-                {editingId ? t('configuration.saveChanges') : t('configuration.addBroker')}
-              </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Brokers List */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Server className="w-5 h-5 text-primary-600" />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Server className="w-5 h-5 text-primary" />
             {t('configuration.configuredBrokers')}
-          </h3>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {brokers.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Server className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>{t('configuration.noBrokers')}</p>
-              <p className="text-sm">{t('configuration.noBrokersHint')}</p>
-            </div>
-          ) : (
-            brokers.map((broker) => (
-              <div
-                key={broker.id}
-                className={clsx(
-                  'p-4 flex items-center justify-between hover:bg-gray-50 transition-colors',
-                  broker.id === activeBrokerId && 'bg-primary-50 border-l-4 border-primary-500'
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(broker.status)}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-900">{broker.name}</h4>
-                        {broker.isDefault && (
-                          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">
-                            {t('common.default')}
-                          </span>
-                        )}
-                        {broker.id === activeBrokerId && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                            {t('common.active')}
-                          </span>
-                        )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {brokers.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Server className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p>{t('configuration.noBrokers')}</p>
+                <p className="text-sm">{t('configuration.noBrokersHint')}</p>
+              </div>
+            ) : (
+              brokers.map((broker) => (
+                <div
+                  key={broker.id}
+                  className={clsx(
+                    'px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors',
+                    broker.id === activeBrokerId && 'bg-primary-50/50 border-l-4 border-l-primary-500'
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(broker.status)}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium">{broker.name}</h4>
+                          {broker.isDefault && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {t('common.default')}
+                            </Badge>
+                          )}
+                          {broker.id === activeBrokerId && (
+                            <Badge variant="success" className="text-[10px]">
+                              {t('common.active')}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {broker.host}:{broker.port}
+                          {broker.useTls && (
+                            <Lock className="w-3 h-3 inline ml-1 text-green-600" />
+                          )}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-500 font-mono">
-                        {broker.host}:{broker.port}
-                        {broker.useTls && (
-                          <Lock className="w-3 h-3 inline ml-1 text-green-600" />
-                        )}
-                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right text-sm">
+                      <Badge variant={statusBadgeVariant(broker.status)}>
+                        {getStatusText(broker.status)}
+                      </Badge>
+                      {(broker.messageCount ?? 0) > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {(broker.messageCount ?? 0).toLocaleString()} msgs
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {broker.status === 'connected' ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDisconnect(broker.id)}
+                          title={t('configuration.disconnect')}
+                          disabled={actionLoading === broker.id}
+                        >
+                          {actionLoading === broker.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <PowerOff className="w-4 h-4" />
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleConnect(broker.id)}
+                          title={t('configuration.connect')}
+                          disabled={actionLoading === broker.id}
+                        >
+                          {actionLoading === broker.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Power className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      {broker.id !== activeBrokerId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleActivate(broker.id)}
+                          title={t('configuration.activateHint')}
+                          disabled={actionLoading === broker.id}
+                        >
+                          <Radio className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(broker)}
+                        title={t('common.edit')}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      {!broker.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(broker.id)}
+                          title={t('configuration.remove')}
+                          disabled={actionLoading === broker.id}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right text-sm">
-                    <p className={clsx(
-                      'font-medium',
-                      broker.status === 'connected' && 'text-green-600',
-                      broker.status === 'error' && 'text-red-600',
-                      broker.status === 'disconnected' && 'text-gray-500'
-                    )}>
-                      {getStatusText(broker.status)}
-                    </p>
-                    {(broker.messageCount ?? 0) > 0 && (
-                      <p className="text-gray-400">
-                        {(broker.messageCount ?? 0).toLocaleString()} msgs
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {/* Connect/Disconnect */}
-                    {broker.status === 'connected' ? (
-                      <button
-                        onClick={() => handleDisconnect(broker.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title={t('configuration.disconnect')}
-                        disabled={actionLoading === broker.id}
-                      >
-                        {actionLoading === broker.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <PowerOff className="w-4 h-4" />
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleConnect(broker.id)}
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title={t('configuration.connect')}
-                        disabled={actionLoading === broker.id}
-                      >
-                        {actionLoading === broker.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Power className="w-4 h-4" />
-                        )}
-                      </button>
-                    )}
-                    {/* Activate */}
-                    {broker.id !== activeBrokerId && (
-                      <button
-                        onClick={() => handleActivate(broker.id)}
-                        className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                        title={t('configuration.activateHint')}
-                        disabled={actionLoading === broker.id}
-                      >
-                        <Radio className="w-4 h-4" />
-                      </button>
-                    )}
-                    {/* Edit */}
-                    <button
-                      onClick={() => handleEdit(broker)}
-                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                      title={t('common.edit')}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    {/* Delete */}
-                    {!broker.isDefault && (
-                      <button
-                        onClick={() => handleDelete(broker.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title={t('configuration.remove')}
-                        disabled={actionLoading === broker.id}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Info Card */}
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-        <h4 className="font-medium text-primary-900 mb-2">{t('configuration.aboutConnections')}</h4>
-        <ul className="text-sm text-primary-800 space-y-1">
-          <li>• {t('configuration.aboutTip1')}</li>
-          <li>• {t('configuration.aboutTip2')}</li>
-          <li>• {t('configuration.aboutTip3')}</li>
-          <li>• {t('configuration.aboutTip4')}</li>
-          <li>• {t('configuration.aboutTip5')}</li>
-        </ul>
-      </div>
-      </>}
+      <Card className="bg-primary-50/50 border-primary-200">
+        <CardContent className="p-4">
+          <h4 className="font-medium text-primary-900 mb-2">{t('configuration.aboutConnections')}</h4>
+          <ul className="text-sm text-primary-800 space-y-1">
+            <li>• {t('configuration.aboutTip1')}</li>
+            <li>• {t('configuration.aboutTip2')}</li>
+            <li>• {t('configuration.aboutTip3')}</li>
+            <li>• {t('configuration.aboutTip4')}</li>
+            <li>• {t('configuration.aboutTip5')}</li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

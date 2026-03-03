@@ -10,3 +10,4 @@ export { Alarms } from './Alarms';
 export { OEE } from './OEE';
 export { Rules } from './Rules';
 export { ModbusPage } from './ModbusPage';
+export { OpcUaPage } from './OpcUaPage';

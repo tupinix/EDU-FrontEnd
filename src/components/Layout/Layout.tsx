@@ -2,29 +2,27 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useUIStore } from '../../hooks/useStore';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 
 export function Layout() {
   const { sidebarCollapsed } = useUIStore();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-background">
       <Sidebar />
 
-      {/* Main content */}
       <div
-        className={clsx(
+        className={cn(
           'transition-all duration-300',
           sidebarCollapsed ? 'ml-16' : 'ml-64'
         )}
       >
-        {/* Header */}
         <Header />
 
-        {/* Page content */}
         <main className="p-6">
-          <Outlet />
+          <div className="max-w-screen-2xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -1,6 +1,17 @@
 import { useState } from 'react';
-import { X, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import { useCreateModbusConnection } from '../../hooks/useModbus';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface ModbusFormProps {
   onClose: () => void;
@@ -33,101 +44,97 @@ export function ModbusForm({ onClose }: ModbusFormProps) {
   };
 
   return (
-    <div className="border border-primary-200 bg-primary-50/30 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium text-gray-900">Nova Conexão Modbus TCP</h4>
-        <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nova Conexão Modbus TCP</DialogTitle>
+          <DialogDescription>
+            Configure os parâmetros de conexão com o dispositivo Modbus.
+          </DialogDescription>
+        </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="PLC Linha 1"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="PLC Linha 1"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="host">Host / IP</Label>
+              <Input
+                id="host"
+                value={form.host}
+                onChange={(e) => setForm({ ...form, host: e.target.value })}
+                placeholder="192.168.1.100"
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Host / IP</label>
-            <input
-              type="text"
-              value={form.host}
-              onChange={(e) => setForm({ ...form, host: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="192.168.1.100"
-              required
-            />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Porta TCP</label>
-            <input
-              type="number"
-              value={form.port}
-              onChange={(e) => setForm({ ...form, port: parseInt(e.target.value) || 502 })}
-              min={1} max={65535}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="port">Porta TCP</Label>
+              <Input
+                id="port"
+                type="number"
+                value={form.port}
+                onChange={(e) => setForm({ ...form, port: parseInt(e.target.value) || 502 })}
+                min={1}
+                max={65535}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unitId">Unit ID (Slave)</Label>
+              <Input
+                id="unitId"
+                type="number"
+                value={form.unitId}
+                onChange={(e) => setForm({ ...form, unitId: parseInt(e.target.value) || 1 })}
+                min={0}
+                max={247}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="timeout">Timeout (ms)</Label>
+              <Input
+                id="timeout"
+                type="number"
+                value={form.timeoutMs}
+                onChange={(e) => setForm({ ...form, timeoutMs: parseInt(e.target.value) || 5000 })}
+                min={100}
+                max={30000}
+                step={500}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Unit ID (Slave)</label>
-            <input
-              type="number"
-              value={form.unitId}
-              onChange={(e) => setForm({ ...form, unitId: parseInt(e.target.value) || 1 })}
-              min={0} max={247}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timeout (ms)</label>
-            <input
-              type="number"
-              value={form.timeoutMs}
-              onChange={(e) => setForm({ ...form, timeoutMs: parseInt(e.target.value) || 5000 })}
-              min={100} max={30000} step={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-        </div>
 
-        {createMutation.isError && (
-          <p className="text-sm text-red-600">
-            Erro: {createMutation.error instanceof Error ? createMutation.error.message : 'Falha ao criar conexão'}
-          </p>
-        )}
+          {createMutation.isError && (
+            <p className="text-sm text-destructive">
+              Erro: {createMutation.error instanceof Error ? createMutation.error.message : 'Falha ao criar conexão'}
+            </p>
+          )}
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-          >
-            {createMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Salvar
-          </button>
-        </div>
-      </form>
-    </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={createMutation.isPending} className="gap-2">
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,39 +1,40 @@
 import { MessageSquare, Clock, Hash, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Card, CardContent } from '../ui/card';
+import { cn } from '@/lib/utils';
 
 interface MetricCardProps {
   title: string;
   value: number | string;
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
+  iconBg: string;
   trend?: number;
   suffix?: string;
 }
 
-function MetricCard({ title, value, icon: Icon, color, trend, suffix }: MetricCardProps) {
+function MetricCard({ title, value, icon: Icon, iconBg, trend, suffix }: MetricCardProps) {
   return (
-    <div className="card">
-      <div className="p-4">
+    <Card>
+      <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className={clsx('p-2 rounded-lg', color)}>
-            <Icon className="w-5 h-5" />
+          <div className={cn('p-2 rounded-lg', iconBg)}>
+            <Icon className="h-5 w-5" />
           </div>
           {trend !== undefined && (
-            <div className={clsx('flex items-center gap-1 text-sm', trend >= 0 ? 'text-green-600' : 'text-red-600')}>
-              {trend >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+            <div className={cn('flex items-center gap-1 text-sm', trend >= 0 ? 'text-green-600' : 'text-red-600')}>
+              {trend >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
               <span>{Math.abs(trend)}%</span>
             </div>
           )}
         </div>
         <div className="mt-4">
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-semibold tracking-tight">
             {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
-            {suffix && <span className="text-sm font-normal text-gray-500 ml-1">{suffix}</span>}
+            {suffix && <span className="text-sm font-normal text-muted-foreground ml-1">{suffix}</span>}
           </p>
-          <p className="text-sm text-gray-500 mt-1">{title}</p>
+          <p className="text-sm text-muted-foreground mt-1">{title}</p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -46,31 +47,31 @@ interface MetricsCardsProps {
 
 export function MetricsCards({ messagesPerDay, messagesPerMinute, totalTopics, errorRate }: MetricsCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <MetricCard
         title="Mensagens/Dia"
         value={messagesPerDay}
         icon={MessageSquare}
-        color="bg-blue-100 text-blue-600"
+        iconBg="bg-blue-50 text-blue-600"
       />
       <MetricCard
         title="Mensagens/Minuto"
         value={messagesPerMinute}
         icon={Clock}
-        color="bg-green-100 text-green-600"
+        iconBg="bg-emerald-50 text-emerald-600"
       />
       <MetricCard
         title="Total de Tópicos"
         value={totalTopics}
         icon={Hash}
-        color="bg-purple-100 text-purple-600"
+        iconBg="bg-purple-50 text-purple-600"
       />
       <MetricCard
         title="Taxa de Erro"
         value={errorRate.toFixed(2)}
         suffix="%"
         icon={AlertCircle}
-        color={errorRate > 1 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}
+        iconBg={errorRate > 1 ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600'}
       />
     </div>
   );
