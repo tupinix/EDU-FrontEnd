@@ -326,6 +326,48 @@ export interface OEESnapshot {
 }
 
 // OPC-UA Types
+// Modbus TCP Types
+export interface ModbusConnection {
+  id: string;
+  tenantId?: string;
+  name: string;
+  host: string;
+  port: number;
+  unitId: number;
+  timeoutMs: number;
+  status: 'connected' | 'connecting' | 'disconnected' | 'error';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ModbusRegister {
+  id: string;
+  connectionId: string;
+  name: string;
+  registerType: 'coil' | 'discrete_input' | 'holding' | 'input';
+  address: number;
+  dataType: 'uint16' | 'int16' | 'int32' | 'float32' | 'boolean';
+  scaleFactor: number;
+  mqttTopic: string;
+  samplingIntervalMs: number;
+  brokerId?: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface ModbusLiveValue {
+  connectionId: string;
+  registerId: string;
+  name: string;
+  registerType: string;
+  address: number;
+  value: number | boolean;
+  rawValue: number;
+  quality: 'good' | 'bad' | 'uncertain';
+  timestamp: string;
+  updateCount: number;
+}
+
 export interface OpcUaConnection {
   id: string;
   tenantId: string;

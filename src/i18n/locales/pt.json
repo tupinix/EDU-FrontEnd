@@ -67,6 +67,7 @@
     "alarms": "Alarmes",
     "oee": "OEE",
     "rules": "Regras",
+    "modbus": "Modbus TCP",
     "collapse": "Recolher",
     "expand": "Expandir menu"
   },

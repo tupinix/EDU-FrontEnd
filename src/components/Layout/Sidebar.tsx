@@ -16,6 +16,7 @@ import {
   Bell,
   Gauge,
   Zap,
+  Cpu,
 } from 'lucide-react';
 import { useUIStore, useAuthStore } from '../../hooks/useStore';
 import { clsx } from 'clsx';
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { path: '/alarms', labelKey: 'sidebar.alarms', icon: Bell },
   { path: '/oee', labelKey: 'sidebar.oee', icon: Gauge },
   { path: '/rules', labelKey: 'sidebar.rules', icon: Zap },
+  { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
   { path: '/assistant', labelKey: 'sidebar.assistant', icon: Bot },
   { path: '/reports', labelKey: 'sidebar.reports', icon: FileBarChart },
   { path: '/configuration', labelKey: 'sidebar.configuration', icon: Settings },

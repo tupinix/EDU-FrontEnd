@@ -401,7 +401,7 @@ export const reportsApi = {
 // OPC-UA API
 // ===========================================
 
-import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot } from '../types';
+import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot, ModbusConnection, ModbusRegister, ModbusLiveValue } from '../types';
 
 export const opcuaApi = {
   getConnections: async (): Promise<OpcUaConnection[]> => {
@@ -749,5 +749,107 @@ export const exportApi = {
     const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/oee/${equipmentId}/csv`;
     const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
     return base + qs;
+  },
+};
+
+// ===========================================
+// Modbus TCP API
+// ===========================================
+
+export const modbusApi = {
+  getConnections: async (): Promise<ModbusConnection[]> => {
+    const { data } = await apiClient.get<ApiResponse<ModbusConnection[]>>('/modbus/connections');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch Modbus connections');
+    return data.data;
+  },
+
+  getConnectionById: async (id: string): Promise<ModbusConnection> => {
+    const { data } = await apiClient.get<ApiResponse<ModbusConnection>>(`/modbus/connections/${id}`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch Modbus connection');
+    return data.data;
+  },
+
+  createConnection: async (connection: {
+    name: string;
+    host: string;
+    port?: number;
+    unitId?: number;
+    timeoutMs?: number;
+  }): Promise<ModbusConnection> => {
+    const { data } = await apiClient.post<ApiResponse<ModbusConnection>>('/modbus/connections', connection);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create Modbus connection');
+    return data.data;
+  },
+
+  updateConnection: async (id: string, updates: Partial<{
+    name: string;
+    host: string;
+    port: number;
+    unitId: number;
+    timeoutMs: number;
+  }>): Promise<ModbusConnection> => {
+    const { data } = await apiClient.put<ApiResponse<ModbusConnection>>(`/modbus/connections/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update Modbus connection');
+    return data.data;
+  },
+
+  deleteConnection: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/modbus/connections/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete Modbus connection');
+  },
+
+  connect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/modbus/connections/${id}/connect`);
+    if (!data.success) throw new Error(data.error || 'Failed to connect to Modbus device');
+  },
+
+  disconnect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/modbus/connections/${id}/disconnect`);
+    if (!data.success) throw new Error(data.error || 'Failed to disconnect from Modbus device');
+  },
+
+  getLiveValues: async (connectionId: string): Promise<ModbusLiveValue[]> => {
+    const { data } = await apiClient.get<ApiResponse<ModbusLiveValue[]>>(
+      `/modbus/connections/${connectionId}/values`
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch live values');
+    return data.data;
+  },
+
+  getRegisters: async (connectionId: string): Promise<ModbusRegister[]> => {
+    const { data } = await apiClient.get<ApiResponse<ModbusRegister[]>>(
+      `/modbus/connections/${connectionId}/registers`
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch registers');
+    return data.data;
+  },
+
+  createRegister: async (
+    connectionId: string,
+    register: {
+      name: string;
+      registerType: string;
+      address: number;
+      dataType?: string;
+      scaleFactor?: number;
+      mqttTopic: string;
+      samplingIntervalMs?: number;
+      brokerId?: string;
+      enabled?: boolean;
+    }
+  ): Promise<ModbusRegister> => {
+    const { data } = await apiClient.post<ApiResponse<ModbusRegister>>(
+      `/modbus/connections/${connectionId}/registers`,
+      register
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create register');
+    return data.data;
+  },
+
+  deleteRegister: async (connectionId: string, regId: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(
+      `/modbus/connections/${connectionId}/registers/${regId}`
+    );
+    if (!data.success) throw new Error(data.error || 'Failed to delete register');
   },
 };
