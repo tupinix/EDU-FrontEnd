@@ -17,6 +17,8 @@ import {
   RuleExecution,
   CreateRuleInput,
   AnomalyDetection,
+  McpToken,
+  McpTokenCreated,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -851,5 +853,27 @@ export const modbusApi = {
       `/modbus/connections/${connectionId}/registers/${regId}`
     );
     if (!data.success) throw new Error(data.error || 'Failed to delete register');
+  },
+};
+
+// ===========================================
+// MCP Connections API
+// ===========================================
+export const mcpApi = {
+  listTokens: async (): Promise<McpToken[]> => {
+    const { data } = await apiClient.get<ApiResponse<McpToken[]>>('/auth/mcp-tokens');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch MCP tokens');
+    return data.data;
+  },
+
+  createToken: async (payload: { name: string; expiresIn?: string }): Promise<McpTokenCreated> => {
+    const { data } = await apiClient.post<ApiResponse<McpTokenCreated>>('/auth/mcp-token', payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create MCP token');
+    return data.data;
+  },
+
+  deleteToken: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/auth/mcp-tokens/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete MCP token');
   },
 };

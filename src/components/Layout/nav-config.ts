@@ -10,6 +10,7 @@ import {
   Bot,
   FileBarChart,
   Users,
+  Cable,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,6 +65,7 @@ export const navGroups: NavGroup[] = [
     key: 'system',
     labelKey: 'sidebar.groups.system',
     items: [
+      { path: '/connections', labelKey: 'sidebar.connections', icon: Cable, adminOnly: true },
       { path: '/users', labelKey: 'sidebar.users', icon: Users, adminOnly: true },
     ],
   },

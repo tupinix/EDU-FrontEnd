@@ -11,3 +11,4 @@ export { OEE } from './OEE';
 export { Rules } from './Rules';
 export { ModbusPage } from './ModbusPage';
 export { OpcUaPage } from './OpcUaPage';
+export { ConnectionsPage } from './ConnectionsPage';

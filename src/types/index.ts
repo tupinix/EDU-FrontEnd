@@ -473,3 +473,21 @@ export interface AnomalyDetection {
   acknowledged: boolean;
 }
 
+// MCP Connection Types
+export interface McpToken {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  permissions: string[];
+  expiresAt: string;
+  lastUsedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface McpTokenCreated extends McpToken {
+  token: string; // Only returned on creation, never shown again
+  scope: string;
+  role: string;
+}
+

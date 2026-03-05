@@ -70,6 +70,7 @@
     "mqtt": "MQTT",
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
+    "connections": "Conexões",
     "collapse": "Recolher",
     "expand": "Expandir menu",
     "groups": {
