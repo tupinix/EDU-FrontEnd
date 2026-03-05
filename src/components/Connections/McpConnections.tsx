@@ -45,6 +45,12 @@ function isExpired(dateStr: string): boolean {
 }
 
 function getMcpEndpointUrl(): string {
+  // If a public MCP URL is explicitly set (e.g. ngrok HTTPS tunnel), use it directly
+  const mcpUrl = import.meta.env.VITE_MCP_URL;
+  if (mcpUrl) {
+    return mcpUrl.replace(/\/+$/, ''); // strip trailing slashes
+  }
+
   const apiUrl = import.meta.env.VITE_API_URL;
   if (apiUrl) {
     if (apiUrl.startsWith('/')) {
