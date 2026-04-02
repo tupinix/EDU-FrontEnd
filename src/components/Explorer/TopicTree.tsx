@@ -1,7 +1,7 @@
-import { ChevronRight, Folder, FolderOpen, FileText, Hash } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { TopicNode } from '../../types';
 import { useExplorerStore, useUIStore } from '../../hooks/useStore';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 
 interface TopicTreeItemProps {
   node: TopicNode;
@@ -17,83 +17,50 @@ function TopicTreeItem({ node, level }: TopicTreeItemProps) {
   const hasChildren = node.children.length > 0;
 
   const handleClick = () => {
-    if (hasChildren) {
-      toggleNode(node.fullPath);
-    }
-    if (node.hasValue) {
-      setSelectedTopic(node.fullPath);
-    }
-  };
-
-  const handleSelect = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedTopic(node.fullPath);
+    if (hasChildren) toggleNode(node.fullPath);
+    if (node.hasValue) setSelectedTopic(node.fullPath);
   };
 
   return (
     <div>
-      <div
-        className={clsx(
-          'topic-tree-item',
-          isSelected && 'selected'
-        )}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
+      <button
         onClick={handleClick}
-      >
-        {/* Expand/Collapse icon */}
-        <button
-          className={clsx(
-            'topic-tree-expand',
-            isExpanded && 'expanded',
-            !hasChildren && 'invisible'
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleNode(node.fullPath);
-          }}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {/* Folder/File icon */}
-        {hasChildren ? (
-          isExpanded ? (
-            <FolderOpen className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" />
-          ) : (
-            <Folder className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" />
-          )
-        ) : node.hasValue ? (
-          <Hash className="w-4 h-4 text-primary-500 mr-2 flex-shrink-0" />
-        ) : (
-          <FileText className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+        className={cn(
+          'flex items-center gap-1.5 w-full text-left py-1.5 pr-3 rounded-lg text-[13px] transition-colors group',
+          isSelected
+            ? 'bg-gray-900 text-white'
+            : 'text-gray-600 hover:bg-gray-50'
         )}
+        style={{ paddingLeft: `${level * 16 + 10}px` }}
+      >
+        <ChevronRight
+          className={cn(
+            'w-3 h-3 shrink-0 transition-transform',
+            isExpanded && 'rotate-90',
+            !hasChildren && 'invisible',
+            isSelected ? 'text-white/50' : 'text-gray-300'
+          )}
+        />
 
-        {/* Node name */}
-        <span className="truncate flex-1 text-sm">{node.name}</span>
+        <span className={cn(
+          'w-1.5 h-1.5 rounded-full shrink-0',
+          node.hasValue
+            ? isSelected ? 'bg-emerald-400' : 'bg-emerald-300'
+            : isSelected ? 'bg-white/20' : 'bg-gray-200'
+        )} />
 
-        {/* Message count badge */}
+        <span className="truncate flex-1 font-mono">{node.name}</span>
+
         {node.messageCount > 0 && (
-          <span
-            className="ml-2 px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
-            title={`${node.messageCount} mensagens`}
-          >
+          <span className={cn(
+            'text-[11px] tabular-nums shrink-0',
+            isSelected ? 'text-white/40' : 'text-gray-300'
+          )}>
             {node.messageCount}
           </span>
         )}
+      </button>
 
-        {/* Value indicator */}
-        {node.hasValue && node.lastValue !== undefined && (
-          <button
-            onClick={handleSelect}
-            className="ml-2 px-2 py-0.5 text-xs bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors"
-            title="Ver valor"
-          >
-            valor
-          </button>
-        )}
-      </div>
-
-      {/* Children */}
       {isExpanded && hasChildren && (
         <div>
           {node.children.map((child) => (
@@ -112,16 +79,14 @@ interface TopicTreeProps {
 export function TopicTree({ topics }: TopicTreeProps) {
   if (!topics || topics.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500">
-        <Folder className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-        <p>Nenhum tópico encontrado</p>
-        <p className="text-sm">Aguardando mensagens MQTT...</p>
+      <div className="p-6 text-center">
+        <p className="text-[13px] text-gray-300">No topics found</p>
       </div>
     );
   }
 
   return (
-    <div className="py-2">
+    <div className="py-1 px-1">
       {topics.map((topic) => (
         <TopicTreeItem key={topic.fullPath} node={topic} level={0} />
       ))}

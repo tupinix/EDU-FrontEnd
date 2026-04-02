@@ -4,15 +4,13 @@ import {
   Cpu,
   Network,
   Radio,
-  Bell,
-  Gauge,
-  Zap,
-  Bot,
-  FileBarChart,
   Users,
   Cable,
+  Factory,
+  Monitor,
   type LucideIcon,
 } from 'lucide-react';
+import { editionPages, type EditionMode } from '../../config/edition';
 
 export interface NavItem {
   path: string;
@@ -38,27 +36,12 @@ export const navGroups: NavGroup[] = [
     key: 'protocols',
     labelKey: 'sidebar.groups.protocols',
     items: [
+      { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
       { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
       { path: '/configuration', labelKey: 'sidebar.mqtt', icon: Radio },
       { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
       { path: '/opcua', labelKey: 'sidebar.opcua', icon: Network },
-    ],
-  },
-  {
-    key: 'monitoring',
-    labelKey: 'sidebar.groups.monitoring',
-    items: [
-      { path: '/alarms', labelKey: 'sidebar.alarms', icon: Bell },
-      { path: '/oee', labelKey: 'sidebar.oee', icon: Gauge },
-      { path: '/rules', labelKey: 'sidebar.rules', icon: Zap },
-    ],
-  },
-  {
-    key: 'intelligence',
-    labelKey: 'sidebar.groups.intelligence',
-    items: [
-      { path: '/assistant', labelKey: 'sidebar.assistant', icon: Bot },
-      { path: '/reports', labelKey: 'sidebar.reports', icon: FileBarChart },
+      { path: '/ignition', labelKey: 'sidebar.ignition', icon: Monitor },
     ],
   },
   {
@@ -70,3 +53,13 @@ export const navGroups: NavGroup[] = [
     ],
   },
 ];
+
+export function getNavGroups(mode: EditionMode): NavGroup[] {
+  const allowed = new Set(editionPages[mode]);
+  return navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => allowed.has(item.path)),
+    }))
+    .filter((group) => group.items.length > 0);
+}

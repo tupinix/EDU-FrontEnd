@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RefreshCw, Loader2, ChevronDown, ChevronUp, ServerOff } from 'lucide-react';
+import { Search, RefreshCw, Loader2, ChevronDown, ChevronUp, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useTopicTree, useTopicDetails, useTopicHistory } from '../hooks/useTopics';
 import { useActiveBroker } from '../hooks/useMetrics';
 import { useUIStore, useExplorerStore } from '../hooks/useStore';
 import { TopicTree, TopicDetail, PayloadViewer } from '../components/Explorer';
 import { useQueryClient } from '@tanstack/react-query';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
 export function Explorer() {
@@ -21,8 +21,9 @@ export function Explorer() {
   const { data: topicHistory } = useTopicHistory(selectedTopic, 50);
 
   const [showHistory, setShowHistory] = useState(true);
+  // Mobile: which panel is visible
+  const [mobilePanel, setMobilePanel] = useState<'tree' | 'detail'>('tree');
 
-  // Check if there's an active and connected broker
   const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
 
   const handleRefresh = () => {
@@ -39,89 +40,113 @@ export function Explorer() {
     }
   };
 
-  // Filter topics based on search
   const filteredTopics = topics?.filter((topic) => {
     if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return topic.fullPath.toLowerCase().includes(searchLower) ||
-      topic.name.toLowerCase().includes(searchLower);
+    const q = searchQuery.toLowerCase();
+    return topic.fullPath.toLowerCase().includes(q) || topic.name.toLowerCase().includes(q);
   });
 
-  // No active broker state
+  // No broker
   if (!hasActiveBroker) {
     return (
-      <div className="h-[calc(100vh-8rem)]">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('explorer.title')}</h1>
-            <p className="text-gray-500 mt-1">{t('explorer.subtitle')}</p>
-          </div>
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+            {t('explorer.title')}
+          </h1>
+          <p className="text-[13px] text-gray-400 mt-0.5">{t('explorer.subtitle')}</p>
         </div>
-
-        {/* No Broker Message */}
-        <div className="card h-[calc(100%-4rem)] flex items-center justify-center">
-          <div className="text-center p-8">
-            <ServerOff className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="font-semibold text-gray-700 mb-2">{t('explorer.noBroker')}</h3>
-            <p className="text-gray-500 mb-6 max-w-md">
-              {t('explorer.noBrokerDesc')}
-            </p>
-            <Link to="/configuration" className="btn btn-primary">
-              {t('dashboard.configureBrokers')}
-            </Link>
-          </div>
+        <div className="bg-white rounded-2xl border border-gray-200/60 px-8 py-12 text-center">
+          <p className="text-[15px] font-medium text-gray-900 mb-1">{t('explorer.noBroker')}</p>
+          <p className="text-[13px] text-gray-400 mb-5 max-w-md mx-auto">{t('explorer.noBrokerDesc')}</p>
+          <Link
+            to="/configuration"
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 hover:text-gray-600 transition-colors"
+          >
+            {t('dashboard.configureBrokers')}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-[calc(100vh-6rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('explorer.title')}</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+            {t('explorer.title')}
+          </h1>
+          <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
             {t('explorer.subtitle')}
             {activeBroker && (
-              <span className="ml-2 text-primary-600">
-                ({activeBroker.name})
-              </span>
+              <span className="text-gray-500"> &middot; {activeBroker.name}</span>
             )}
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isLoadingTree}
-          className="btn btn-secondary flex items-center gap-2"
+          className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors self-start sm:self-auto"
         >
-          <RefreshCw className={clsx('w-4 h-4', isLoadingTree && 'animate-spin')} />
-          {t('common.refresh')}
+          <RefreshCw className={cn('w-4 h-4', isLoadingTree && 'animate-spin')} />
         </button>
       </div>
 
-      <div className="flex gap-4 h-[calc(100%-4rem)]">
-        {/* Left Panel - Topic Tree */}
-        <div className="w-1/3 card flex flex-col">
+      {/* Mobile panel switcher */}
+      {selectedTopic && (
+        <div className="flex lg:hidden mb-3 shrink-0">
+          <button
+            onClick={() => setMobilePanel('tree')}
+            className={cn(
+              'flex-1 py-2 text-[13px] font-medium rounded-l-lg border transition-colors',
+              mobilePanel === 'tree'
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-500 border-gray-200'
+            )}
+          >
+            Topics
+          </button>
+          <button
+            onClick={() => setMobilePanel('detail')}
+            className={cn(
+              'flex-1 py-2 text-[13px] font-medium rounded-r-lg border border-l-0 transition-colors',
+              mobilePanel === 'detail'
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-500 border-gray-200'
+            )}
+          >
+            Details
+          </button>
+        </div>
+      )}
+
+      {/* Panels */}
+      <div className="flex gap-5 flex-1 min-h-0">
+        {/* Left — Topic Tree */}
+        <div className={cn(
+          'bg-white rounded-2xl border border-gray-200/60 flex flex-col overflow-hidden',
+          'w-full lg:w-[340px] lg:shrink-0',
+          // Mobile: hide when detail panel is active
+          selectedTopic && mobilePanel === 'detail' ? 'hidden lg:flex' : 'flex'
+        )}>
           {/* Search */}
-          <div className="p-3 border-b border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-100">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
               <input
                 type="text"
                 placeholder={t('explorer.searchTopics')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pl-10"
+                className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 border border-gray-100 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100"
               />
             </div>
-            <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+            <div className="flex items-center justify-between mt-2.5 text-[11px] text-gray-400">
               <span>{filteredTopics?.length || 0} {t('explorer.topics').toLowerCase()}</span>
-              <button
-                onClick={() => collapseAll()}
-                className="hover:text-gray-700"
-              >
+              <button onClick={() => collapseAll()} className="hover:text-gray-500 transition-colors">
                 {t('explorer.collapseAll')}
               </button>
             </div>
@@ -131,29 +156,39 @@ export function Explorer() {
           <div className="flex-1 overflow-auto">
             {isLoadingTree ? (
               <div className="flex items-center justify-center h-32">
-                <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+                <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
               </div>
             ) : filteredTopics && filteredTopics.length > 0 ? (
               <TopicTree topics={filteredTopics} />
             ) : (
-              <div className="flex items-center justify-center h-32 text-gray-500">
-                <div className="text-center">
-                  <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">{t('explorer.noTopics')}</p>
-                </div>
+              <div className="flex items-center justify-center h-32">
+                <p className="text-[13px] text-gray-300">{t('explorer.noTopics')}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Panel - Topic Details */}
-        <div className="flex-1 flex flex-col gap-4 overflow-auto">
+        {/* Right — Detail */}
+        <div className={cn(
+          'flex-1 flex flex-col gap-4 overflow-auto min-w-0',
+          // Mobile: hide when tree panel is active
+          !selectedTopic || mobilePanel === 'tree' ? 'hidden lg:flex' : 'flex'
+        )}>
           {selectedTopic ? (
             <>
-              {/* Topic Detail */}
+              {/* Back button (mobile) */}
+              <button
+                onClick={() => setMobilePanel('tree')}
+                className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-gray-600 lg:hidden shrink-0"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to topics
+              </button>
+
+              {/* Detail card */}
               {isLoadingDetail ? (
-                <div className="card p-8 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+                <div className="bg-white rounded-2xl border border-gray-200/60 p-8 flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
                 </div>
               ) : topicDetail ? (
                 <TopicDetail
@@ -164,45 +199,51 @@ export function Explorer() {
                 />
               ) : null}
 
-              {/* Payload Viewer */}
+              {/* Payload */}
               {topicDetail && (
                 <PayloadViewer payload={topicDetail.payload} maxHeight="200px" />
               )}
 
               {/* History */}
               {topicHistory && topicHistory.length > 0 && (
-                <div className="card flex-1 flex flex-col min-h-0">
+                <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden flex flex-col flex-1 min-h-0">
                   <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="card-header flex items-center justify-between cursor-pointer hover:bg-gray-50"
+                    className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0"
                   >
-                    <h4 className="font-medium text-gray-900">{t('explorer.history')} ({topicHistory.length})</h4>
+                    <span className="text-[13px] font-semibold text-gray-900">
+                      {t('explorer.history')}
+                      <span className="text-gray-300 font-normal ml-1.5">{topicHistory.length}</span>
+                    </span>
                     {showHistory ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                      <ChevronUp className="w-3.5 h-3.5 text-gray-300" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-300" />
                     )}
                   </button>
                   {showHistory && (
                     <div className="flex-1 overflow-auto">
-                      <table className="table">
+                      <table className="w-full">
                         <thead>
-                          <tr>
-                            <th>{t('explorer.time')}</th>
-                            <th>{t('explorer.value')}</th>
-                            <th>{t('explorer.qos')}</th>
+                          <tr className="text-[11px] text-gray-400 border-b border-gray-50">
+                            <th className="text-left font-medium px-5 py-2">{t('explorer.time')}</th>
+                            <th className="text-left font-medium px-5 py-2">{t('explorer.value')}</th>
+                            <th className="text-left font-medium px-5 py-2 w-16">{t('explorer.qos')}</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody>
                           {topicHistory.map((item, index) => (
-                            <tr key={`${item.receivedAt}-${index}`}>
-                              <td className="text-gray-500">
+                            <tr
+                              key={`${item.receivedAt}-${index}`}
+                              className="border-b border-gray-50 last:border-0"
+                            >
+                              <td className="px-5 py-2 text-[12px] text-gray-400 tabular-nums">
                                 {new Date(item.receivedAt).toLocaleTimeString('pt-BR')}
                               </td>
-                              <td className="font-mono text-sm">
+                              <td className="px-5 py-2 text-[12px] font-mono text-gray-700">
                                 {formatValue(item.payload)}
                               </td>
-                              <td>{item.qos}</td>
+                              <td className="px-5 py-2 text-[12px] text-gray-400">{item.qos}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -213,13 +254,10 @@ export function Explorer() {
               )}
             </>
           ) : (
-            <div className="card flex-1 flex items-center justify-center text-center">
-              <div>
-                <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">{t('explorer.selectTopic')}</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  {t('explorer.selectTopicHint')}
-                </p>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-[14px] text-gray-400">{t('explorer.selectTopic')}</p>
+                <p className="text-[12px] text-gray-300 mt-1">{t('explorer.selectTopicHint')}</p>
               </div>
             </div>
           )}
@@ -231,14 +269,10 @@ export function Explorer() {
 
 function formatValue(payload: unknown): string {
   if (payload === null || payload === undefined) return '-';
-
   if (typeof payload === 'object') {
     const obj = payload as Record<string, unknown>;
-    if (obj.value !== undefined) {
-      return String(obj.value);
-    }
+    if (obj.value !== undefined) return String(obj.value);
     return JSON.stringify(payload).substring(0, 50) + '...';
   }
-
   return String(payload);
 }

@@ -1,13 +1,14 @@
 import { McpConnections } from '../components/Connections';
-import { PageHeader } from '../components/ui/page-header';
 
 export function ConnectionsPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Conexões"
-        description="Gerencie conexões MCP para integrar assistentes de IA com a plataforma EDU"
-      />
+    <div className="space-y-5 sm:space-y-6">
+      <div>
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">Connections</h1>
+        <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
+          Manage MCP connections to integrate AI assistants with EDU Platform
+        </p>
+      </div>
       <McpConnections />
     </div>
   );

@@ -1,117 +1,107 @@
 import { useState } from 'react';
-import { Save, Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useCreateMcpToken } from '../../hooks/useMcpConnections';
 import { McpTokenCreated } from '../../types';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
 
 interface McpConnectionFormProps {
   onClose: () => void;
   onCreated: (token: McpTokenCreated) => void;
 }
 
+const expiryOptions = [
+  { value: '7d', label: '7 days' },
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+  { value: '365d', label: '1 year' },
+];
+
 export function McpConnectionForm({ onClose, onCreated }: McpConnectionFormProps) {
   const createMutation = useCreateMcpToken();
-  const [form, setForm] = useState({
-    name: '',
-    expiresIn: '365d',
-  });
+  const [form, setForm] = useState({ name: '', expiresIn: '365d' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await createMutation.mutateAsync({
-        name: form.name,
-        expiresIn: form.expiresIn,
-      });
+      const result = await createMutation.mutateAsync({ name: form.name, expiresIn: form.expiresIn });
       onCreated(result);
-    } catch {
-      // Error handled by mutation
-    }
+    } catch { /* handled by mutation */ }
   };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Nova Conexão MCP</DialogTitle>
-          <DialogDescription>
-            Gere um token para conectar o Claude Desktop (ou outro cliente MCP) à plataforma EDU.
-            O token será exibido apenas uma vez.
-          </DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-md">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-[15px] font-semibold text-gray-900">New Connection</h3>
+            <p className="text-[12px] text-gray-400 mt-0.5">Generate a token for Claude Desktop or other MCP clients</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome da Conexão</Label>
-            <Input
-              id="name"
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium text-gray-500">Connection Name</label>
+            <input
+              type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex: Claude Desktop - João"
+              placeholder="e.g. Claude Desktop — John"
               required
               minLength={2}
+              className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
             />
-            <p className="text-xs text-muted-foreground">
-              Um nome descritivo para identificar esta conexão.
-            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="expiresIn">Validade</Label>
-            <Select
-              value={form.expiresIn}
-              onValueChange={(value) => setForm({ ...form, expiresIn: value })}
-            >
-              <SelectTrigger id="expiresIn">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">7 dias</SelectItem>
-                <SelectItem value="30d">30 dias</SelectItem>
-                <SelectItem value="90d">90 dias</SelectItem>
-                <SelectItem value="365d">1 ano</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium text-gray-500">Expiry</label>
+            <div className="flex gap-2">
+              {expiryOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, expiresIn: opt.value })}
+                  className={`flex-1 py-2 text-[12px] font-medium rounded-lg border transition-colors ${
+                    form.expiresIn === opt.value
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {createMutation.isError && (
-            <p className="text-sm text-destructive">
-              Erro: {createMutation.error instanceof Error ? createMutation.error.message : 'Falha ao gerar token'}
+            <p className="text-[13px] text-red-500">
+              {createMutation.error instanceof Error ? createMutation.error.message : 'Failed to generate token'}
             </p>
           )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending} className="gap-2">
-              {createMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Gerar Token
-            </Button>
-          </DialogFooter>
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40"
+            >
+              {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Generate Token
+            </button>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

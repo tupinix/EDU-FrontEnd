@@ -1,12 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, ServerOff, Wifi, WifiOff } from 'lucide-react';
+import { LogOut, Wifi, WifiOff } from 'lucide-react';
 import { useActiveBroker } from '../../hooks/useMetrics';
 import { useAuthStore } from '../../hooks/useStore';
 import { useSocketStatus } from '../../hooks/useSocket';
 import { cn } from '@/lib/utils';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
   DropdownMenu,
@@ -20,7 +18,7 @@ import {
 export function Header() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { data: activeBroker, isLoading } = useActiveBroker();
+  const { data: activeBroker } = useActiveBroker();
   const { user, clearAuth } = useAuthStore();
   const { isConnected: wsConnected, mode } = useSocketStatus();
 
@@ -32,72 +30,53 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-background border-b flex items-center justify-between px-6">
+    <header className="sticky top-0 z-30 h-12 bg-white/80 backdrop-blur-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8">
       {/* Left — Broker status */}
-      <div className="flex items-center gap-3">
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-muted animate-pulse" />
-            <span className="text-sm text-muted-foreground">{t('common.loading')}</span>
-          </div>
-        ) : activeBroker ? (
-          <div className="flex items-center gap-2">
-            <div
+      <div className="flex items-center gap-2.5 pl-10 lg:pl-0">
+        {activeBroker ? (
+          <>
+            <span
               className={cn(
-                'h-2 w-2 rounded-full',
-                hasActiveBroker && 'bg-green-500 animate-pulse-slow',
-                activeBroker.status === 'connecting' && 'bg-yellow-500 animate-pulse',
-                activeBroker.status === 'error' && 'bg-red-500',
-                activeBroker.status === 'disconnected' && 'bg-gray-400'
+                'w-1.5 h-1.5 rounded-full',
+                hasActiveBroker && 'bg-emerald-400',
+                activeBroker.status === 'connecting' && 'bg-amber-400 animate-pulse',
+                activeBroker.status === 'error' && 'bg-red-400',
+                activeBroker.status === 'disconnected' && 'bg-gray-300'
               )}
             />
-            <span className="text-sm">
-              <span className="font-medium">{activeBroker.name}</span>
-              <span className="text-muted-foreground">
-                {' — '}
-                <span
-                  className={cn(
-                    hasActiveBroker && 'text-green-600',
-                    activeBroker.status === 'connecting' && 'text-yellow-600',
-                    activeBroker.status === 'error' && 'text-red-600',
-                    activeBroker.status === 'disconnected' && 'text-muted-foreground'
-                  )}
-                >
-                  {hasActiveBroker
-                    ? t('configuration.connected')
-                    : activeBroker.status === 'connecting'
-                      ? t('configuration.connecting')
-                      : activeBroker.status === 'error'
-                        ? t('configuration.errorStatus')
-                        : t('configuration.disconnected')}
-                </span>
+            <span className="text-[13px] text-gray-500 hidden sm:inline">
+              <span className="font-medium text-gray-700">{activeBroker.name}</span>
+              {' — '}
+              <span className={cn(hasActiveBroker ? 'text-emerald-600' : 'text-gray-400')}>
+                {hasActiveBroker ? 'Connected' : activeBroker.status}
               </span>
             </span>
-          </div>
+          </>
         ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <ServerOff className="h-4 w-4" />
-            <span className="text-sm">{t('dashboard.noBroker')}</span>
-          </div>
+          <span className="text-[13px] text-gray-300">{t('dashboard.noBroker')}</span>
         )}
       </div>
 
-      {/* Right — WS status + User */}
+      {/* Right */}
       <div className="flex items-center gap-3">
-        {/* WebSocket badge */}
-        <Badge variant={wsConnected ? 'success' : 'secondary'} className="gap-1.5">
-          {wsConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-          {mode === 'realtime' ? 'Real-time' : 'Polling'}
-        </Badge>
+        {/* WS indicator */}
+        <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+          {wsConnected ? (
+            <Wifi className="w-3 h-3 text-emerald-400" />
+          ) : (
+            <WifiOff className="w-3 h-3 text-gray-300" />
+          )}
+          <span className="hidden sm:inline">{mode === 'realtime' ? 'Real-time' : 'Polling'}</span>
+        </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <div className="w-px h-4 bg-gray-100" />
 
-        {/* User dropdown */}
+        {/* User */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md p-1 hover:bg-accent transition-colors">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary-100 text-primary-700 text-xs font-medium">
+            <button className="flex items-center gap-2 rounded-lg p-1 hover:bg-gray-50 transition-colors">
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-gray-100 text-gray-500 text-[11px] font-medium">
                   {(user?.name || user?.email || 'U')
                     .split(/[\s@]+/)
                     .map((w) => w[0])
@@ -106,10 +85,9 @@ export function Header() {
                     .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium leading-none">{user?.name || t('common.user')}</p>
-                <p className="text-xs text-muted-foreground">{user?.role || 'viewer'}</p>
-              </div>
+              <span className="text-[13px] font-medium text-gray-700 hidden sm:inline">
+                {user?.name || user?.email}
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

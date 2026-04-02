@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, ToastMessage, BrokerConfig } from '../types';
+import type { EditionMode } from '../config/edition';
 
 // ===========================================
 // Auth Store
@@ -10,6 +11,8 @@ interface AuthStore {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  editionMode: EditionMode;
+  setEditionMode: (mode: EditionMode) => void;
   setAuth: (user: User, token: string) => void;
   clearAuth: () => void;
 }
@@ -20,6 +23,8 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      editionMode: 'standard',
+      setEditionMode: (mode) => set({ editionMode: mode }),
       setAuth: (user, token) => {
         localStorage.setItem('edu_token', token);
         set({ user, token, isAuthenticated: true });
@@ -32,7 +37,11 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'edu-auth',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        editionMode: state.editionMode,
+      }),
     }
   )
 );

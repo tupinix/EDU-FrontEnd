@@ -1,14 +1,11 @@
 export { Dashboard } from './Dashboard';
 export { Discovery } from './Discovery';
 export { Explorer } from './Explorer';
-export { Assistant } from './Assistant';
-export { Reports } from './Reports';
 export { Configuration } from './Configuration';
 export { Login } from './Login';
 export { Users } from './Users';
-export { Alarms } from './Alarms';
-export { OEE } from './OEE';
-export { Rules } from './Rules';
 export { ModbusPage } from './ModbusPage';
 export { OpcUaPage } from './OpcUaPage';
 export { ConnectionsPage } from './ConnectionsPage';
+export { PlantModel } from './PlantModel';
+export { IgnitionViews } from './IgnitionViews';

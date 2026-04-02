@@ -2,9 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Assistant, Reports, Configuration, Login, Users, Alarms, OEE, Rules, ModbusPage, OpcUaPage, ConnectionsPage } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, ConnectionsPage, PlantModel, IgnitionViews } from './pages';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
+import { editionPages } from './config/edition';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -25,6 +26,16 @@ function PrivateRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  return <>{children}</>;
+}
+
+// Edition Route wrapper - redirects if page not allowed in current edition
+function EditionRoute({ path, children }: { path: string; children: ReactNode }) {
+  const { editionMode } = useAuthStore();
+  const allowed = new Set(editionPages[editionMode]);
+  if (!allowed.has(path)) {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -62,15 +73,12 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="neo4j" element={<EditionRoute path="/neo4j"><PlantModel /></EditionRoute>} />
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
-            <Route path="alarms" element={<Alarms />} />
-            <Route path="oee" element={<OEE />} />
-            <Route path="rules" element={<Rules />} />
-            <Route path="modbus" element={<ModbusPage />} />
-            <Route path="opcua" element={<OpcUaPage />} />
-            <Route path="assistant" element={<Assistant />} />
-            <Route path="reports" element={<Reports />} />
+            <Route path="modbus" element={<EditionRoute path="/modbus"><ModbusPage /></EditionRoute>} />
+            <Route path="opcua" element={<EditionRoute path="/opcua"><OpcUaPage /></EditionRoute>} />
+            <Route path="ignition" element={<EditionRoute path="/ignition"><IgnitionViews /></EditionRoute>} />
             <Route path="configuration" element={<Configuration />} />
             <Route
               path="connections"
