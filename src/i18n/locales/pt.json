@@ -70,7 +70,11 @@
     "mqtt": "MQTT",
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
+    "ethip": "EtherNet/IP",
     "connections": "Conexões",
+    "neo4j": "Neo4J",
+    "ignition": "Ignition Views",
+    "dataModels": "Data Models",
     "collapse": "Recolher",
     "expand": "Expandir menu",
     "groups": {

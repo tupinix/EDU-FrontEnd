@@ -1,136 +1,60 @@
 import { useState } from 'react';
-import { X, Save, Loader2 } from 'lucide-react';
+import { X, Loader2, Lock } from 'lucide-react';
 import { useCreateOpcUaConnection } from '../../hooks/useOpcUa';
 
-interface OpcUaFormProps {
-  onClose: () => void;
-}
+interface OpcUaFormProps { onClose: () => void; }
+
+const SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const;
 
 export function OpcUaForm({ onClose }: OpcUaFormProps) {
   const createMutation = useCreateOpcUaConnection();
-  const [form, setForm] = useState({
-    name: '',
-    endpointUrl: 'opc.tcp://',
-    securityMode: 'None',
-    username: '',
-    password: '',
-  });
+  const [form, setForm] = useState({ name: '', endpointUrl: 'opc.tcp://', securityMode: 'None', username: '', password: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createMutation.mutateAsync({
-        name: form.name,
-        endpointUrl: form.endpointUrl,
-        securityMode: form.securityMode,
-        username: form.username || undefined,
-        password: form.password || undefined,
-      });
+      await createMutation.mutateAsync({ ...form, username: form.username || undefined, password: form.password || undefined });
       onClose();
-    } catch {
-      // Error handled by mutation
-    }
+    } catch { /* handled */ }
   };
 
   return (
-    <div className="border border-primary-200 bg-primary-50/30 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium text-gray-900">Nova Conexão OPC-UA</h4>
-        <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
-          <X className="w-4 h-4" />
-        </button>
+    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+      <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 className="text-[14px] font-semibold text-gray-900">New OPC-UA Connection</h3>
+        <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="Servidor PLC #1"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Segurança</label>
-            <select
-              value={form.securityMode}
-              onChange={(e) => setForm({ ...form, securityMode: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="None">None</option>
-              <option value="Sign">Sign</option>
-              <option value="SignAndEncrypt">Sign & Encrypt</option>
-            </select>
-          </div>
+      <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Name *"><input type="text" required placeholder="PLC Server #1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
+          <Field label="Security">
+            <div className="flex gap-1.5">
+              {SECURITY_MODES.map(m => (
+                <button key={m} type="button" onClick={() => setForm({ ...form, securityMode: m })}
+                  className={`flex-1 py-2 text-[11px] font-medium rounded-lg border transition-colors ${form.securityMode === m ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                  {m === 'None' ? 'None' : m === 'Sign' ? <span className="flex items-center justify-center gap-1"><Lock className="w-3 h-3" />Sign</span> : <span className="flex items-center justify-center gap-1"><Lock className="w-3 h-3" />Encrypt</span>}
+                </button>
+              ))}
+            </div>
+          </Field>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Endpoint URL</label>
-          <input
-            type="text"
-            value={form.endpointUrl}
-            onChange={(e) => setForm({ ...form, endpointUrl: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="opc.tcp://192.168.1.100:4840"
-            required
-          />
+        <Field label="Endpoint URL *"><input type="text" required placeholder="opc.tcp://192.168.1.100:4840" value={form.endpointUrl} onChange={(e) => setForm({ ...form, endpointUrl: e.target.value })} className="input-clean font-mono" /></Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Username (optional)"><input type="text" placeholder="admin" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="input-clean" /></Field>
+          <Field label="Password (optional)"><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Usuário (opcional)</label>
-            <input
-              type="text"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="admin"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Senha (opcional)</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="••••••"
-            />
-          </div>
-        </div>
-
-        {createMutation.isError && (
-          <p className="text-sm text-red-600">
-            Erro: {createMutation.error instanceof Error ? createMutation.error.message : 'Falha ao criar conexão'}
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-          >
-            {createMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Salvar
+        {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Failed to create connection'}</p>}
+        <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+          <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40">
+            {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
           </button>
         </div>
       </form>
     </div>
   );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className="space-y-1.5"><label className="text-[13px] font-medium text-gray-500">{label}</label>{children}</div>;
 }

@@ -2,12 +2,12 @@ export type EditionMode = 'standard' | 'edge';
 
 export const editionPages: Record<EditionMode, string[]> = {
   standard: [
-    '/', '/neo4j', '/explorer', '/configuration',
+    '/', '/data-models', '/neo4j', '/explorer', '/configuration',
     '/ignition', '/connections', '/users',
   ],
   edge: [
-    '/', '/explorer', '/configuration',
-    '/modbus', '/opcua', '/connections', '/users',
+    '/', '/data-models', '/explorer', '/configuration',
+    '/modbus', '/opcua', '/ethip', '/connections', '/users',
   ],
 };
 

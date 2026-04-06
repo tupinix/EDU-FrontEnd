@@ -15,8 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { dashboardItem, getNavGroups, type NavItem } from './nav-config';
-import { editionLabels } from '../../config/edition';
+import { dashboardItem, standaloneItems, getNavGroups, type NavItem } from './nav-config';
+import { editionPages, editionLabels } from '../../config/edition';
 
 function getInitials(name?: string, email?: string): string {
   const source = name || email || 'U';
@@ -114,6 +114,14 @@ export function Sidebar() {
         <ScrollArea className="flex-1">
           <nav className="p-2 space-y-0.5">
             <SidebarNavItem item={dashboardItem} collapsed={sidebarCollapsed} />
+
+            {/* Standalone items (Explorer, Data Models) */}
+            {standaloneItems
+              .filter(item => new Set(editionPages[editionMode]).has(item.path))
+              .map(item => (
+                <SidebarNavItem key={item.path} item={item} collapsed={sidebarCollapsed} />
+              ))
+            }
 
             {sidebarCollapsed ? (
               <>

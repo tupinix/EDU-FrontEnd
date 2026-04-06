@@ -1,64 +1,18 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Loader2, ListChecks, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, X } from 'lucide-react';
 import { useModbusRegisters, useCreateModbusRegister, useDeleteModbusRegister } from '../../hooks/useModbus';
 import { ModbusConnection } from '../../types';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card, CardContent } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '../ui/dialog';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '../ui/select';
 import { cn } from '@/lib/utils';
 
-interface Props {
-  connection: ModbusConnection;
-  onBack: () => void;
-}
+interface Props { connection: ModbusConnection; onBack: () => void; }
 
 const REGISTER_TYPES = ['holding', 'input', 'coil', 'discrete_input'] as const;
 const DATA_TYPES = ['uint16', 'int16', 'int32', 'float32', 'boolean'] as const;
 
-const registerTypeLabel: Record<string, string> = {
-  holding: 'Holding (FC03)',
-  input: 'Input (FC04)',
-  coil: 'Coil (FC01)',
-  discrete_input: 'Discrete Input (FC02)',
-};
+const regLabel: Record<string, string> = { holding: 'Holding (FC03)', input: 'Input (FC04)', coil: 'Coil (FC01)', discrete_input: 'Discrete (FC02)' };
+const dtLabel: Record<string, string> = { uint16: 'UInt16', int16: 'Int16', int32: 'Int32', float32: 'Float32', boolean: 'Bool' };
 
-const dataTypeLabel: Record<string, string> = {
-  uint16: 'UInt16 (0–65535)',
-  int16: 'Int16 (-32768–32767)',
-  int32: 'Int32 / DINT (±2 bilhões)',
-  float32: 'Float32 (IEEE 754)',
-  boolean: 'Boolean',
-};
-
-const defaultForm = {
-  name: '',
-  registerType: 'holding' as (typeof REGISTER_TYPES)[number],
-  address: 0,
-  dataType: 'uint16' as (typeof DATA_TYPES)[number],
-  scaleFactor: 1,
-  mqttTopic: '',
-  samplingIntervalMs: 1000,
-  brokerId: '',
-  enabled: true,
-};
+const defaultForm = { name: '', registerType: 'holding' as (typeof REGISTER_TYPES)[number], address: 0, dataType: 'uint16' as (typeof DATA_TYPES)[number], scaleFactor: 1, mqttTopic: '', samplingIntervalMs: 1000, brokerId: '', enabled: true };
 
 export function ModbusRegisterConfig({ connection, onBack }: Props) {
   const { data: registers, isLoading } = useModbusRegisters(connection.id);
@@ -69,253 +23,122 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await createMutation.mutateAsync({
-        name: form.name,
-        registerType: form.registerType,
-        address: form.address,
-        dataType: form.dataType,
-        scaleFactor: form.scaleFactor,
-        mqttTopic: form.mqttTopic,
-        samplingIntervalMs: form.samplingIntervalMs,
-        brokerId: form.brokerId || undefined,
-        enabled: form.enabled,
-      });
-      setShowForm(false);
-      setForm({ ...defaultForm });
-    } catch {
-      // handled by mutation
-    }
+    try { await createMutation.mutateAsync({ ...form, brokerId: form.brokerId || undefined }); setShowForm(false); setForm({ ...defaultForm }); } catch { /* handled */ }
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <ListChecks className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Registradores — {connection.name}</h3>
-        <Button onClick={() => setShowForm(true)} className="ml-auto gap-2" size="sm">
-          <Plus className="h-4 w-4" />
-          Adicionar
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"><ArrowLeft className="w-4 h-4" /></button>
+          <div>
+            <h3 className="text-[15px] font-semibold text-gray-900">Registers — {connection.name}</h3>
+            <p className="text-[12px] text-gray-400 mt-0.5">{connection.host}:{connection.port}</p>
+          </div>
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-xl hover:bg-gray-800 transition-colors">
+          <Plus className="w-3 h-3" /> Add Register
+        </button>
       </div>
 
-      {/* Add Register Dialog */}
-      <Dialog open={showForm} onOpenChange={(open) => !open && setShowForm(false)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Novo Registrador</DialogTitle>
-            <DialogDescription>
-              Configure um registrador Modbus para monitoramento.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reg-name">Nome</Label>
-                <Input
-                  id="reg-name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Temperatura Motor"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-mqtt">Tópico MQTT</Label>
-                <Input
-                  id="reg-mqtt"
-                  value={form.mqttTopic}
-                  onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })}
-                  placeholder="Modbus/PLC1/Temperature"
-                  required
-                />
-              </div>
+      {/* Add Register Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowForm(false)} />
+          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-2xl">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-gray-900">New Register</h3>
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
-
-            <div className="grid grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Tipo de Registro</Label>
-                <Select
-                  value={form.registerType}
-                  onValueChange={(v) => setForm({ ...form, registerType: v as typeof form.registerType })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGISTER_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {registerTypeLabel[t]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Name *"><input type="text" required placeholder="Motor Temperature" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
+                <Field label="MQTT Topic *"><input type="text" required placeholder="Modbus/PLC1/Temperature" value={form.mqttTopic} onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })} className="input-clean font-mono" /></Field>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-addr">Endereço</Label>
-                <Input
-                  id="reg-addr"
-                  type="number"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  max={65535}
-                />
+              <div className="grid grid-cols-4 gap-3">
+                <Field label="Register Type">
+                  <select value={form.registerType} onChange={(e) => setForm({ ...form, registerType: e.target.value as typeof form.registerType })} className="input-clean">
+                    {REGISTER_TYPES.map(t => <option key={t} value={t}>{regLabel[t]}</option>)}
+                  </select>
+                </Field>
+                <Field label="Address"><input type="number" value={form.address} onChange={(e) => setForm({ ...form, address: parseInt(e.target.value) || 0 })} min={0} max={65535} className="input-clean" /></Field>
+                <Field label="Data Type">
+                  <select value={form.dataType} onChange={(e) => setForm({ ...form, dataType: e.target.value as typeof form.dataType })} disabled={form.registerType === 'coil' || form.registerType === 'discrete_input'} className="input-clean disabled:opacity-40">
+                    {DATA_TYPES.map(t => <option key={t} value={t}>{dtLabel[t]}</option>)}
+                  </select>
+                </Field>
+                <Field label="Scale"><input type="number" value={form.scaleFactor} onChange={(e) => setForm({ ...form, scaleFactor: parseFloat(e.target.value) || 1 })} step="0.001" className="input-clean" /></Field>
               </div>
-              <div className="space-y-2">
-                <Label>Tipo de Dado</Label>
-                <Select
-                  value={form.dataType}
-                  onValueChange={(v) => setForm({ ...form, dataType: v as typeof form.dataType })}
-                  disabled={form.registerType === 'coil' || form.registerType === 'discrete_input'}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DATA_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {dataTypeLabel[t]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Polling (ms)"><input type="number" value={form.samplingIntervalMs} onChange={(e) => setForm({ ...form, samplingIntervalMs: parseInt(e.target.value) || 1000 })} min={100} max={60000} step={100} className="input-clean" /></Field>
+                <Field label="Broker ID (optional)"><input type="text" value={form.brokerId} onChange={(e) => setForm({ ...form, brokerId: e.target.value })} placeholder="Leave blank for active broker" className="input-clean" /></Field>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-scale">Fator Escala</Label>
-                <Input
-                  id="reg-scale"
-                  type="number"
-                  value={form.scaleFactor}
-                  onChange={(e) => setForm({ ...form, scaleFactor: parseFloat(e.target.value) || 1 })}
-                  step="0.001"
-                />
+              {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Error'}</p>}
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40">
+                  {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+                </button>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="reg-interval">Intervalo de Polling (ms)</Label>
-                <Input
-                  id="reg-interval"
-                  type="number"
-                  value={form.samplingIntervalMs}
-                  onChange={(e) => setForm({ ...form, samplingIntervalMs: parseInt(e.target.value) || 1000 })}
-                  min={100}
-                  max={60000}
-                  step={100}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reg-broker">Broker ID (opcional)</Label>
-                <Input
-                  id="reg-broker"
-                  value={form.brokerId}
-                  onChange={(e) => setForm({ ...form, brokerId: e.target.value })}
-                  placeholder="deixe em branco para broker ativo"
-                />
-              </div>
-            </div>
-
-            {createMutation.isError && (
-              <p className="text-sm text-destructive">
-                Erro: {createMutation.error instanceof Error ? createMutation.error.message : 'Falha ao criar registrador'}
-              </p>
-            )}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending} className="gap-2">
-                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Salvar
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Registers table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </form>
+          </div>
         </div>
+      )}
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 text-gray-300 animate-spin" /></div>
       ) : !registers || registers.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <ListChecks className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p>Nenhum registrador configurado</p>
-            <p className="text-sm mt-1">Adicione registradores para monitorar endereços Modbus</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-gray-200/60 px-6 py-12 text-center">
+          <p className="text-[14px] text-gray-400">No registers configured</p>
+          <p className="text-[12px] text-gray-300 mt-1">Add registers to monitor Modbus addresses</p>
+        </div>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Endereço</TableHead>
-                <TableHead>Dado</TableHead>
-                <TableHead>Escala</TableHead>
-                <TableHead>Tópico MQTT</TableHead>
-                <TableHead>Intervalo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {registers.map((reg) => (
-                <TableRow key={reg.id}>
-                  <TableCell className="font-medium">{reg.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-mono text-[10px]">
-                      {registerTypeLabel[reg.registerType] ?? reg.registerType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-muted-foreground">{reg.address}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                      {reg.dataType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-muted-foreground">{reg.scaleFactor}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[200px] truncate" title={reg.mqttTopic}>
-                    {reg.mqttTopic}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{reg.samplingIntervalMs}ms</TableCell>
-                  <TableCell>
-                    <Badge variant={reg.enabled ? 'success' : 'secondary'}>
-                      {reg.enabled ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm('Excluir registrador?')) {
-                          deleteMutation.mutate(reg.id);
-                        }
-                      }}
-                      disabled={deleteMutation.isPending}
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+        <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="bg-gray-50 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                <th className="text-left px-5 py-2.5">Name</th>
+                <th className="text-left px-5 py-2.5">Type</th>
+                <th className="text-left px-5 py-2.5">Addr</th>
+                <th className="text-left px-5 py-2.5">Data</th>
+                <th className="text-left px-5 py-2.5">Scale</th>
+                <th className="text-left px-5 py-2.5">MQTT Topic</th>
+                <th className="text-left px-5 py-2.5">Interval</th>
+                <th className="text-left px-5 py-2.5">Status</th>
+                <th className="w-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {registers.map(reg => (
+                <tr key={reg.id} className="border-t border-gray-50">
+                  <td className="px-5 py-2 font-medium text-gray-700">{reg.name}</td>
+                  <td className="px-5 py-2"><span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{regLabel[reg.registerType] ?? reg.registerType}</span></td>
+                  <td className="px-5 py-2 font-mono text-gray-400">{reg.address}</td>
+                  <td className="px-5 py-2"><span className="text-[10px] font-mono text-gray-400">{reg.dataType}</span></td>
+                  <td className="px-5 py-2 font-mono text-gray-400">{reg.scaleFactor}</td>
+                  <td className="px-5 py-2 font-mono text-gray-400 max-w-[180px] truncate" title={reg.mqttTopic}>{reg.mqttTopic}</td>
+                  <td className="px-5 py-2 text-gray-400">{reg.samplingIntervalMs}ms</td>
+                  <td className="px-5 py-2">
+                    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded', reg.enabled ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400')}>
+                      {reg.enabled ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-2 text-right">
+                    <button onClick={() => { if (confirm('Delete register?')) deleteMutation.mutate(reg.id); }} disabled={deleteMutation.isPending} className="p-1.5 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </Card>
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className="space-y-1.5"><label className="text-[13px] font-medium text-gray-500">{label}</label>{children}</div>;
 }

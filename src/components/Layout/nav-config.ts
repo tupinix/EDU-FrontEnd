@@ -2,12 +2,14 @@ import {
   LayoutDashboard,
   Search,
   Cpu,
+  CircuitBoard,
   Network,
   Radio,
   Users,
   Cable,
   Factory,
   Monitor,
+  Workflow,
   type LucideIcon,
 } from 'lucide-react';
 import { editionPages, type EditionMode } from '../../config/edition';
@@ -31,16 +33,21 @@ export const dashboardItem: NavItem = {
   icon: LayoutDashboard,
 };
 
+export const standaloneItems: NavItem[] = [
+  { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
+  { path: '/data-models', labelKey: 'sidebar.dataModels', icon: Workflow },
+];
+
 export const navGroups: NavGroup[] = [
   {
     key: 'protocols',
     labelKey: 'sidebar.groups.protocols',
     items: [
       { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
-      { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
       { path: '/configuration', labelKey: 'sidebar.mqtt', icon: Radio },
       { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
       { path: '/opcua', labelKey: 'sidebar.opcua', icon: Network },
+      { path: '/ethip', labelKey: 'sidebar.ethip', icon: CircuitBoard },
       { path: '/ignition', labelKey: 'sidebar.ignition', icon: Monitor },
     ],
   },

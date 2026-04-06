@@ -137,6 +137,15 @@ export interface HierarchyMapping {
   description?: string;
 }
 
+// Cypher Query Result
+export interface CypherResult {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  rowCount: number;
+  counters: Record<string, number>;
+  resultAvailableAfter: number | null;
+}
+
 // User & Auth Types
 export interface User {
   id: string;
@@ -471,6 +480,91 @@ export interface AnomalyDetection {
   stdDev?: number;
   message: string;
   acknowledged: boolean;
+}
+
+// Ignition Perspective Types
+export interface PerspectiveViewMeta {
+  id: string;
+  viewPath: string;
+  projectName: string;
+  title?: string;
+  description?: string;
+  generatedBy: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IgnitionStatus {
+  running: boolean;
+  url: string;
+  projectName: string;
+  tagProvider: string;
+}
+
+// EtherNet/IP Types
+export interface EthipConnection {
+  id: string;
+  name: string;
+  host: string;
+  slot: number;
+  plcType: 'logix' | 'slc' | 'micro800';
+  status: string;
+  plcInfo?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface EthipTag {
+  id: string;
+  connectionId: string;
+  tagName: string;
+  displayName?: string;
+  dataType?: string;
+  mqttTopic: string;
+  samplingIntervalMs: number;
+  enabled: boolean;
+}
+
+export interface EthipDiscoveredTag {
+  tag_name: string;
+  data_type: string;
+  dim: number;
+}
+
+export interface EthipLiveValue {
+  connectionId: string;
+  tagName: string;
+  value: unknown;
+  dataType?: string;
+  quality: string;
+  timestamp: string;
+  updateCount: number;
+}
+
+// Data Model Types
+export interface DataModel {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  sourceTopic: string;
+  sourceBrokerId?: string;
+  targetTopic: string;
+  targetBrokerId?: string;
+  enterprise?: string;
+  site?: string;
+  area?: string;
+  line?: string;
+  equipment?: string;
+  tagName?: string;
+  unit?: string;
+  dataType?: string;
+  tagDescription?: string;
+  fieldMappings: { source: string; target: string; transform: string; transformConfig?: Record<string, unknown> }[];
+  extraFields: Record<string, unknown>;
+  messagesProcessed: number;
+  lastProcessedAt?: string;
+  createdAt: string;
 }
 
 // MCP Connection Types

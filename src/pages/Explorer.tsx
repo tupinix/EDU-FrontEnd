@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RefreshCw, Loader2, ChevronDown, ChevronUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Search, RefreshCw, Loader2, ChevronDown, ChevronUp, ArrowLeft, ArrowRight, BarChart3 } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useTopicTree, useTopicDetails, useTopicHistory } from '../hooks/useTopics';
 import { useActiveBroker } from '../hooks/useMetrics';
 import { useUIStore, useExplorerStore } from '../hooks/useStore';
@@ -20,7 +21,8 @@ export function Explorer() {
   const { data: topicDetail, isLoading: isLoadingDetail, refetch: refetchDetail } = useTopicDetails(selectedTopic);
   const { data: topicHistory } = useTopicHistory(selectedTopic, 50);
 
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showChart, setShowChart] = useState(false);
   // Mobile: which panel is visible
   const [mobilePanel, setMobilePanel] = useState<'tree' | 'detail'>('tree');
 
@@ -204,6 +206,11 @@ export function Explorer() {
                 <PayloadViewer payload={topicDetail.payload} maxHeight="200px" />
               )}
 
+              {/* Chart */}
+              {topicHistory && topicHistory.length > 1 && (
+                <TimeSeriesChart data={topicHistory} show={showChart} onToggle={() => setShowChart(!showChart)} />
+              )}
+
               {/* History */}
               {topicHistory && topicHistory.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden flex flex-col flex-1 min-h-0">
@@ -265,6 +272,117 @@ export function Explorer() {
       </div>
     </div>
   );
+}
+
+// ── Time Series Chart ────────────────────────────────────────────────
+
+interface ChartDataPoint {
+  time: string;
+  value: number;
+  ts: number;
+}
+
+function TimeSeriesChart({ data, show, onToggle }: { data: { payload: unknown; receivedAt: string }[]; show: boolean; onToggle: () => void }) {
+  const chartData = useMemo<ChartDataPoint[]>(() => {
+    return data
+      .map((item) => {
+        const val = extractNumericValue(item.payload);
+        if (val === null) return null;
+        const d = new Date(item.receivedAt);
+        return {
+          time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          value: val,
+          ts: d.getTime(),
+        };
+      })
+      .filter((d): d is ChartDataPoint => d !== null)
+      .sort((a, b) => a.ts - b.ts);
+  }, [data]);
+
+  if (chartData.length < 2) return null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full px-5 py-3 border-b border-gray-100 flex items-center justify-between"
+      >
+        <span className="text-[13px] font-semibold text-gray-900 flex items-center gap-2">
+          <BarChart3 className="w-3.5 h-3.5 text-gray-400" />
+          Trend
+          <span className="text-gray-300 font-normal">{chartData.length} pts</span>
+        </span>
+        {show ? <ChevronUp className="w-3.5 h-3.5 text-gray-300" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-300" />}
+      </button>
+      {show && (
+        <div className="px-3 py-4" style={{ height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 10, fill: '#d1d5db' }}
+                axisLine={{ stroke: '#f3f4f6' }}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#d1d5db' }}
+                axisLine={false}
+                tickLine={false}
+                width={50}
+                domain={['auto', 'auto']}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                }}
+                labelStyle={{ color: '#9ca3af', fontSize: '11px' }}
+                formatter={(value: number) => [value.toFixed(4), 'Value']}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#10b981"
+                strokeWidth={1.5}
+                fillOpacity={1}
+                fill="url(#colorValue)"
+                dot={false}
+                activeDot={{ r: 3, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function extractNumericValue(payload: unknown): number | null {
+  if (typeof payload === 'number') return payload;
+  if (typeof payload === 'boolean') return payload ? 1 : 0;
+  if (typeof payload === 'string') {
+    const n = parseFloat(payload);
+    return isNaN(n) ? null : n;
+  }
+  if (typeof payload === 'object' && payload !== null) {
+    const obj = payload as Record<string, unknown>;
+    // Try common value fields
+    for (const key of ['value', 'Value', 'val', 'data', 'measurement']) {
+      if (key in obj) return extractNumericValue(obj[key]);
+    }
+  }
+  return null;
 }
 
 function formatValue(payload: unknown): string {

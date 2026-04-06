@@ -19,6 +19,9 @@ import {
   AnomalyDetection,
   McpToken,
   McpTokenCreated,
+  CypherResult,
+  PerspectiveViewMeta,
+  IgnitionStatus,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -188,6 +191,14 @@ export const hierarchyApi = {
     if (!data.success) {
       throw new Error(data.error || 'Failed to assign topic');
     }
+  },
+
+  cypher: async (query: string, params?: Record<string, unknown>): Promise<CypherResult> => {
+    const { data } = await apiClient.post<ApiResponse<CypherResult>>('/hierarchy/cypher', { query, params });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Cypher query failed');
+    }
+    return data.data;
   },
 };
 
@@ -403,7 +414,7 @@ export const reportsApi = {
 // OPC-UA API
 // ===========================================
 
-import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot, ModbusConnection, ModbusRegister, ModbusLiveValue } from '../types';
+import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot, ModbusConnection, ModbusRegister, ModbusLiveValue, EthipConnection, EthipTag, EthipDiscoveredTag, EthipLiveValue } from '../types';
 
 export const opcuaApi = {
   getConnections: async (): Promise<OpcUaConnection[]> => {
@@ -857,6 +868,121 @@ export const modbusApi = {
 };
 
 // ===========================================
+// EtherNet/IP API
+// ===========================================
+
+export const ethipApi = {
+  getConnections: async (): Promise<EthipConnection[]> => {
+    const { data } = await apiClient.get<ApiResponse<EthipConnection[]>>('/ethip/connections');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch EtherNet/IP connections');
+    return data.data;
+  },
+
+  createConnection: async (connection: {
+    name: string;
+    host: string;
+    slot?: number;
+    plcType?: 'logix' | 'slc' | 'micro800';
+  }): Promise<EthipConnection> => {
+    const { data } = await apiClient.post<ApiResponse<EthipConnection>>('/ethip/connections', connection);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create EtherNet/IP connection');
+    return data.data;
+  },
+
+  deleteConnection: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/ethip/connections/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete EtherNet/IP connection');
+  },
+
+  connect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/ethip/connections/${id}/connect`);
+    if (!data.success) throw new Error(data.error || 'Failed to connect to EtherNet/IP device');
+  },
+
+  disconnect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/ethip/connections/${id}/disconnect`);
+    if (!data.success) throw new Error(data.error || 'Failed to disconnect from EtherNet/IP device');
+  },
+
+  discoverTags: async (id: string): Promise<EthipDiscoveredTag[]> => {
+    const { data } = await apiClient.get<ApiResponse<EthipDiscoveredTag[]>>(`/ethip/connections/${id}/tags`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to discover tags');
+    return data.data;
+  },
+
+  getSubscribedTags: async (id: string): Promise<EthipTag[]> => {
+    const { data } = await apiClient.get<ApiResponse<EthipTag[]>>(`/ethip/connections/${id}/tags/subscribed`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch subscribed tags');
+    return data.data;
+  },
+
+  subscribeTag: async (connId: string, body: {
+    tagName: string;
+    mqttTopic: string;
+    samplingIntervalMs?: number;
+    displayName?: string;
+  }): Promise<EthipTag> => {
+    const { data } = await apiClient.post<ApiResponse<EthipTag>>(`/ethip/connections/${connId}/tags`, body);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to subscribe tag');
+    return data.data;
+  },
+
+  deleteTag: async (tagId: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/ethip/tags/${tagId}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete tag');
+  },
+
+  getValues: async (id: string): Promise<EthipLiveValue[]> => {
+    const { data } = await apiClient.get<ApiResponse<EthipLiveValue[]>>(`/ethip/connections/${id}/values`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch live values');
+    return data.data;
+  },
+
+  readTags: async (id: string, tags: string[]): Promise<Record<string, unknown>> => {
+    const { data } = await apiClient.post<ApiResponse<Record<string, unknown>>>(`/ethip/connections/${id}/read`, { tags });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to read tags');
+    return data.data;
+  },
+
+  writeTags: async (id: string, tags: [string, unknown][]): Promise<Record<string, unknown>> => {
+    const { data } = await apiClient.post<ApiResponse<Record<string, unknown>>>(`/ethip/connections/${id}/write`, { tags });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to write tags');
+    return data.data;
+  },
+};
+
+// ===========================================
+// Ignition API
+// ===========================================
+
+export const ignitionApi = {
+  getStatus: async (): Promise<IgnitionStatus> => {
+    const { data } = await apiClient.get<ApiResponse<IgnitionStatus>>('/ignition/status');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch Ignition status');
+    return data.data;
+  },
+
+  getViews: async (): Promise<PerspectiveViewMeta[]> => {
+    const { data } = await apiClient.get<ApiResponse<PerspectiveViewMeta[]>>('/ignition/views');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch views');
+    return data.data;
+  },
+
+  getView: async (viewPath: string): Promise<{ meta: PerspectiveViewMeta; viewJson: unknown }> => {
+    const { data } = await apiClient.get<ApiResponse<{ meta: PerspectiveViewMeta; viewJson: unknown }>>(
+      `/ignition/views/${encodeURIComponent(viewPath)}`
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch view');
+    return data.data;
+  },
+
+  deleteView: async (viewPath: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/ignition/views/${encodeURIComponent(viewPath)}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete view');
+  },
+};
+
+// ===========================================
 // MCP Connections API
 // ===========================================
 export const mcpApi = {
@@ -875,5 +1001,43 @@ export const mcpApi = {
   deleteToken: async (id: string): Promise<void> => {
     const { data } = await apiClient.delete<ApiResponse>(`/auth/mcp-tokens/${id}`);
     if (!data.success) throw new Error(data.error || 'Failed to delete MCP token');
+  },
+};
+
+// ===========================================
+// Data Models API
+// ===========================================
+
+export const dataModelsApi = {
+  getAll: async () => {
+    const { data } = await apiClient.get('/data-models');
+    return data.data;
+  },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get(`/data-models/${id}`);
+    return data.data;
+  },
+  create: async (body: any) => {
+    const { data } = await apiClient.post('/data-models', body);
+    return data.data;
+  },
+  update: async (id: string, body: any) => {
+    const { data } = await apiClient.put(`/data-models/${id}`, body);
+    return data.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.delete(`/data-models/${id}`);
+  },
+  toggle: async (id: string) => {
+    const { data } = await apiClient.post(`/data-models/${id}/toggle`);
+    return data.data;
+  },
+  test: async (id: string, payload: unknown) => {
+    const { data } = await apiClient.post(`/data-models/${id}/test`, { payload });
+    return data.data;
+  },
+  getStats: async () => {
+    const { data } = await apiClient.get('/data-models/stats');
+    return data.data;
   },
 };

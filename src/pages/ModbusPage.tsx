@@ -1,13 +1,12 @@
 import { ModbusConnections } from '../components/Modbus';
-import { PageHeader } from '../components/ui/page-header';
 
 export function ModbusPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Modbus TCP"
-        description="Gateway Modbus TCP — conecte PLCs e CLPs ao pipeline do Unified Namespace"
-      />
+    <div className="space-y-5 sm:space-y-6">
+      <div>
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">Modbus TCP</h1>
+        <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">Connect PLCs to the Unified Namespace pipeline</p>
+      </div>
       <ModbusConnections />
     </div>
   );
