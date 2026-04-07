@@ -100,7 +100,7 @@ function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; le
 export function DataModelForm({ model, onClose }: Props) {
   const createMutation = useCreateDataModel();
   const updateMutation = useUpdateDataModel();
-  const isEditing = !!model;
+  const isEditing = !!model && !!model.id;
 
   // Core state
   const [name, setName] = useState(model?.name ?? '');

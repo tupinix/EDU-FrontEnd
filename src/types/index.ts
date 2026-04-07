@@ -598,6 +598,9 @@ export interface AlertRule {
   warnMin?: number;
   warnMax?: number;
   webhookUrl?: string;
+  notifyDiscord: boolean;
+  notifyWhatsapp: boolean;
+  whatsappTo?: string;
   notifyOnGood: boolean;
   notifyOnWarn: boolean;
   notifyOnBad: boolean;

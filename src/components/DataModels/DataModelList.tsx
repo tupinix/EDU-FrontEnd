@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, ArrowRight, Copy } from 'lucide-react';
 import { useDataModels, useToggleDataModel, useDeleteDataModel } from '../../hooks/useDataModels';
 import { DataModelForm } from './DataModelForm';
 import { DataModel } from '../../types';
@@ -85,8 +85,18 @@ export function DataModelList() {
                 >
                   <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform', model.enabled ? 'translate-x-4' : 'translate-x-0.5')} />
                 </div>
-                <button onClick={() => setEditing({ show: true, model })} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+                <button onClick={() => setEditing({ show: true, model })} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors" title="Edit">
                   <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    const clone = { ...model, id: undefined, name: `${model.name} (copy)`, messagesProcessed: 0, lastProcessedAt: undefined } as unknown as DataModel;
+                    setEditing({ show: true, model: { ...clone, id: '' } });
+                  }}
+                  className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+                  title="Duplicate"
+                >
+                  <Copy className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => { if (confirm('Delete this data model?')) deleteMutation.mutate(model.id); }}

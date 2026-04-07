@@ -111,6 +111,9 @@ export function AlertForm({ alert, onClose }: Props) {
   const [notifyOnWarn, setNotifyOnWarn] = useState(alert?.notifyOnWarn ?? true);
   const [notifyOnBad, setNotifyOnBad] = useState(alert?.notifyOnBad ?? true);
   const [cooldownSeconds, setCooldownSeconds] = useState(alert?.cooldownSeconds ?? 60);
+  const [notifyDiscord, setNotifyDiscord] = useState(alert?.notifyDiscord !== false);
+  const [notifyWhatsapp, setNotifyWhatsapp] = useState(alert?.notifyWhatsapp ?? false);
+  const [whatsappTo, setWhatsappTo] = useState(alert?.whatsappTo ?? '');
 
   // Source payload preview
   const [sourcePayload, setSourcePayload] = useState<Record<string, unknown> | null>(null);
@@ -192,6 +195,9 @@ export function AlertForm({ alert, onClose }: Props) {
       notifyOnWarn,
       notifyOnBad,
       cooldownSeconds,
+      notifyDiscord,
+      notifyWhatsapp,
+      whatsappTo: whatsappTo.trim() || null,
     };
 
     try {
@@ -265,7 +271,7 @@ export function AlertForm({ alert, onClose }: Props) {
         </div>
 
         {/* CENTER -- Alert Configuration */}
-        <div className="flex-1 flex flex-col gap-4 overflow-auto min-w-0">
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0 pr-1">
 
           {/* Source topic (mobile) */}
           <div className="md:hidden bg-white rounded-2xl border border-gray-200/60 px-4 py-3">
@@ -325,7 +331,7 @@ export function AlertForm({ alert, onClose }: Props) {
           )}
 
           {/* Threshold Configuration */}
-          <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden flex-1">
+          <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shrink-0">
             <div className="px-4 py-3 border-b border-gray-100">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Threshold Configuration</p>
               <p className="text-[10px] text-gray-300 mt-0.5">Define value ranges for each status level</p>
@@ -407,15 +413,52 @@ export function AlertForm({ alert, onClose }: Props) {
           <div className="bg-white rounded-2xl border border-gray-200/60 px-4 py-3 shrink-0">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Notification Settings</p>
 
-            {/* Webhook */}
+            {/* Channels */}
             <div className="mb-4">
-              <label className="text-[11px] text-gray-400 mb-1 block">Webhook URL</label>
-              <input type="text" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)}
-                placeholder="Uses default Discord webhook"
-                className="input-clean text-[12px] font-mono" />
+              <label className="text-[11px] text-gray-400 mb-2 block">Channels</label>
+              <div className="flex flex-wrap gap-3 mb-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
+                    onClick={() => setNotifyDiscord(!notifyDiscord)}
+                    className={cn('w-9 h-5 rounded-full transition-colors relative cursor-pointer', notifyDiscord ? 'bg-[#5865F2]' : 'bg-gray-200')}
+                  >
+                    <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform', notifyDiscord ? 'translate-x-4' : 'translate-x-0.5')} />
+                  </div>
+                  <span className="text-[11px] text-gray-600">Discord</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
+                    onClick={() => setNotifyWhatsapp(!notifyWhatsapp)}
+                    className={cn('w-9 h-5 rounded-full transition-colors relative cursor-pointer', notifyWhatsapp ? 'bg-[#25D366]' : 'bg-gray-200')}
+                  >
+                    <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform', notifyWhatsapp ? 'translate-x-4' : 'translate-x-0.5')} />
+                  </div>
+                  <span className="text-[11px] text-gray-600">WhatsApp</span>
+                </label>
+              </div>
+
+              {/* Discord webhook URL */}
+              {notifyDiscord && (
+                <div className="mb-3">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Discord Webhook URL</label>
+                  <input type="text" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)}
+                    placeholder="Uses default from env"
+                    className="input-clean text-[12px] font-mono" />
+                </div>
+              )}
+
+              {/* WhatsApp number */}
+              {notifyWhatsapp && (
+                <div>
+                  <label className="text-[10px] text-gray-400 mb-1 block">WhatsApp Number</label>
+                  <input type="text" value={whatsappTo} onChange={e => setWhatsappTo(e.target.value)}
+                    placeholder="Uses default from env (e.g. +5511970713832)"
+                    className="input-clean text-[12px] font-mono" />
+                </div>
+              )}
             </div>
 
-            {/* Notify toggles */}
+            {/* Notify on status */}
             <div className="flex flex-wrap gap-4 mb-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <div
