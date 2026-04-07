@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Loader2, ArrowLeft, Plus, Trash2, ChevronRight, Search, ArrowRight, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreateDataModel, useUpdateDataModel } from '../../hooks/useDataModels';
-import { DataModel, BrokerConfig, TopicNode } from '../../types';
+import { DataModel, BrokerConfig, TopicNode, SmProfile } from '../../types';
 import { topicsApi } from '../../services/api';
 import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
 
 interface Props {
   model: DataModel | null;
+  profile?: SmProfile | null;
   onClose: () => void;
 }
 
@@ -97,13 +98,13 @@ function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; le
 
 // ── Main Form ────────────────────────────────────────────────────────
 
-export function DataModelForm({ model, onClose }: Props) {
+export function DataModelForm({ model, profile, onClose }: Props) {
   const createMutation = useCreateDataModel();
   const updateMutation = useUpdateDataModel();
   const isEditing = !!model && !!model.id;
 
   // Core state
-  const [name, setName] = useState(model?.name ?? '');
+  const [name, setName] = useState(model?.name ?? ((!model && profile) ? profile.name : ''));
   const [sourceTopic, setSourceTopic] = useState(model?.sourceTopic ?? '');
   const [targetTopic, setTargetTopic] = useState(model?.targetTopic ?? '');
   const [sourceBrokerId, setSourceBrokerId] = useState(model?.sourceBrokerId ?? '');
@@ -115,8 +116,21 @@ export function DataModelForm({ model, onClose }: Props) {
 
   // Attributes: free-form key/value pairs (enrichment + field mappings combined)
   const [attributes, setAttributes] = useState<Attribute[]>(() => {
-    if (!model) return [];
     const attrs: Attribute[] = [];
+    // Pre-populate from SM Profile when creating a new model from a profile
+    if (!model && profile) {
+      for (const attr of profile.attributes) {
+        attrs.push({
+          key: attr.name,
+          value: attr.unit || attr.dataType,
+          fromPayload: false,
+          transform: 'none',
+          valueMode: 'manual',
+        });
+      }
+      return attrs;
+    }
+    if (!model) return [];
     // Restore field mappings (src)
     for (const m of model.fieldMappings ?? []) {
       attrs.push({ key: m.target, value: '', fromPayload: true, sourceField: m.source, transform: m.transform });

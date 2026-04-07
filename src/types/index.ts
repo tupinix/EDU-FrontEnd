@@ -612,3 +612,22 @@ export interface AlertRule {
   createdAt: string;
 }
 
+// SM Profile Types (CESMII)
+export interface SmProfileAttribute {
+  name: string;
+  displayName: string;
+  dataType: string;
+  unit?: string;
+  description?: string;
+}
+
+export interface SmProfile {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  source: string;
+  attributes: SmProfileAttribute[];
+  attributeCount?: number;
+}
+

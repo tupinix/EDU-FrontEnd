@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Loader2, ArrowRight, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, ArrowRight, Copy, Layers } from 'lucide-react';
 import { useDataModels, useToggleDataModel, useDeleteDataModel } from '../../hooks/useDataModels';
 import { DataModelForm } from './DataModelForm';
-import { DataModel } from '../../types';
+import { ProfileBrowser } from './ProfileBrowser';
+import { DataModel, SmProfile } from '../../types';
 import { cn } from '@/lib/utils';
 
 function formatTime(iso?: string): string {
@@ -21,9 +22,18 @@ export function DataModelList() {
   const toggleMutation = useToggleDataModel();
   const deleteMutation = useDeleteDataModel();
   const [editing, setEditing] = useState<{ show: boolean; model: DataModel | null }>({ show: false, model: null });
+  const [showChoice, setShowChoice] = useState(false);
+  const [showProfileBrowser, setShowProfileBrowser] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<SmProfile | null>(null);
 
   if (editing.show) {
-    return <DataModelForm model={editing.model} onClose={() => setEditing({ show: false, model: null })} />;
+    return (
+      <DataModelForm
+        model={editing.model}
+        profile={selectedProfile}
+        onClose={() => { setEditing({ show: false, model: null }); setSelectedProfile(null); }}
+      />
+    );
   }
 
   if (isLoading) {
@@ -47,7 +57,7 @@ export function DataModelList() {
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-gray-400">Transform and enrich MQTT data for the UNS</p>
         <button
-          onClick={() => setEditing({ show: true, model: null })}
+          onClick={() => setShowChoice(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> New Model
@@ -109,6 +119,46 @@ export function DataModelList() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Choice modal */}
+      {showChoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowChoice(false)} />
+          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Create New Model</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { setShowChoice(false); setSelectedProfile(null); setEditing({ show: true, model: null }); }}
+                className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-gray-200 hover:border-gray-400 transition-colors"
+              >
+                <Pencil className="w-6 h-6 text-gray-400" />
+                <span className="text-[13px] font-medium text-gray-700">Manual</span>
+                <span className="text-[10px] text-gray-400 text-center">Create from scratch</span>
+              </button>
+              <button
+                onClick={() => { setShowChoice(false); setShowProfileBrowser(true); }}
+                className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-gray-200 hover:border-emerald-400 transition-colors"
+              >
+                <Layers className="w-6 h-6 text-emerald-500" />
+                <span className="text-[13px] font-medium text-gray-700">SM Profile</span>
+                <span className="text-[10px] text-gray-400 text-center">Start from CESMII template</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile browser */}
+      {showProfileBrowser && (
+        <ProfileBrowser
+          onClose={() => setShowProfileBrowser(false)}
+          onSelect={(profile) => {
+            setShowProfileBrowser(false);
+            setSelectedProfile(profile);
+            setEditing({ show: true, model: null });
+          }}
+        />
       )}
     </div>
   );

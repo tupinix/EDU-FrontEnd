@@ -1005,6 +1005,25 @@ export const mcpApi = {
 };
 
 // ===========================================
+// SM Profiles API
+// ===========================================
+
+export const smProfilesApi = {
+  getAll: async () => {
+    const { data } = await apiClient.get('/sm-profiles');
+    return data.data;
+  },
+  getCategories: async () => {
+    const { data } = await apiClient.get('/sm-profiles/categories');
+    return data.data;
+  },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get(`/sm-profiles/${id}`);
+    return data.data;
+  },
+};
+
+// ===========================================
 // Data Models API
 // ===========================================
 
