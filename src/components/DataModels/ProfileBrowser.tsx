@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { X, Search, ChevronRight, Loader2, Database } from 'lucide-react';
-import { useSmProfiles } from '../../hooks/useSmProfiles';
+import { useSmProfiles, useSmProfile } from '../../hooks/useSmProfiles';
 import { SmProfile } from '../../types';
 import { cn } from '@/lib/utils';
 
@@ -39,10 +39,8 @@ export function ProfileBrowser({ onClose, onSelect }: Props) {
 
   const categories = Object.keys(grouped).sort();
 
-  const selectedProfile = useMemo(() => {
-    if (!selectedId || !profiles) return null;
-    return (profiles as SmProfile[]).find((p) => p.id === selectedId) || null;
-  }, [selectedId, profiles]);
+  // Fetch full profile with attributes when selected
+  const { data: selectedProfile, isLoading: isLoadingProfile } = useSmProfile(selectedId);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
@@ -161,7 +159,7 @@ export function ProfileBrowser({ onClose, onSelect }: Props) {
 
           {/* Right: Preview */}
           <div className="flex-1 overflow-auto">
-            {!selectedProfile ? (
+            {!selectedId ? (
               <div className="flex items-center justify-center h-full py-12">
                 <div className="text-center">
                   <Database className="w-8 h-8 text-gray-200 mx-auto mb-3" />
@@ -170,6 +168,14 @@ export function ProfileBrowser({ onClose, onSelect }: Props) {
                     Browse CESMII SM profiles to use as a template
                   </p>
                 </div>
+              </div>
+            ) : isLoadingProfile ? (
+              <div className="flex items-center justify-center h-full py-12">
+                <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
+              </div>
+            ) : !selectedProfile ? (
+              <div className="flex items-center justify-center h-full py-12">
+                <p className="text-[13px] text-gray-400">Profile not found</p>
               </div>
             ) : (
               <div className="px-5 py-4">
