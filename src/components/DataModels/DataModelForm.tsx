@@ -25,6 +25,18 @@ interface Attribute {
 
 const TRANSFORMS = ['none', 'round', 'scale', 'toNumber', 'toString', 'toBool'] as const;
 
+/** Parse a ctx value — detects {{topic.field}} tag references */
+function parseCtxAttribute(key: string, val: string): Attribute {
+  if (val.startsWith('{{') && val.endsWith('}}')) {
+    const inner = val.slice(2, -2); // "OPCUA/TagCount.value"
+    const lastDot = inner.lastIndexOf('.');
+    const linkedTopic = lastDot > 0 ? inner.slice(0, lastDot) : inner;
+    const linkedField = lastDot > 0 ? inner.slice(lastDot + 1) : 'value';
+    return { key, value: val, fromPayload: false, transform: 'none', valueMode: 'tag', linkedTopic, linkedField };
+  }
+  return { key, value: val, fromPayload: false, transform: 'none', valueMode: 'manual' };
+}
+
 // ── Mini Topic Tree ──────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,19 +117,24 @@ export function DataModelForm({ model, onClose }: Props) {
   const [attributes, setAttributes] = useState<Attribute[]>(() => {
     if (!model) return [];
     const attrs: Attribute[] = [];
-    // Restore field mappings
+    // Restore field mappings (src)
     for (const m of model.fieldMappings ?? []) {
       attrs.push({ key: m.target, value: '', fromPayload: true, sourceField: m.source, transform: m.transform });
     }
-    // Restore enrichment as attributes
-    if (model.enterprise) attrs.push({ key: 'enterprise', value: model.enterprise, fromPayload: false, transform: 'none' });
-    if (model.site) attrs.push({ key: 'site', value: model.site, fromPayload: false, transform: 'none' });
-    if (model.area) attrs.push({ key: 'area', value: model.area, fromPayload: false, transform: 'none' });
-    if (model.line) attrs.push({ key: 'line', value: model.line, fromPayload: false, transform: 'none' });
-    if (model.equipment) attrs.push({ key: 'equipment', value: model.equipment, fromPayload: false, transform: 'none' });
-    if (model.unit) attrs.push({ key: 'unit', value: model.unit, fromPayload: false, transform: 'none' });
-    if (model.dataType) attrs.push({ key: 'dataType', value: model.dataType, fromPayload: false, transform: 'none' });
-    if (model.tagDescription) attrs.push({ key: 'description', value: model.tagDescription, fromPayload: false, transform: 'none' });
+    // Restore known ISA-95 / enrichment fields as ctx
+    const knownFields: [string, string | undefined][] = [
+      ['enterprise', model.enterprise], ['site', model.site], ['area', model.area],
+      ['line', model.line], ['equipment', model.equipment], ['unit', model.unit],
+      ['dataType', model.dataType], ['description', model.tagDescription], ['tagName', model.tagName],
+    ];
+    for (const [key, val] of knownFields) {
+      if (!val) continue;
+      attrs.push(parseCtxAttribute(key, val));
+    }
+    // Restore extraFields (custom ctx — including tag-linked ones)
+    for (const [key, val] of Object.entries(model.extraFields ?? {})) {
+      attrs.push(parseCtxAttribute(key, String(val)));
+    }
     return attrs;
   });
 
@@ -211,6 +228,34 @@ export function DataModelForm({ model, onClose }: Props) {
     }]);
   };
 
+  // Fetch live values for linked tags
+  const linkedTopics = useMemo(() =>
+    [...new Set(attributes.filter(a => a.valueMode === 'tag' && a.linkedTopic).map(a => a.linkedTopic!))],
+    [attributes]
+  );
+
+  const [linkedValues, setLinkedValues] = useState<Record<string, Record<string, unknown>>>({});
+
+  useEffect(() => {
+    if (linkedTopics.length === 0) { setLinkedValues({}); return; }
+    let cancelled = false;
+    const fetchAll = async () => {
+      const results: Record<string, Record<string, unknown>> = {};
+      for (const topic of linkedTopics) {
+        try {
+          const { data } = await apiClient.get(`/topics/${encodeURIComponent(topic)}/details`);
+          if (!cancelled && data.data?.payload != null) {
+            results[topic] = typeof data.data.payload === 'object' ? data.data.payload : { value: data.data.payload };
+          }
+        } catch { /* skip */ }
+      }
+      if (!cancelled) setLinkedValues(results);
+    };
+    fetchAll();
+    const interval = window.setInterval(fetchAll, 5000); // refresh every 5s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [linkedTopics]);
+
   // Build output preview
   const outputPreview = useMemo(() => {
     const out: Record<string, unknown> = {};
@@ -219,7 +264,13 @@ export function DataModelForm({ model, onClose }: Props) {
         out[attr.key || attr.sourceField] = sourcePayload[attr.sourceField] ?? null;
       } else if (!attr.fromPayload && attr.key) {
         if (attr.valueMode === 'tag' && attr.linkedTopic) {
-          out[attr.key] = `← ${attr.linkedTopic}.${attr.linkedField || 'value'}`;
+          const topicPayload = linkedValues[attr.linkedTopic];
+          const field = attr.linkedField || 'value';
+          if (topicPayload && topicPayload[field] !== undefined) {
+            out[attr.key] = topicPayload[field];
+          } else {
+            out[attr.key] = `← ${attr.linkedTopic}.${field} (loading...)`;
+          }
         } else {
           out[attr.key] = attr.value;
         }
@@ -229,7 +280,7 @@ export function DataModelForm({ model, onClose }: Props) {
     out.quality = 'good';
     out.timestamp = new Date().toISOString();
     return out;
-  }, [attributes, sourcePayload, sourceTopic]);
+  }, [attributes, sourcePayload, sourceTopic, linkedValues]);
 
   // Auto-suggest target topic from attributes
   useEffect(() => {

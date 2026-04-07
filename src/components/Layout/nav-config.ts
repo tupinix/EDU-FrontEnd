@@ -10,6 +10,7 @@ import {
   Factory,
   Monitor,
   Workflow,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { editionPages, type EditionMode } from '../../config/edition';
@@ -36,6 +37,7 @@ export const dashboardItem: NavItem = {
 export const standaloneItems: NavItem[] = [
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
   { path: '/data-models', labelKey: 'sidebar.dataModels', icon: Workflow },
+  { path: '/alerts', labelKey: 'sidebar.alerts', icon: Bell },
 ];
 
 export const navGroups: NavGroup[] = [

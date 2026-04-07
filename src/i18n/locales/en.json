@@ -75,6 +75,7 @@
     "neo4j": "Neo4J",
     "ignition": "Ignition Views",
     "dataModels": "Data Models",
+    "alerts": "Alerts",
     "collapse": "Collapse",
     "expand": "Expand menu",
     "groups": {

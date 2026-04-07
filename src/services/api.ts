@@ -1008,6 +1008,40 @@ export const mcpApi = {
 // Data Models API
 // ===========================================
 
+// ===========================================
+// Alerts API
+// ===========================================
+
+export const alertsApi = {
+  getAll: async () => {
+    const { data } = await apiClient.get('/alerts');
+    return data.data;
+  },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get(`/alerts/${id}`);
+    return data.data;
+  },
+  create: async (body: any) => {
+    const { data } = await apiClient.post('/alerts', body);
+    return data.data;
+  },
+  update: async (id: string, body: any) => {
+    const { data } = await apiClient.put(`/alerts/${id}`, body);
+    return data.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.delete(`/alerts/${id}`);
+  },
+  toggle: async (id: string) => {
+    const { data } = await apiClient.post(`/alerts/${id}/toggle`);
+    return data.data;
+  },
+  test: async (id: string) => {
+    const { data } = await apiClient.post(`/alerts/${id}/test`);
+    return data.data;
+  },
+};
+
 export const dataModelsApi = {
   getAll: async () => {
     const { data } = await apiClient.get('/data-models');

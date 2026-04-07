@@ -585,3 +585,27 @@ export interface McpTokenCreated extends McpToken {
   role: string;
 }
 
+// Alert Rule Types
+export interface AlertRule {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  sourceTopic: string;
+  valueField: string;
+  goodMin?: number;
+  goodMax?: number;
+  warnMin?: number;
+  warnMax?: number;
+  webhookUrl?: string;
+  notifyOnGood: boolean;
+  notifyOnWarn: boolean;
+  notifyOnBad: boolean;
+  cooldownSeconds: number;
+  currentStatus: string;
+  lastValue?: number;
+  lastNotifiedAt?: string;
+  totalNotifications: number;
+  createdAt: string;
+}
+
