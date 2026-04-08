@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, PlantModel, IgnitionViews, DataModelsPage, AlertsPage } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, PlantModel, IgnitionViews, DataModelsPage, AlertsPage, ProcessDashboard } from './pages';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
 import { editionPages } from './config/edition';
@@ -82,6 +82,7 @@ function App() {
             <Route path="ignition" element={<EditionRoute path="/ignition"><IgnitionViews /></EditionRoute>} />
             <Route path="data-models" element={<DataModelsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
+            <Route path="process" element={<ProcessDashboard />} />
             <Route path="configuration" element={<Configuration />} />
             <Route
               path="connections"

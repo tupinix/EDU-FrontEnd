@@ -11,6 +11,7 @@ import {
   Monitor,
   Workflow,
   Bell,
+  LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 import { editionPages, type EditionMode } from '../../config/edition';
@@ -38,6 +39,7 @@ export const standaloneItems: NavItem[] = [
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
   { path: '/data-models', labelKey: 'sidebar.dataModels', icon: Workflow },
   { path: '/alerts', labelKey: 'sidebar.alerts', icon: Bell },
+  { path: '/process', labelKey: 'sidebar.process', icon: LayoutGrid },
 ];
 
 export const navGroups: NavGroup[] = [

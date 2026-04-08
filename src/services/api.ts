@@ -1061,6 +1061,19 @@ export const alertsApi = {
   },
 };
 
+// ===========================================
+// Dashboards API
+// ===========================================
+
+export const dashboardsApi = {
+  getAll: async () => { const { data } = await apiClient.get('/dashboards'); return data.data; },
+  getById: async (id: string) => { const { data } = await apiClient.get(`/dashboards/${id}`); return data.data; },
+  create: async (body: any) => { const { data } = await apiClient.post('/dashboards', body); return data.data; },
+  update: async (id: string, body: any) => { const { data } = await apiClient.put(`/dashboards/${id}`, body); return data.data; },
+  delete: async (id: string) => { await apiClient.delete(`/dashboards/${id}`); },
+  duplicate: async (id: string) => { const { data } = await apiClient.post(`/dashboards/${id}/duplicate`); return data.data; },
+};
+
 export const dataModelsApi = {
   getAll: async () => {
     const { data } = await apiClient.get('/data-models');

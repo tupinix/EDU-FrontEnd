@@ -612,6 +612,20 @@ export interface AlertRule {
   createdAt: string;
 }
 
+// Process Dashboard Types
+export interface DashboardWidget {
+  id: string;
+  type: 'gauge' | 'trend' | 'value' | 'label' | 'status' | 'tank' | 'bar' | 'image' | 'rectangle' | 'text';
+  x: number; y: number; width: number; height: number; zIndex: number;
+  config: Record<string, unknown>;
+}
+
+export interface ProcessDashboard {
+  id: string; userId: string; name: string; description?: string;
+  canvasWidth: number; canvasHeight: number; backgroundColor: string;
+  widgets: DashboardWidget[]; isDefault: boolean; createdAt: string;
+}
+
 // SM Profile Types (CESMII)
 export interface SmProfileAttribute {
   name: string;
