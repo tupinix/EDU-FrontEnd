@@ -16,8 +16,9 @@ interface Props {
   liveValue: unknown;
   isEditMode: boolean;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (e?: React.MouseEvent) => void;
   onMove: (x: number, y: number) => void;
+  onMoveEnd?: () => void;
   onResize: (width: number, height: number) => void;
 }
 
@@ -40,7 +41,7 @@ function renderWidgetContent(widget: DashboardWidget, value: unknown) {
   }
 }
 
-export function WidgetRenderer({ widget, liveValue, isEditMode, isSelected, onSelect, onMove, onResize }: Props) {
+export function WidgetRenderer({ widget, liveValue, isEditMode, isSelected, onSelect, onMove, onMoveEnd, onResize }: Props) {
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number; corner: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,7 +52,7 @@ export function WidgetRenderer({ widget, liveValue, isEditMode, isSelected, onSe
   const handleMouseDownMove = useCallback((e: React.MouseEvent) => {
     if (!isEditMode) return;
     e.stopPropagation();
-    onSelect();
+    onSelect(e);
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -73,13 +74,14 @@ export function WidgetRenderer({ widget, liveValue, isEditMode, isSelected, onSe
     const handleMouseUp = () => {
       dragRef.current = null;
       setIsDragging(false);
+      onMoveEnd?.();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-  }, [isEditMode, widget.x, widget.y, onSelect, onMove]);
+  }, [isEditMode, widget.x, widget.y, onSelect, onMove, onMoveEnd]);
 
   // Resize handler
   const handleMouseDownResize = useCallback((e: React.MouseEvent, corner: string) => {
@@ -133,7 +135,7 @@ export function WidgetRenderer({ widget, liveValue, isEditMode, isSelected, onSe
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isEditMode) onSelect();
+    if (isEditMode) onSelect(e);
   }, [isEditMode, onSelect]);
 
   const corners = [
