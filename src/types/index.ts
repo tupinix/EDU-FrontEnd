@@ -595,7 +595,7 @@ export interface AlertRule {
 // Process Dashboard Types
 export interface DashboardWidget {
   id: string;
-  type: 'gauge' | 'trend' | 'value' | 'label' | 'status' | 'tank' | 'bar' | 'image' | 'rectangle' | 'text';
+  type: 'gauge' | 'trend' | 'value' | 'label' | 'status' | 'tank' | 'bar' | 'image' | 'rectangle' | 'text' | 'pipe' | 'sparkline' | 'alarm';
   x: number; y: number; width: number; height: number; zIndex: number;
   config: Record<string, unknown>;
 }

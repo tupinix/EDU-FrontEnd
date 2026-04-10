@@ -541,6 +541,9 @@ function getDefaultConfig(type: DashboardWidget['type']): Record<string, unknown
     case 'bar': return { min: 0, max: 100, unit: '', orientation: 'horizontal' };
     case 'image': return { src: '', objectFit: 'contain' };
     case 'rectangle': return { backgroundColor: '#1f2937', borderRadius: 8, border: '1px solid #374151' };
+    case 'pipe': return { direction: 'horizontal', color: '#3b82f6', thickness: 6, animated: true };
+    case 'sparkline': return { color: '#10b981' };
+    case 'alarm': return { label: 'Alarm', goodMin: 20, goodMax: 80, warnMin: 10, warnMax: 90 };
     default: return {};
   }
 }

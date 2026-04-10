@@ -9,6 +9,9 @@ import {
   BarChart3,
   Image,
   Square,
+  Minus,
+  TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DashboardWidget } from '../../types';
@@ -37,18 +40,21 @@ const WIDGET_GROUPS: { group: string; items: WidgetTypeInfo[] }[] = [
       { type: 'status', label: 'Status', icon: Circle, defaultWidth: 100, defaultHeight: 100 },
       { type: 'bar', label: 'Bar', icon: BarChart3, defaultWidth: 200, defaultHeight: 60 },
       { type: 'tank', label: 'Tank', icon: Droplets, defaultWidth: 100, defaultHeight: 180 },
+      { type: 'alarm', label: 'Alarm', icon: AlertTriangle, defaultWidth: 120, defaultHeight: 120 },
     ],
   },
   {
     group: 'Charts',
     items: [
       { type: 'trend', label: 'Trend', icon: Activity, defaultWidth: 300, defaultHeight: 150 },
+      { type: 'sparkline', label: 'Sparkline', icon: TrendingUp, defaultWidth: 200, defaultHeight: 80 },
     ],
   },
   {
     group: 'Layout',
     items: [
       { type: 'rectangle', label: 'Rectangle', icon: Square, defaultWidth: 200, defaultHeight: 150 },
+      { type: 'pipe', label: 'Pipe', icon: Minus, defaultWidth: 200, defaultHeight: 20 },
       { type: 'image', label: 'Image', icon: Image, defaultWidth: 200, defaultHeight: 150 },
     ],
   },

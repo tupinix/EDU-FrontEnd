@@ -10,6 +10,9 @@ import { TextWidget } from './widgets/TextWidget';
 import { BarWidget } from './widgets/BarWidget';
 import { ImageWidget } from './widgets/ImageWidget';
 import { RectangleWidget } from './widgets/RectangleWidget';
+import { PipeWidget } from './widgets/PipeWidget';
+import { SparklineWidget } from './widgets/SparklineWidget';
+import { AlarmIndicatorWidget } from './widgets/AlarmIndicatorWidget';
 
 interface Props {
   widget: DashboardWidget;
@@ -37,6 +40,9 @@ function renderWidgetContent(widget: DashboardWidget, value: unknown) {
     case 'bar': return <BarWidget {...props} />;
     case 'image': return <ImageWidget {...props} />;
     case 'rectangle': return <RectangleWidget {...props} />;
+    case 'pipe': return <PipeWidget {...props} />;
+    case 'sparkline': return <SparklineWidget {...props} />;
+    case 'alarm': return <AlarmIndicatorWidget {...props} />;
     default: return <div className="text-gray-500 text-xs p-2">Unknown widget: {widget.type}</div>;
   }
 }
