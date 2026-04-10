@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { X, Search, ChevronRight, Loader2, Database } from 'lucide-react';
-import { useSmProfiles, useSmProfile } from '../../hooks/useSmProfiles';
+import { useTemplates, useTemplate } from '../../hooks/useTemplates';
 import { SmProfile } from '../../types';
 import { cn } from '@/lib/utils';
 
@@ -9,8 +9,8 @@ interface Props {
   onSelect: (profile: SmProfile) => void;
 }
 
-export function ProfileBrowser({ onClose, onSelect }: Props) {
-  const { data: profiles, isLoading, error } = useSmProfiles();
+export function TemplateBrowser({ onClose, onSelect }: Props) {
+  const { data: profiles, isLoading, error } = useTemplates();
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export function ProfileBrowser({ onClose, onSelect }: Props) {
   const categories = Object.keys(grouped).sort();
 
   // Fetch full profile with attributes when selected
-  const { data: selectedProfile, isLoading: isLoadingProfile } = useSmProfile(selectedId);
+  const { data: selectedProfile, isLoading: isLoadingProfile } = useTemplate(selectedId);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
@@ -60,7 +60,7 @@ export function ProfileBrowser({ onClose, onSelect }: Props) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">
               <Database className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-[15px] font-semibold text-gray-900">Select SM Profile</h3>
+              <h3 className="text-[15px] font-semibold text-gray-900">Select Template</h3>
             </div>
             <button
               onClick={onClose}

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Loader2, ArrowRight, Copy, Layers } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, ArrowRight, Copy, Layers, FileCode } from 'lucide-react';
 import { useDataModels, useToggleDataModel, useDeleteDataModel } from '../../hooks/useDataModels';
 import { DataModelForm } from './DataModelForm';
-import { ProfileBrowser } from './ProfileBrowser';
+import { TemplateBrowser } from './TemplateBrowser';
+import { SmProfileBrowser } from './SmProfileBrowser';
 import { DataModel, SmProfile } from '../../types';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,8 @@ export function DataModelList() {
   const deleteMutation = useDeleteDataModel();
   const [editing, setEditing] = useState<{ show: boolean; model: DataModel | null }>({ show: false, model: null });
   const [showChoice, setShowChoice] = useState(false);
-  const [showProfileBrowser, setShowProfileBrowser] = useState(false);
+  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
+  const [showSmProfileBrowser, setShowSmProfileBrowser] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<SmProfile | null>(null);
 
   if (editing.show) {
@@ -125,36 +127,56 @@ export function DataModelList() {
       {showChoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/20" onClick={() => setShowChoice(false)} />
-          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-sm p-6">
+          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-md p-6">
             <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Create New Model</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => { setShowChoice(false); setSelectedProfile(null); setEditing({ show: true, model: null }); }}
-                className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-gray-200 hover:border-gray-400 transition-colors"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-400 transition-colors"
               >
-                <Pencil className="w-6 h-6 text-gray-400" />
-                <span className="text-[13px] font-medium text-gray-700">Manual</span>
-                <span className="text-[10px] text-gray-400 text-center">Create from scratch</span>
+                <Pencil className="w-5 h-5 text-gray-400" />
+                <span className="text-[12px] font-medium text-gray-700">Manual</span>
+                <span className="text-[9px] text-gray-400 text-center leading-tight">Create from scratch</span>
               </button>
               <button
-                onClick={() => { setShowChoice(false); setShowProfileBrowser(true); }}
-                className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-gray-200 hover:border-emerald-400 transition-colors"
+                onClick={() => { setShowChoice(false); setShowTemplateBrowser(true); }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 hover:border-emerald-400 transition-colors"
               >
-                <Layers className="w-6 h-6 text-emerald-500" />
-                <span className="text-[13px] font-medium text-gray-700">SM Profile</span>
-                <span className="text-[10px] text-gray-400 text-center">Start from CESMII template</span>
+                <Layers className="w-5 h-5 text-emerald-500" />
+                <span className="text-[12px] font-medium text-gray-700">Template</span>
+                <span className="text-[9px] text-gray-400 text-center leading-tight">Equipment templates</span>
+              </button>
+              <button
+                onClick={() => { setShowChoice(false); setShowSmProfileBrowser(true); }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 transition-colors"
+              >
+                <FileCode className="w-5 h-5 text-blue-500" />
+                <span className="text-[12px] font-medium text-gray-700">SM Profile</span>
+                <span className="text-[9px] text-gray-400 text-center leading-tight">OPC-UA / CESMII</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Profile browser */}
-      {showProfileBrowser && (
-        <ProfileBrowser
-          onClose={() => setShowProfileBrowser(false)}
+      {/* Template browser */}
+      {showTemplateBrowser && (
+        <TemplateBrowser
+          onClose={() => setShowTemplateBrowser(false)}
           onSelect={(profile) => {
-            setShowProfileBrowser(false);
+            setShowTemplateBrowser(false);
+            setSelectedProfile(profile);
+            setEditing({ show: true, model: null });
+          }}
+        />
+      )}
+
+      {/* SM Profile browser */}
+      {showSmProfileBrowser && (
+        <SmProfileBrowser
+          onClose={() => setShowSmProfileBrowser(false)}
+          onSelect={(profile) => {
+            setShowSmProfileBrowser(false);
             setSelectedProfile(profile);
             setEditing({ show: true, model: null });
           }}

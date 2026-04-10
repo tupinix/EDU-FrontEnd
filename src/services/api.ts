@@ -1008,13 +1008,24 @@ export const mcpApi = {
 // SM Profiles API
 // ===========================================
 
-export const smProfilesApi = {
+export const templatesApi = {
   getAll: async () => {
-    const { data } = await apiClient.get('/sm-profiles');
+    const { data } = await apiClient.get('/templates');
     return data.data;
   },
   getCategories: async () => {
-    const { data } = await apiClient.get('/sm-profiles/categories');
+    const { data } = await apiClient.get('/templates/categories');
+    return data.data;
+  },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get(`/templates/${id}`);
+    return data.data;
+  },
+};
+
+export const smProfilesApi = {
+  getAll: async () => {
+    const { data } = await apiClient.get('/sm-profiles');
     return data.data;
   },
   getById: async (id: string) => {
