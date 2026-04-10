@@ -161,7 +161,19 @@ function ShareButton({ dashboardId }: { dashboardId: string }) {
     try {
       const result = await dashboardsApi.share(dashboardId);
       const shareUrl = `${window.location.origin}/view/${result.shareToken}`;
-      await navigator.clipboard.writeText(shareUrl);
+      // Try clipboard API first, fallback to textarea method
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {
