@@ -8,7 +8,6 @@ import {
   Users,
   Cable,
   Factory,
-  Monitor,
   Workflow,
   Bell,
   LayoutGrid,
@@ -52,7 +51,6 @@ export const navGroups: NavGroup[] = [
       { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
       { path: '/opcua', labelKey: 'sidebar.opcua', icon: Network },
       { path: '/ethip', labelKey: 'sidebar.ethip', icon: CircuitBoard },
-      { path: '/ignition', labelKey: 'sidebar.ignition', icon: Monitor },
     ],
   },
   {

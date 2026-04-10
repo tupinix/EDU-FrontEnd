@@ -482,26 +482,6 @@ export interface AnomalyDetection {
   acknowledged: boolean;
 }
 
-// Ignition Perspective Types
-export interface PerspectiveViewMeta {
-  id: string;
-  viewPath: string;
-  projectName: string;
-  title?: string;
-  description?: string;
-  generatedBy: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface IgnitionStatus {
-  running: boolean;
-  url: string;
-  projectName: string;
-  tagProvider: string;
-}
-
 // EtherNet/IP Types
 export interface EthipConnection {
   id: string;

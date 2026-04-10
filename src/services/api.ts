@@ -20,8 +20,6 @@ import {
   McpToken,
   McpTokenCreated,
   CypherResult,
-  PerspectiveViewMeta,
-  IgnitionStatus,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -948,37 +946,6 @@ export const ethipApi = {
     const { data } = await apiClient.post<ApiResponse<Record<string, unknown>>>(`/ethip/connections/${id}/write`, { tags });
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to write tags');
     return data.data;
-  },
-};
-
-// ===========================================
-// Ignition API
-// ===========================================
-
-export const ignitionApi = {
-  getStatus: async (): Promise<IgnitionStatus> => {
-    const { data } = await apiClient.get<ApiResponse<IgnitionStatus>>('/ignition/status');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch Ignition status');
-    return data.data;
-  },
-
-  getViews: async (): Promise<PerspectiveViewMeta[]> => {
-    const { data } = await apiClient.get<ApiResponse<PerspectiveViewMeta[]>>('/ignition/views');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch views');
-    return data.data;
-  },
-
-  getView: async (viewPath: string): Promise<{ meta: PerspectiveViewMeta; viewJson: unknown }> => {
-    const { data } = await apiClient.get<ApiResponse<{ meta: PerspectiveViewMeta; viewJson: unknown }>>(
-      `/ignition/views/${encodeURIComponent(viewPath)}`
-    );
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch view');
-    return data.data;
-  },
-
-  deleteView: async (viewPath: string): Promise<void> => {
-    const { data } = await apiClient.delete<ApiResponse>(`/ignition/views/${encodeURIComponent(viewPath)}`);
-    if (!data.success) throw new Error(data.error || 'Failed to delete view');
   },
 };
 

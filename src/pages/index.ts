@@ -8,7 +8,6 @@ export { ModbusPage } from './ModbusPage';
 export { OpcUaPage } from './OpcUaPage';
 export { ConnectionsPage } from './ConnectionsPage';
 export { PlantModel } from './PlantModel';
-export { IgnitionViews } from './IgnitionViews';
 export { EthernetIpPage } from './EthernetIpPage';
 export { DataModelsPage } from './DataModelsPage';
 export { AlertsPage } from './AlertsPage';
