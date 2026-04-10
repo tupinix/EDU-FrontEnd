@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, PlantModel, DataModelsPage, AlertsPage, ProcessDashboard } from './pages';
+import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
 import { editionPages } from './config/edition';
@@ -62,6 +63,7 @@ function App() {
         <Routes>
           {/* Public route */}
           <Route path="/login" element={<Login />} />
+          <Route path="/view/:token" element={<SharedDashboard />} />
 
           {/* Protected routes */}
           <Route

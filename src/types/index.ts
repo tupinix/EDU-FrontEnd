@@ -603,7 +603,7 @@ export interface DashboardWidget {
 export interface ProcessDashboard {
   id: string; userId: string; name: string; description?: string;
   canvasWidth: number; canvasHeight: number; backgroundColor: string;
-  widgets: DashboardWidget[]; isDefault: boolean; createdAt: string;
+  widgets: DashboardWidget[]; isDefault: boolean; shareToken?: string; createdAt: string;
 }
 
 // SM Profile Types (CESMII)

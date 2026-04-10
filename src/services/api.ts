@@ -1050,6 +1050,9 @@ export const dashboardsApi = {
   update: async (id: string, body: any) => { const { data } = await apiClient.put(`/dashboards/${id}`, body); return data.data; },
   delete: async (id: string) => { await apiClient.delete(`/dashboards/${id}`); },
   duplicate: async (id: string) => { const { data } = await apiClient.post(`/dashboards/${id}/duplicate`); return data.data; },
+  share: async (id: string) => { const { data } = await apiClient.post(`/dashboards/${id}/share`); return data.data; },
+  unshare: async (id: string) => { await apiClient.delete(`/dashboards/${id}/share`); },
+  getShared: async (token: string) => { const { data } = await apiClient.get(`/dashboards/shared/${token}`); return data.data; },
 };
 
 export const dataModelsApi = {
