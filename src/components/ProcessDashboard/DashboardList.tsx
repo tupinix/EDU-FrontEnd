@@ -1,5 +1,7 @@
-import { Plus, ExternalLink, Copy, Trash2, Loader2, LayoutGrid } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, ExternalLink, Copy, Trash2, Loader2, LayoutGrid, Share2, Check } from 'lucide-react';
 import { useDashboards, useCreateDashboard, useDeleteDashboard, useDuplicateDashboard } from '../../hooks/useDashboards';
+import { dashboardsApi } from '../../services/api';
 import { ProcessDashboard } from '../../types';
 
 interface Props {
@@ -132,6 +134,7 @@ export function DashboardList({ onOpen }: Props) {
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
+                <ShareButton dashboardId={dashboard.id} />
                 <button
                   onClick={() => handleDelete(dashboard.id)}
                   disabled={deleteMutation.isPending}
@@ -146,5 +149,36 @@ export function DashboardList({ onOpen }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function ShareButton({ dashboardId }: { dashboardId: string }) {
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleShare = async () => {
+    setLoading(true);
+    try {
+      const result = await dashboardsApi.share(dashboardId);
+      const shareUrl = `${window.location.origin}/view/${result.shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch (err) {
+      console.error('Share failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      disabled={loading}
+      className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+      title={copied ? 'Link copied!' : 'Share link'}
+    >
+      {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+    </button>
   );
 }

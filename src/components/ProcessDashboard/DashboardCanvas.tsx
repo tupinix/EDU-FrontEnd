@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ArrowLeft, Save, Eye, Pencil, Loader2, Grid3X3, Undo2, Redo2, Share2, Check } from 'lucide-react';
-import { dashboardsApi } from '../../services/api';
+import { ArrowLeft, Save, Eye, Pencil, Loader2, Grid3X3, Undo2, Redo2 } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../../types';
 import { useUpdateDashboard } from '../../hooks/useDashboards';
 import { useDashboardLiveValues } from '../../hooks/useDashboardLiveValues';
@@ -357,17 +356,6 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
     } catch { /* handled */ }
   };
 
-  // Share
-  const [shareCopied, setShareCopied] = useState(false);
-  const handleShare = async () => {
-    try {
-      const result = await dashboardsApi.share(dashboard.id);
-      const shareUrl = `${window.location.origin}/view/${result.shareToken}`;
-      await navigator.clipboard.writeText(shareUrl);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 3000);
-    } catch { /* handled */ }
-  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
@@ -439,11 +427,6 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
               <Eye className="w-3 h-3" /> View
             </button>
           </div>
-          <button onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-xl transition-colors border border-gray-200 text-gray-600 hover:bg-gray-50">
-            {shareCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Share2 className="w-3 h-3" />}
-            {shareCopied ? 'Link copied!' : 'Share'}
-          </button>
           <button onClick={handleSave} disabled={updateMutation.isPending}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50">
             {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
