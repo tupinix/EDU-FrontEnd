@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ArrowLeft, Save, Eye, Pencil, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Pencil, Loader2, Grid3X3, Undo2, Redo2 } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../../types';
 import { useUpdateDashboard } from '../../hooks/useDashboards';
 import { useDashboardLiveValues } from '../../hooks/useDashboardLiveValues';
@@ -115,9 +115,56 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
   const [clipboard, setClipboard] = useState<DashboardWidget[]>([]);
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  const [gridEnabled, setGridEnabled] = useState(false);
+  const [gridSize, setGridSize] = useState(20);
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const updateMutation = useUpdateDashboard();
+
+  // ── Undo/Redo ───────────────────────────────────────────────
+  const historyRef = useRef<DashboardWidget[][]>([dashboard.widgets || []]);
+  const historyIndexRef = useRef(0);
+  const MAX_HISTORY = 50;
+
+  const pushHistory = useCallback((newWidgets: DashboardWidget[]) => {
+    const history = historyRef.current;
+    const idx = historyIndexRef.current;
+    // Truncate any redo states
+    historyRef.current = history.slice(0, idx + 1);
+    historyRef.current.push(JSON.parse(JSON.stringify(newWidgets)));
+    if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift();
+    historyIndexRef.current = historyRef.current.length - 1;
+  }, []);
+
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current--;
+    setWidgets(JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])));
+  }, []);
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current++;
+    setWidgets(JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])));
+  }, []);
+
+  const canUndo = historyIndexRef.current > 0;
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+
+  // Wrapper around setWidgets that pushes history on significant changes
+  const setWidgetsWithHistory = useCallback((updater: (prev: DashboardWidget[]) => DashboardWidget[]) => {
+    setWidgets(prev => {
+      const next = updater(prev);
+      pushHistory(next);
+      return next;
+    });
+  }, [pushHistory]);
+
+  // Grid snap helper
+  const snapToGrid = useCallback((val: number) => {
+    if (!gridEnabled) return val;
+    return Math.round(val / gridSize) * gridSize;
+  }, [gridEnabled, gridSize]);
 
   // Live values
   const bindings = widgets.filter(w => w.config.tagBinding).map(w => w.config.tagBinding as string);
@@ -139,11 +186,24 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
     if (!isEditMode) return;
 
     const handler = (e: KeyboardEvent) => {
+      // Undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+
+      // Redo
+      if ((e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
       // Delete selected
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.size > 0) {
-        // Don't delete if focused on input
         if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
-        setWidgets(prev => prev.filter(w => !selectedIds.has(w.id)));
+        setWidgetsWithHistory(prev => prev.filter(w => !selectedIds.has(w.id)));
         setSelectedIds(new Set());
       }
 
@@ -157,13 +217,9 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboard.length > 0) {
         e.preventDefault();
         const newWidgets = clipboard.map(w => ({
-          ...w,
-          id: generateId(),
-          x: w.x + 20,
-          y: w.y + 20,
-          config: { ...w.config },
+          ...w, id: generateId(), x: snapToGrid(w.x + 20), y: snapToGrid(w.y + 20), config: { ...w.config },
         }));
-        setWidgets(prev => [...prev, ...newWidgets]);
+        setWidgetsWithHistory(prev => [...prev, ...newWidgets]);
         setSelectedIds(new Set(newWidgets.map(w => w.id)));
       }
 
@@ -171,13 +227,9 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedIds.size > 0) {
         e.preventDefault();
         const duped = widgets.filter(w => selectedIds.has(w.id)).map(w => ({
-          ...w,
-          id: generateId(),
-          x: w.x + 20,
-          y: w.y + 20,
-          config: { ...w.config },
+          ...w, id: generateId(), x: snapToGrid(w.x + 20), y: snapToGrid(w.y + 20), config: { ...w.config },
         }));
-        setWidgets(prev => [...prev, ...duped]);
+        setWidgetsWithHistory(prev => [...prev, ...duped]);
         setSelectedIds(new Set(duped.map(w => w.id)));
       }
 
@@ -190,7 +242,7 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isEditMode, selectedIds, widgets, clipboard]);
+  }, [isEditMode, selectedIds, widgets, clipboard, undo, redo, setWidgetsWithHistory, snapToGrid]);
 
   // ── Widget operations ───────────────────────────────────────────
 
@@ -198,22 +250,30 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
     const widget = widgets.find(w => w.id === id);
     if (!widget) return;
 
-    // Compute snap guides
-    const tempWidget = { ...widget, x, y };
-    const others = widgets.filter(w => w.id !== id);
-    const { guides, snapX, snapY } = computeSnapGuides(tempWidget, others);
-    setSnapGuides(guides);
+    const gx = snapToGrid(x);
+    const gy = snapToGrid(y);
 
-    setWidgets(prev =>
-      prev.map(w => w.id === id ? { ...w, x: Math.round(snapX ?? x), y: Math.round(snapY ?? y) } : w)
-    );
-  }, [widgets]);
+    // Compute snap guides (only if grid not enabled — grid takes priority)
+    if (!gridEnabled) {
+      const tempWidget = { ...widget, x: gx, y: gy };
+      const others = widgets.filter(w => w.id !== id);
+      const { guides, snapX, snapY } = computeSnapGuides(tempWidget, others);
+      setSnapGuides(guides);
+      setWidgets(prev => prev.map(w => w.id === id ? { ...w, x: Math.round(snapX ?? gx), y: Math.round(snapY ?? gy) } : w));
+    } else {
+      setWidgets(prev => prev.map(w => w.id === id ? { ...w, x: gx, y: gy } : w));
+    }
+  }, [widgets, snapToGrid, gridEnabled]);
 
-  const clearSnapGuides = useCallback(() => setSnapGuides([]), []);
+  const clearSnapGuides = useCallback(() => {
+    setSnapGuides([]);
+    // Push history when move ends
+    pushHistory(widgets);
+  }, [widgets, pushHistory]);
 
   const updateWidgetSize = useCallback((id: string, width: number, height: number) => {
-    setWidgets(prev => prev.map(w => w.id === id ? { ...w, width: Math.round(width), height: Math.round(height) } : w));
-  }, []);
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, width: snapToGrid(Math.round(width)), height: snapToGrid(Math.round(height)) } : w));
+  }, [snapToGrid]);
 
   const updateWidgetProps = useCallback((id: string, updates: Partial<DashboardWidget>) => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w));
@@ -255,17 +315,17 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
     const newWidget: DashboardWidget = {
       id: generateId(),
       type: widgetType,
-      x: Math.round(x - defaultWidth / 2),
-      y: Math.round(y - defaultHeight / 2),
+      x: snapToGrid(Math.round(x - defaultWidth / 2)),
+      y: snapToGrid(Math.round(y - defaultHeight / 2)),
       width: defaultWidth,
       height: defaultHeight,
       zIndex: maxZ + 1,
       config: getDefaultConfig(widgetType),
     };
 
-    setWidgets(prev => [...prev, newWidget]);
+    setWidgetsWithHistory(prev => [...prev, newWidget]);
     setSelectedIds(new Set([newWidget.id]));
-  }, [widgets]);
+  }, [widgets, snapToGrid, setWidgetsWithHistory]);
 
   // ── Canvas click (select / deselect) ────────────────────────────
 
@@ -316,9 +376,44 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Grid snap toggle */}
+          {isEditMode && (
+            <div className="flex items-center gap-1.5 mr-1">
+              <button
+                onClick={() => setGridEnabled(!gridEnabled)}
+                className={cn('p-1.5 rounded-lg transition-colors', gridEnabled ? 'bg-blue-50 text-blue-500' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50')}
+                title={gridEnabled ? `Grid ${gridSize}px (on)` : 'Grid snap (off)'}
+              >
+                <Grid3X3 className="w-3.5 h-3.5" />
+              </button>
+              {gridEnabled && (
+                <select value={gridSize} onChange={e => setGridSize(Number(e.target.value))}
+                  className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded px-1 py-0.5 outline-none">
+                  <option value={10}>10px</option>
+                  <option value={20}>20px</option>
+                  <option value={40}>40px</option>
+                </select>
+              )}
+            </div>
+          )}
+
+          {/* Undo/Redo */}
+          {isEditMode && (
+            <div className="flex items-center gap-0.5 mr-1">
+              <button onClick={undo} disabled={!canUndo}
+                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-20" title="Undo (Ctrl+Z)">
+                <Undo2 className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={redo} disabled={!canRedo}
+                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-20" title="Redo (Ctrl+Shift+Z)">
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <div className="hidden sm:flex text-[9px] text-gray-300 gap-2 mr-2">
+            <span>Ctrl+Z/Y</span>
             <span>Ctrl+C/V</span>
-            <span>Ctrl+D</span>
             <span>Del</span>
           </div>
           <div className="flex bg-gray-100 rounded-lg p-0.5">
@@ -370,6 +465,18 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               >
+                {/* Grid lines */}
+                {isEditMode && gridEnabled && (
+                  <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%" style={{ opacity: 0.08 }}>
+                    {Array.from({ length: Math.ceil(dashboard.canvasWidth / gridSize) }, (_, i) => (
+                      <line key={`v${i}`} x1={i * gridSize} y1={0} x2={i * gridSize} y2={dashboard.canvasHeight} stroke="#fff" strokeWidth={1} />
+                    ))}
+                    {Array.from({ length: Math.ceil(dashboard.canvasHeight / gridSize) }, (_, i) => (
+                      <line key={`h${i}`} x1={0} y1={i * gridSize} x2={dashboard.canvasWidth} y2={i * gridSize} stroke="#fff" strokeWidth={1} />
+                    ))}
+                  </svg>
+                )}
+
                 {/* Snap guides */}
                 {isEditMode && snapGuides.map((guide, i) => (
                   <div key={i} className="absolute pointer-events-none" style={
