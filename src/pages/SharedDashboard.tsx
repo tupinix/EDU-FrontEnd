@@ -2,8 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Maximize, Minimize } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../types';
-import { dashboardsApi } from '../services/api';
-import { useDashboardLiveValues } from '../hooks/useDashboardLiveValues';
+import apiClient from '../services/api';
 import { WidgetRenderer } from '../components/ProcessDashboard/WidgetRenderer';
 
 export function SharedDashboard() {
@@ -13,15 +12,44 @@ export function SharedDashboard() {
   const [loading, setLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [liveValues, setLiveValues] = useState<Map<string, unknown>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch dashboard
+  // Fetch dashboard (using apiClient directly, no auth needed for shared)
   useEffect(() => {
     if (!token) return;
-    dashboardsApi.getShared(token)
-      .then(d => { setDashboard(d); setLoading(false); })
-      .catch(err => { setError(err instanceof Error ? err.message : 'Dashboard not found'); setLoading(false); });
+    apiClient.get(`/dashboards/shared/${token}`)
+      .then(({ data }) => { setDashboard(data.data); setLoading(false); })
+      .catch(() => { setError('Dashboard not found'); setLoading(false); });
   }, [token]);
+
+  // Poll live values for all tag bindings
+  useEffect(() => {
+    if (!dashboard) return;
+    const bindings = dashboard.widgets
+      .filter((w: DashboardWidget) => w.config.tagBinding)
+      .map((w: DashboardWidget) => w.config.tagBinding as string);
+
+    if (bindings.length === 0) return;
+
+    const poll = async () => {
+      const newValues = new Map<string, unknown>();
+      for (const topic of bindings) {
+        try {
+          const { data } = await apiClient.get(`/topics/${encodeURIComponent(topic)}/details`);
+          if (data.data?.payload != null) {
+            const p = data.data.payload;
+            newValues.set(topic, typeof p === 'object' && p !== null ? (p as Record<string, unknown>).value ?? p : p);
+          }
+        } catch { /* skip */ }
+      }
+      setLiveValues(newValues);
+    };
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => clearInterval(interval);
+  }, [dashboard]);
 
   // Auto-scale canvas to fit viewport
   const computeScale = useCallback(() => {
@@ -30,7 +58,7 @@ export function SharedDashboard() {
     const vh = containerRef.current.clientHeight;
     const scaleX = vw / dashboard.canvasWidth;
     const scaleY = vh / dashboard.canvasHeight;
-    setScale(Math.min(scaleX, scaleY, 1)); // never scale up, only down
+    setScale(Math.min(scaleX, scaleY, 1));
   }, [dashboard]);
 
   useEffect(() => {
@@ -42,7 +70,7 @@ export function SharedDashboard() {
   // Fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
+      document.documentElement.requestFullscreen();
       setIsFullscreen(true);
     } else {
       document.exitFullscreen();
@@ -51,20 +79,24 @@ export function SharedDashboard() {
   };
 
   useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // Recompute scale after fullscreen change
+      setTimeout(computeScale, 100);
+    };
     document.addEventListener('fullscreenchange', handler);
     return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
+  }, [computeScale]);
 
-  // Live values
-  const bindings = (dashboard?.widgets || [])
-    .filter((w: DashboardWidget) => w.config.tagBinding)
-    .map((w: DashboardWidget) => w.config.tagBinding as string);
-  const liveValues = useDashboardLiveValues(bindings);
+  // Hide any parent layout elements
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
         <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
       </div>
     );
@@ -72,10 +104,10 @@ export function SharedDashboard() {
 
   if (error || !dashboard) {
     return (
-      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-400 text-[15px]">Dashboard not found</p>
-          <p className="text-gray-600 text-[12px] mt-1">This link may have expired or been revoked</p>
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#9ca3af', fontSize: 15 }}>Dashboard not found</p>
+          <p style={{ color: '#4b5563', fontSize: 12, marginTop: 4 }}>This link may have expired or been revoked</p>
         </div>
       </div>
     );
@@ -86,8 +118,16 @@ export function SharedDashboard() {
   return (
     <div
       ref={containerRef}
-      className="min-h-screen w-full flex items-center justify-center overflow-hidden"
-      style={{ backgroundColor: bgColor }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: bgColor,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        zIndex: 9999,
+      }}
     >
       {/* Scaled canvas */}
       <div
@@ -97,6 +137,7 @@ export function SharedDashboard() {
           transform: `scale(${scale})`,
           transformOrigin: 'center center',
           position: 'relative',
+          flexShrink: 0,
         }}
       >
         {dashboard.widgets.map((widget: DashboardWidget) => (
@@ -114,14 +155,19 @@ export function SharedDashboard() {
       </div>
 
       {/* Floating controls */}
-      <div className="fixed bottom-4 right-4 flex items-center gap-2 z-50">
-        <span className="text-[10px] text-white/30 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg">
+      <div style={{ position: 'fixed', bottom: 16, right: 16, display: 'flex', alignItems: 'center', gap: 8, zIndex: 10000 }}>
+        <span style={{
+          fontSize: 10, color: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(8px)', padding: '4px 8px', borderRadius: 8,
+        }}>
           {dashboard.name} &middot; {Math.round(scale * 100)}%
         </span>
         <button
           onClick={toggleFullscreen}
-          className="p-2 bg-black/30 backdrop-blur-sm text-white/50 hover:text-white/80 rounded-lg transition-colors"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          style={{
+            padding: 8, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
+            color: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: 8, cursor: 'pointer',
+          }}
         >
           {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </button>
