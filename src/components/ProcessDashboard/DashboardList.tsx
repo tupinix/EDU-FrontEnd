@@ -176,8 +176,8 @@ function ShareButton({ dashboardId }: { dashboardId: string }) {
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
-    } catch (err) {
-      console.error('Share failed:', err);
+    } catch {
+      // share failed silently — UI already shows loading state
     } finally {
       setLoading(false);
     }

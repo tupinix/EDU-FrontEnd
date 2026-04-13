@@ -111,7 +111,6 @@ interface ExplorerStore {
   toggleNode: (path: string) => void;
   expandNode: (path: string) => void;
   collapseNode: (path: string) => void;
-  expandAll: () => void;
   collapseAll: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -141,7 +140,6 @@ export const useExplorerStore = create<ExplorerStore>()((set) => ({
       newExpanded.delete(path);
       return { expandedNodes: newExpanded };
     }),
-  expandAll: () => set({ expandedNodes: new Set<string>() }), // Implement with actual nodes
   collapseAll: () => set({ expandedNodes: new Set<string>() }),
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),

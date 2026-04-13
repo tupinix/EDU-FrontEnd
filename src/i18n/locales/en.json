@@ -60,20 +60,14 @@
     "dashboard": "Dashboard",
     "discovery": "Discovery",
     "explorer": "Explorer",
-    "assistant": "AI Assistant",
-    "reports": "Reports",
     "configuration": "Configuration",
     "users": "Users",
-    "alarms": "Alarms",
-    "oee": "OEE",
-    "rules": "Rules",
     "mqtt": "MQTT",
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
     "ethip": "EtherNet/IP",
     "connections": "Connections",
     "neo4j": "Neo4J",
-    "ignition": "Ignition Views",
     "dataModels": "Data Models",
     "alerts": "Alerts",
     "process": "Process",
@@ -85,26 +79,6 @@
       "intelligence": "Intelligence",
       "system": "System"
     }
-  },
-  "assistant": {
-    "title": "AI Assistant",
-    "subtitle": "Analyze your data with artificial intelligence",
-    "placeholder": "Ask about your MQTT data...",
-    "send": "Send",
-    "thinking": "Thinking...",
-    "error": "Error processing message",
-    "unavailable": "AI service unavailable",
-    "unavailableDesc": "Make sure Ollama is running on the server.",
-    "welcome": "Hello! I'm your data analysis assistant. I can help you understand your MQTT broker data, identify patterns and generate insights. How can I help?",
-    "suggestions": "Suggestions",
-    "suggestion1": "Which topics are most active?",
-    "suggestion2": "Give me a summary of current data",
-    "suggestion3": "Are there any patterns in the data?",
-    "clearChat": "Clear chat",
-    "model": "Model",
-    "status": "Status",
-    "online": "Online",
-    "offline": "Offline"
   },
   "users": {
     "title": "User Management",
@@ -272,152 +246,6 @@
     },
     "online": "Online",
     "offline": "Offline"
-  },
-  "alarms": {
-    "title": "Alarms",
-    "subtitle": "Industrial alarm management (ISA-18.2)",
-    "active": "Active",
-    "history": "History",
-    "configuration": "Configuration",
-    "acknowledge": "Acknowledge",
-    "noActiveAlarms": "No active alarms",
-    "events": "event(s)",
-    "notesRequired": "Notes required for critical alarms",
-    "notesOptional": "Optional notes...",
-    "states": {
-      "active_unack": "Active",
-      "active_ack": "Acknowledged",
-      "rtn_unack": "Returned",
-      "normal": "Normal"
-    },
-    "priorities": {
-      "critical": "Critical",
-      "high": "High",
-      "medium": "Medium",
-      "low": "Low",
-      "info": "Info"
-    },
-    "conditionTypes": {
-      "threshold": "Threshold",
-      "bad_quality": "Bad Quality"
-    },
-    "filters": {
-      "allPriorities": "All priorities",
-      "allStates": "All states"
-    },
-    "fields": {
-      "alarm": "Alarm",
-      "topic": "Topic",
-      "value": "Value",
-      "notes": "Notes",
-      "priority": "Priority",
-      "conditionType": "Condition Type",
-      "state": "State"
-    },
-    "config": {
-      "subtitle": "Define alarm conditions for MQTT topics",
-      "new": "New Alarm",
-      "edit": "Edit Alarm",
-      "noDefinitions": "No alarms configured",
-      "noDefinitionsHint": "Create an alarm to monitor your MQTT topics",
-      "disabled": "Disabled",
-      "namePlaceholder": "E.g.: High Temperature Line 1",
-      "operator": "Operator",
-      "threshold": "Threshold",
-      "deadband": "Deadband",
-      "timeoutSeconds": "Timeout (seconds)",
-      "enabled": "Enabled",
-      "enabledHint": "Alarm will be evaluated in real-time"
-    }
-  },
-  "oee": {
-    "title": "OEE — Overall Equipment Effectiveness",
-    "subtitle": "Availability × Performance × Quality per equipment",
-    "availability": "Avail.",
-    "performance": "Performance",
-    "quality": "Quality",
-    "since": "Since",
-    "pieces": "Pieces",
-    "rejects": "Rejects",
-    "running": "Running",
-    "noEquipment": "No equipment configured",
-    "noEquipmentHint": "Go to Configuration to add equipment",
-    "tab": {
-      "overview": "Overview",
-      "history": "History",
-      "configuration": "Configuration"
-    },
-    "status": {
-      "running": "Running",
-      "stopped": "Stopped",
-      "fault": "Fault",
-      "unknown": "Unknown"
-    },
-    "history": {
-      "today": "Today",
-      "7d": "7 days",
-      "30d": "30 days",
-      "noData": "No historical data found"
-    },
-    "config": {
-      "subtitle": "Configure equipment for OEE calculation",
-      "new": "New Equipment",
-      "edit": "Edit Equipment",
-      "noDefinitions": "No equipment configured",
-      "optional": "Optional",
-      "numeric": "Numeric",
-      "string": "String",
-      "col": {
-        "name": "Name",
-        "statusTopic": "Status Topic",
-        "format": "Format",
-        "planned": "Hours/day"
-      },
-      "section": {
-        "availability": "Availability",
-        "performance": "Performance",
-        "quality": "Quality"
-      },
-      "field": {
-        "name": "Equipment Name",
-        "namePlaceholder": "E.g.: CNC Line 1",
-        "statusTopic": "Status Topic",
-        "format": "Payload Format",
-        "runningValue": "Value = Running",
-        "plannedHours": "Planned Hours per Day",
-        "countTopic": "Part Count Topic",
-        "idealCycle": "Ideal Cycle",
-        "rejectTopic": "Reject Topic",
-        "enabled": "Enabled"
-      }
-    }
-  },
-  "rules": {
-    "pageTitle": "Automation Rules",
-    "pageSubtitle": "Automatically execute actions based on conditions from your topics",
-    "title": "Rules",
-    "history": "History",
-    "newRule": "New Rule",
-    "editRule": "Edit Rule",
-    "name": "Rule Name",
-    "description": "Description",
-    "logic": "Logic",
-    "throttle": "Throttle",
-    "enabled": "Enabled",
-    "conditions": "conditions",
-    "actions": "actions",
-    "addCondition": "Add condition",
-    "addAction": "Add action",
-    "topic": "Topic",
-    "operator": "Operator",
-    "value": "Value",
-    "triggered": "triggered",
-    "lastTrigger": "last trigger",
-    "viewHistory": "View history",
-    "empty": "No rules yet. Create the first one!",
-    "noExecutions": "No executions recorded yet",
-    "selectRule": "Select a rule to view its history",
-    "executionHistory": "Rule executions"
   },
   "roles": {
     "admin": "Administrator",

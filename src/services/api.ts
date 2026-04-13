@@ -13,10 +13,6 @@ import {
   BrokerConfig,
   BrokerFormData,
   ReportResult,
-  Rule,
-  RuleExecution,
-  CreateRuleInput,
-  AnomalyDetection,
   McpToken,
   McpTokenCreated,
   CypherResult,
@@ -412,7 +408,7 @@ export const reportsApi = {
 // OPC-UA API
 // ===========================================
 
-import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, AlarmDefinition, AlarmEvent, AlarmSummary, OEEDefinition, OEEMetrics, OEESnapshot, ModbusConnection, ModbusRegister, ModbusLiveValue, EthipConnection, EthipTag, EthipDiscoveredTag, EthipLiveValue } from '../types';
+import { OpcUaConnection, OpcUaSubscription, NodeLiveValue, ModbusConnection, ModbusRegister, ModbusLiveValue, EthipConnection, EthipTag, EthipDiscoveredTag, EthipLiveValue } from '../types';
 
 export const opcuaApi = {
   getConnections: async (): Promise<OpcUaConnection[]> => {
@@ -530,214 +526,7 @@ export const opcuaApi = {
   },
 };
 
-// ===========================================
-// Alarms API
-// ===========================================
-
-export interface AlarmEventFilters {
-  alarmId?: string;
-  state?: string;
-  priority?: string;
-  from?: string;
-  to?: string;
-  limit?: number;
-}
-
-export interface CreateAlarmInput {
-  name: string;
-  topic: string;
-  conditionType: 'threshold' | 'bad_quality';
-  conditionConfig: Record<string, unknown>;
-  priority?: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  enabled?: boolean;
-}
-
-export const alarmsApi = {
-  getDefinitions: async (): Promise<AlarmDefinition[]> => {
-    const { data } = await apiClient.get<ApiResponse<AlarmDefinition[]>>('/alarms/definitions');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm definitions');
-    return data.data;
-  },
-
-  createDefinition: async (input: CreateAlarmInput): Promise<AlarmDefinition> => {
-    const { data } = await apiClient.post<ApiResponse<AlarmDefinition>>('/alarms/definitions', input);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create alarm');
-    return data.data;
-  },
-
-  updateDefinition: async (id: string, updates: Partial<CreateAlarmInput>): Promise<AlarmDefinition> => {
-    const { data } = await apiClient.put<ApiResponse<AlarmDefinition>>(`/alarms/definitions/${id}`, updates);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update alarm');
-    return data.data;
-  },
-
-  deleteDefinition: async (id: string): Promise<void> => {
-    const { data } = await apiClient.delete<ApiResponse>(`/alarms/definitions/${id}`);
-    if (!data.success) throw new Error(data.error || 'Failed to delete alarm');
-  },
-
-  getActiveAlarms: async (): Promise<AlarmDefinition[]> => {
-    const { data } = await apiClient.get<ApiResponse<AlarmDefinition[]>>('/alarms/events/active');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch active alarms');
-    return data.data;
-  },
-
-  getSummary: async (): Promise<AlarmSummary> => {
-    const { data } = await apiClient.get<ApiResponse<AlarmSummary>>('/alarms/summary');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm summary');
-    return data.data;
-  },
-
-  getEvents: async (filters?: AlarmEventFilters): Promise<AlarmEvent[]> => {
-    const { data } = await apiClient.get<ApiResponse<AlarmEvent[]>>('/alarms/events', { params: filters });
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch alarm events');
-    return data.data;
-  },
-
-  acknowledgeEvent: async (id: string, notes?: string): Promise<AlarmEvent> => {
-    const { data } = await apiClient.post<ApiResponse<AlarmEvent>>(
-      `/alarms/events/${id}/acknowledge`,
-      { notes }
-    );
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to acknowledge alarm');
-    return data.data;
-  },
-};
-
-// ===========================================
-// OEE API
-// ===========================================
-
-export interface CreateOEEInput {
-  name: string;
-  statusTopic: string;
-  statusRunningValue?: string;
-  statusFormat?: 'numeric' | 'string';
-  countTopic?: string;
-  idealCycleSeconds?: number;
-  rejectTopic?: string;
-  plannedHoursPerDay?: number;
-  enabled?: boolean;
-}
-
-export interface OEEHistoryFilters {
-  from?: string;
-  to?: string;
-  limit?: number;
-}
-
-export const oeeApi = {
-  getDefinitions: async (): Promise<OEEDefinition[]> => {
-    const { data } = await apiClient.get<ApiResponse<OEEDefinition[]>>('/oee/definitions');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE definitions');
-    return data.data;
-  },
-
-  createDefinition: async (input: CreateOEEInput): Promise<OEEDefinition> => {
-    const { data } = await apiClient.post<ApiResponse<OEEDefinition>>('/oee/definitions', input);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create OEE definition');
-    return data.data;
-  },
-
-  updateDefinition: async (id: string, updates: Partial<CreateOEEInput>): Promise<OEEDefinition> => {
-    const { data } = await apiClient.put<ApiResponse<OEEDefinition>>(`/oee/definitions/${id}`, updates);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update OEE definition');
-    return data.data;
-  },
-
-  deleteDefinition: async (id: string): Promise<void> => {
-    const { data } = await apiClient.delete<ApiResponse>(`/oee/definitions/${id}`);
-    if (!data.success) throw new Error(data.error || 'Failed to delete OEE definition');
-  },
-
-  getCurrentOEE: async (): Promise<OEEMetrics[]> => {
-    const { data } = await apiClient.get<ApiResponse<OEEMetrics[]>>('/oee/current');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch current OEE');
-    return data.data;
-  },
-
-  getCurrentOEEById: async (id: string): Promise<OEEMetrics> => {
-    const { data } = await apiClient.get<ApiResponse<OEEMetrics>>(`/oee/current/${id}`);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE');
-    return data.data;
-  },
-
-  getHistory: async (id: string, filters?: OEEHistoryFilters): Promise<OEESnapshot[]> => {
-    const { data } = await apiClient.get<ApiResponse<OEESnapshot[]>>(`/oee/history/${id}`, { params: filters });
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch OEE history');
-    return data.data;
-  },
-};
-
 export default apiClient;
-
-// ===========================================
-// Rules API
-// ===========================================
-
-export interface RuleFilters {
-  enabled?: boolean;
-}
-
-export const rulesApi = {
-  getAll: async (): Promise<Rule[]> => {
-    const { data } = await apiClient.get<ApiResponse<Rule[]>>('/rules');
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch rules');
-    return data.data;
-  },
-
-  create: async (input: CreateRuleInput): Promise<Rule> => {
-    const { data } = await apiClient.post<ApiResponse<Rule>>('/rules', input);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create rule');
-    return data.data;
-  },
-
-  update: async (id: string, updates: Partial<CreateRuleInput>): Promise<Rule> => {
-    const { data } = await apiClient.put<ApiResponse<Rule>>(`/rules/${id}`, updates);
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update rule');
-    return data.data;
-  },
-
-  delete: async (id: string): Promise<void> => {
-    const { data } = await apiClient.delete<ApiResponse>(`/rules/${id}`);
-    if (!data.success) throw new Error(data.error || 'Failed to delete rule');
-  },
-
-  getExecutions: async (ruleId: string, limit = 100): Promise<RuleExecution[]> => {
-    const { data } = await apiClient.get<ApiResponse<RuleExecution[]>>(
-      `/rules/${ruleId}/executions`,
-      { params: { limit } },
-    );
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch executions');
-    return data.data;
-  },
-
-  getAllExecutions: async (limit = 100): Promise<RuleExecution[]> => {
-    const { data } = await apiClient.get<ApiResponse<RuleExecution[]>>(
-      '/rules/executions/all',
-      { params: { limit } },
-    );
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch executions');
-    return data.data;
-  },
-};
-
-// ===========================================
-// Anomalies API
-// ===========================================
-
-export const anomaliesApi = {
-  getAll: async (params?: { limit?: number; topic?: string; acknowledged?: boolean }): Promise<AnomalyDetection[]> => {
-    const { data } = await apiClient.get<ApiResponse<AnomalyDetection[]>>('/anomalies', { params });
-    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch anomalies');
-    return data.data;
-  },
-
-  acknowledge: async (id: string): Promise<void> => {
-    const { data } = await apiClient.post<ApiResponse>(`/anomalies/${id}/acknowledge`);
-    if (!data.success) throw new Error(data.error || 'Failed to acknowledge anomaly');
-  },
-};
 
 // ===========================================
 // Export API (returns download URLs)
@@ -746,18 +535,6 @@ export const anomaliesApi = {
 export const exportApi = {
   topicCsvUrl: (topic: string, params?: { from?: string; to?: string; limit?: number }) => {
     const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/topics/${encodeURIComponent(topic)}/csv`;
-    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
-    return base + qs;
-  },
-
-  alarmsCsvUrl: (params?: { from?: string; to?: string; priority?: string }) => {
-    const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/alarms/csv`;
-    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
-    return base + qs;
-  },
-
-  oeeCsvUrl: (equipmentId: string, params?: { from?: string; to?: string }) => {
-    const base = `${(import.meta.env.VITE_API_URL || '/api')}/export/oee/${equipmentId}/csv`;
     const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
     return base + qs;
   },

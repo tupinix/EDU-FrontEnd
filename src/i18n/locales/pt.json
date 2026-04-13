@@ -60,20 +60,14 @@
     "dashboard": "Dashboard",
     "discovery": "Discovery",
     "explorer": "Explorer",
-    "assistant": "TupixIA",
-    "reports": "Relatorios",
     "configuration": "Configuracao",
     "users": "Usuarios",
-    "alarms": "Alarmes",
-    "oee": "OEE",
-    "rules": "Regras",
     "mqtt": "MQTT",
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
     "ethip": "EtherNet/IP",
     "connections": "Conexões",
     "neo4j": "Neo4J",
-    "ignition": "Ignition Views",
     "dataModels": "Data Models",
     "alerts": "Alerts",
     "process": "Process",
@@ -85,26 +79,6 @@
       "intelligence": "Inteligencia",
       "system": "Sistema"
     }
-  },
-  "assistant": {
-    "title": "TupixIA",
-    "subtitle": "Analise seus dados com inteligencia artificial",
-    "placeholder": "Pergunte sobre seus dados MQTT...",
-    "send": "Enviar",
-    "thinking": "Pensando...",
-    "error": "Erro ao processar mensagem",
-    "unavailable": "Servico de IA indisponivel",
-    "unavailableDesc": "Verifique se o Ollama esta rodando no servidor.",
-    "welcome": "Ola! Sou seu assistente de analise de dados. Posso ajudar voce a entender os dados do seu broker MQTT, identificar padroes e gerar insights. Como posso ajudar?",
-    "suggestions": "Sugestoes",
-    "suggestion1": "Quais topicos estao mais ativos?",
-    "suggestion2": "Faca um resumo dos dados atuais",
-    "suggestion3": "Existe algum padrao nos dados?",
-    "clearChat": "Limpar conversa",
-    "model": "Modelo",
-    "status": "Status",
-    "online": "Online",
-    "offline": "Offline"
   },
   "users": {
     "title": "Gerenciamento de Usuarios",
@@ -271,152 +245,6 @@
     },
     "online": "Online",
     "offline": "Offline"
-  },
-  "alarms": {
-    "title": "Alarmes",
-    "subtitle": "Gerenciamento de alarmes industriais (ISA-18.2)",
-    "active": "Ativos",
-    "history": "Historico",
-    "configuration": "Configuracao",
-    "acknowledge": "Reconhecer",
-    "noActiveAlarms": "Nenhum alarme ativo",
-    "events": "evento(s)",
-    "notesRequired": "Notas obrigatorias para alarmes criticos",
-    "notesOptional": "Notas opcionais...",
-    "states": {
-      "active_unack": "Ativo",
-      "active_ack": "Reconhecido",
-      "rtn_unack": "Normalizado",
-      "normal": "Normal"
-    },
-    "priorities": {
-      "critical": "Critico",
-      "high": "Alto",
-      "medium": "Medio",
-      "low": "Baixo",
-      "info": "Info"
-    },
-    "conditionTypes": {
-      "threshold": "Limiar",
-      "bad_quality": "Qualidade Ruim"
-    },
-    "filters": {
-      "allPriorities": "Todas as prioridades",
-      "allStates": "Todos os estados"
-    },
-    "fields": {
-      "alarm": "Alarme",
-      "topic": "Topico",
-      "value": "Valor",
-      "notes": "Notas",
-      "priority": "Prioridade",
-      "conditionType": "Tipo de Condicao",
-      "state": "Estado"
-    },
-    "config": {
-      "subtitle": "Defina condicoes de alarme para topicos MQTT",
-      "new": "Novo Alarme",
-      "edit": "Editar Alarme",
-      "noDefinitions": "Nenhum alarme configurado",
-      "noDefinitionsHint": "Crie um alarme para monitorar seus topicos MQTT",
-      "disabled": "Desabilitado",
-      "namePlaceholder": "Ex: Temperatura Alta Linha 1",
-      "operator": "Operador",
-      "threshold": "Limiar",
-      "deadband": "Deadband",
-      "timeoutSeconds": "Timeout (segundos)",
-      "enabled": "Habilitado",
-      "enabledHint": "Alarme sera avaliado em tempo real"
-    }
-  },
-  "oee": {
-    "title": "OEE — Eficiencia Global",
-    "subtitle": "Disponibilidade × Performance × Qualidade por equipamento",
-    "availability": "Disponib.",
-    "performance": "Performance",
-    "quality": "Qualidade",
-    "since": "Desde",
-    "pieces": "Pecas",
-    "rejects": "Rejeitos",
-    "running": "Rodando",
-    "noEquipment": "Nenhum equipamento configurado",
-    "noEquipmentHint": "Va para Configuracao para adicionar equipamentos",
-    "tab": {
-      "overview": "Visao Geral",
-      "history": "Historico",
-      "configuration": "Configuracao"
-    },
-    "status": {
-      "running": "Rodando",
-      "stopped": "Parado",
-      "fault": "Falha",
-      "unknown": "Desconhecido"
-    },
-    "history": {
-      "today": "Hoje",
-      "7d": "7 dias",
-      "30d": "30 dias",
-      "noData": "Nenhum dado historico encontrado"
-    },
-    "config": {
-      "subtitle": "Configure equipamentos para calculo de OEE",
-      "new": "Novo Equipamento",
-      "edit": "Editar Equipamento",
-      "noDefinitions": "Nenhum equipamento configurado",
-      "optional": "Opcional",
-      "numeric": "Numerico",
-      "string": "Texto",
-      "col": {
-        "name": "Nome",
-        "statusTopic": "Topico de Status",
-        "format": "Formato",
-        "planned": "Horas/dia"
-      },
-      "section": {
-        "availability": "Disponibilidade",
-        "performance": "Performance",
-        "quality": "Qualidade"
-      },
-      "field": {
-        "name": "Nome do Equipamento",
-        "namePlaceholder": "Ex: CNC Linha 1",
-        "statusTopic": "Topico de Status",
-        "format": "Formato do Payload",
-        "runningValue": "Valor = Rodando",
-        "plannedHours": "Horas Planejadas por Dia",
-        "countTopic": "Topico de Contagem de Pecas",
-        "idealCycle": "Ciclo Ideal",
-        "rejectTopic": "Topico de Rejeitos",
-        "enabled": "Habilitado"
-      }
-    }
-  },
-  "rules": {
-    "pageTitle": "Regras de Automacao",
-    "pageSubtitle": "Execute acoes automaticamente baseado em condicoes dos seus topicos",
-    "title": "Regras",
-    "history": "Historico",
-    "newRule": "Nova Regra",
-    "editRule": "Editar Regra",
-    "name": "Nome da Regra",
-    "description": "Descricao",
-    "logic": "Logica",
-    "throttle": "Throttle",
-    "enabled": "Habilitada",
-    "conditions": "condicoes",
-    "actions": "acoes",
-    "addCondition": "Adicionar condicao",
-    "addAction": "Adicionar acao",
-    "topic": "Topico",
-    "operator": "Operador",
-    "value": "Valor",
-    "triggered": "disparada",
-    "lastTrigger": "ultimo disparo",
-    "viewHistory": "Ver historico",
-    "empty": "Nenhuma regra cadastrada. Crie a primeira!",
-    "noExecutions": "Nenhuma execucao registrada ainda",
-    "selectRule": "Selecione uma regra para ver o historico",
-    "executionHistory": "Execucoes da regra"
   },
   "roles": {
     "admin": "Administrador",
