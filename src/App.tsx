@@ -1,12 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, PlantModel, DataModelsPage, AlertsPage, ProcessDashboard } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
 import { editionPages } from './config/edition';
+
+// Lazy-loaded heavy pages
+const PlantModel = lazy(() => import('./pages/PlantModel').then(m => ({ default: m.PlantModel })));
+const ProcessDashboard = lazy(() => import('./pages/ProcessDashboard').then(m => ({ default: m.ProcessDashboard })));
 
 // Create a client
 const queryClient = new QueryClient({
@@ -75,7 +79,7 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
-            <Route path="neo4j" element={<EditionRoute path="/neo4j"><PlantModel /></EditionRoute>} />
+            <Route path="neo4j" element={<EditionRoute path="/neo4j"><Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense></EditionRoute>} />
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
             <Route path="modbus" element={<EditionRoute path="/modbus"><ModbusPage /></EditionRoute>} />
@@ -84,7 +88,7 @@ function App() {
 
             <Route path="data-models" element={<DataModelsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
-            <Route path="process" element={<ProcessDashboard />} />
+            <Route path="process" element={<Suspense fallback={<div>Loading...</div>}><ProcessDashboard /></Suspense>} />
             <Route path="configuration" element={<Configuration />} />
             <Route
               path="connections"
