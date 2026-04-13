@@ -12,3 +12,4 @@ export { EthernetIpPage } from './EthernetIpPage';
 export { DataModelsPage } from './DataModelsPage';
 export { AlertsPage } from './AlertsPage';
 export { ProcessDashboard } from './ProcessDashboard';
+export { LicensesPage } from './LicensesPage';

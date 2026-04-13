@@ -3,7 +3,7 @@ export type EditionMode = 'standard' | 'edge';
 export const editionPages: Record<EditionMode, string[]> = {
   standard: [
     '/', '/data-models', '/neo4j', '/explorer', '/configuration',
-    '/connections', '/users', '/alerts', '/process',
+    '/connections', '/users', '/alerts', '/process', '/licenses',
   ],
   edge: [
     '/', '/data-models', '/explorer', '/configuration',

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { LicenseBanner } from './LicenseBanner';
 import { useUIStore } from '../../hooks/useStore';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +10,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
+      <LicenseBanner />
       <Sidebar />
 
       {/* Mobile overlay when sidebar is open */}

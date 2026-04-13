@@ -457,3 +457,30 @@ export interface SmProfile {
   attributeCount?: number;
 }
 
+// License Types
+export interface License {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  plan: 'demo' | 'starter' | 'professional' | 'enterprise';
+  edition: string;
+  maxDevices: number;
+  features: Record<string, unknown>;
+  issuedAt: string;
+  expiresAt: string;
+  revoked: boolean;
+  createdAt: string;
+}
+
+export interface LicenseStatus {
+  valid: boolean;
+  plan: string;
+  customer?: string;
+  expiresAt?: string;
+  daysRemaining?: number;
+  trial: boolean;
+  trialDaysRemaining?: number;
+  features: Record<string, boolean | number>;
+  limits: Record<string, number>;
+}
+

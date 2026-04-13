@@ -832,6 +832,19 @@ export const dashboardsApi = {
   getShared: async (token: string) => { const { data } = await apiClient.get(`/dashboards/shared/${token}`); return data.data; },
 };
 
+// ===========================================
+// Licenses API
+// ===========================================
+
+export const licensesApi = {
+  getAll: async () => { const { data } = await apiClient.get('/licenses'); return data.data; },
+  create: async (body: any) => { const { data } = await apiClient.post('/licenses', body); return data.data; },
+  getById: async (id: string) => { const { data } = await apiClient.get(`/licenses/${id}`); return data.data; },
+  revoke: async (id: string) => { await apiClient.delete(`/licenses/${id}`); },
+  download: async (id: string) => { const { data } = await apiClient.get(`/licenses/${id}/download`); return data; },
+  getStatus: async () => { const { data } = await apiClient.get('/license'); return data.data; },
+};
+
 export const dataModelsApi = {
   getAll: async () => {
     const { data } = await apiClient.get('/data-models');

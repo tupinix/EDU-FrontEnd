@@ -11,6 +11,7 @@ import {
   Workflow,
   Bell,
   LayoutGrid,
+  Key,
   type LucideIcon,
 } from 'lucide-react';
 import { editionPages, type EditionMode } from '../../config/edition';
@@ -59,6 +60,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { path: '/connections', labelKey: 'sidebar.connections', icon: Cable, adminOnly: true },
       { path: '/users', labelKey: 'sidebar.users', icon: Users, adminOnly: true },
+      { path: '/licenses', labelKey: 'sidebar.licenses', icon: Key, adminOnly: true },
     ],
   },
 ];
