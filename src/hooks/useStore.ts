@@ -162,24 +162,12 @@ interface BrokerStore {
   getActiveBroker: () => BrokerConfig | undefined;
 }
 
-// Default HiveMQ broker from environment
-const defaultBroker: BrokerConfig = {
-  id: 'hivemq-default',
-  name: 'HiveMQ Cloud',
-  host: '0e0601f6d61d476eb6a6ca29998a64f6.s1.eu.hivemq.cloud',
-  port: 8883,
-  username: 'tupinix',
-  useTls: true,
-  topics: ['Tupinix/#', 'FCC/#'],
-  status: 'connected',
-  isDefault: true,
-};
-
+// Brokers are loaded from the backend API — no hardcoded defaults
 export const useBrokerStore = create<BrokerStore>()(
   persist(
     (set, get) => ({
-      brokers: [defaultBroker],
-      activeBrokerId: 'hivemq-default',
+      brokers: [],
+      activeBrokerId: null,
       addBroker: (broker) =>
         set((state) => ({
           brokers: [
