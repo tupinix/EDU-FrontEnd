@@ -843,6 +843,7 @@ export const licensesApi = {
   revoke: async (id: string) => { await apiClient.delete(`/licenses/${id}`); },
   download: async (id: string) => { const { data } = await apiClient.get(`/licenses/${id}/download`); return data; },
   getStatus: async () => { const { data } = await apiClient.get('/license'); return data.data; },
+  uploadKey: async (key: string) => { const { data } = await apiClient.post('/license/upload', { key }); return data.data; },
 };
 
 export const dataModelsApi = {
