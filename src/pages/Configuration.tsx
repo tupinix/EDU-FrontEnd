@@ -151,19 +151,19 @@ export function Configuration() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">MQTT Brokers</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">MQTT Brokers</h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">{t('configuration.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={fetchBrokers}
-            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-400 transition-colors"
           >
             <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             {t('configuration.newBroker')}
@@ -173,7 +173,7 @@ export function Configuration() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">
           <p className="text-[13px] text-red-500">{error}</p>
           <button onClick={() => setError(null)} className="text-red-300 hover:text-red-500 p-1">
             <X className="w-3.5 h-3.5" />
@@ -183,12 +183,12 @@ export function Configuration() {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-          <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-[14px] font-semibold text-gray-900">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">
               {editingId ? t('configuration.editBroker') : t('configuration.newBroker')}
             </h3>
-            <button onClick={handleCancel} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg">
+            <button onClick={handleCancel} className="p-1.5 text-gray-300 hover:text-gray-500 dark:hover:text-gray-400 rounded-lg">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -198,21 +198,21 @@ export function Configuration() {
                 <input
                   type="text" required placeholder="HiveMQ Cloud" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="input-clean"
                 />
               </FormField>
               <FormField label={`${t('configuration.host')} *`}>
                 <input
                   type="text" required placeholder="broker.hivemq.com" value={formData.host}
                   onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 font-mono bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="input-clean font-mono"
                 />
               </FormField>
               <FormField label={`${t('configuration.port')} *`}>
                 <input
                   type="number" required placeholder="1883" value={formData.port}
                   onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="input-clean"
                 />
               </FormField>
               <div className="flex items-end pb-1">
@@ -221,7 +221,7 @@ export function Configuration() {
                     onClick={() => setFormData({ ...formData, useTls: !formData.useTls })}
                     className={cn(
                       'w-9 h-5 rounded-full transition-colors relative cursor-pointer',
-                      formData.useTls ? 'bg-gray-900' : 'bg-gray-200'
+                      formData.useTls ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
                     )}
                   >
                     <div className={cn(
@@ -229,7 +229,7 @@ export function Configuration() {
                       formData.useTls ? 'translate-x-4' : 'translate-x-0.5'
                     )} />
                   </div>
-                  <span className="text-[13px] font-medium text-gray-700 flex items-center gap-1.5">
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-gray-400" />
                     TLS / SSL
                   </span>
@@ -239,14 +239,14 @@ export function Configuration() {
                 <input
                   type="text" placeholder={t('common.optional')} value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="input-clean"
                 />
               </FormField>
               <FormField label={t('common.password')}>
                 <input
                   type="password" placeholder={t('common.optional')} value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="input-clean"
                 />
               </FormField>
               <div className="sm:col-span-2">
@@ -254,22 +254,22 @@ export function Configuration() {
                   <input
                     type="text" placeholder="topic/#, other/topic/#" value={formData.topics}
                     onChange={(e) => setFormData({ ...formData, topics: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 font-mono bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                    className="input-clean font-mono"
                   />
                 </FormField>
                 <p className="text-[11px] text-gray-300 mt-1.5">{t('configuration.topicsHint')}</p>
               </div>
             </div>
-            <div className="flex justify-end gap-2.5 pt-5 mt-5 border-t border-gray-100">
+            <div className="flex justify-end gap-2.5 pt-5 mt-5 border-t border-gray-100 dark:border-gray-800">
               <button
                 type="button" onClick={handleCancel}
-                className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-              >
+                className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+>
                 {t('common.cancel')}
               </button>
               <button
                 type="submit" disabled={actionLoading === 'submit'}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40"
               >
                 {actionLoading === 'submit' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {editingId ? t('configuration.saveChanges') : t('configuration.addBroker')}
@@ -280,9 +280,9 @@ export function Configuration() {
       )}
 
       {/* Brokers List */}
-      <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-        <div className="px-5 sm:px-6 py-4 border-b border-gray-100">
-          <h3 className="text-[13px] font-semibold text-gray-900">{t('configuration.configuredBrokers')}</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">{t('configuration.configuredBrokers')}</h3>
         </div>
 
         {brokers.length === 0 ? (
@@ -291,7 +291,7 @@ export function Configuration() {
             <p className="text-[12px] text-gray-300 mt-1">{t('configuration.noBrokersHint')}</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {brokers.map((broker) => {
               const isActive = broker.id === activeBrokerId;
               const isBusy = actionLoading === broker.id;
@@ -302,15 +302,15 @@ export function Configuration() {
                     <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', statusDot[broker.status])} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[14px] font-medium text-gray-900">{broker.name}</p>
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-gray-100">{broker.name}</p>
                         {broker.useTls && <Lock className="w-3 h-3 text-gray-300" />}
                         {isActive && (
-                          <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
                             Active
                           </span>
                         )}
                         {broker.isDefault && (
-                          <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0.5 rounded">
                             Default
                           </span>
                         )}
@@ -375,9 +375,9 @@ export function Configuration() {
       </div>
 
       {/* Tips */}
-      <div className="px-5 py-4 bg-gray-50 rounded-2xl">
+      <div className="px-5 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl">
         <p className="text-[12px] text-gray-400 leading-relaxed space-y-0.5">
-          <span className="font-medium text-gray-500">{t('configuration.aboutConnections')}</span>
+          <span className="font-medium text-gray-500 dark:text-gray-400">{t('configuration.aboutConnections')}</span>
           <br />
           {t('configuration.aboutTip1')} &middot; {t('configuration.aboutTip2')} &middot; {t('configuration.aboutTip3')}
         </p>
@@ -389,7 +389,7 @@ export function Configuration() {
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-[13px] font-medium text-gray-500">{label}</label>
+      <label className="block text-[13px] font-medium text-gray-500 dark:text-gray-400">{label}</label>
       {children}
     </div>
   );
@@ -406,8 +406,8 @@ function IconBtn({ onClick, disabled, title, danger, children }: {
       className={cn(
         'p-2 rounded-lg transition-colors disabled:opacity-30',
         danger
-          ? 'text-red-300 hover:text-red-500 hover:bg-red-50'
-          : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50'
+          ? 'text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+          : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-400'
       )}
     >
       {children}

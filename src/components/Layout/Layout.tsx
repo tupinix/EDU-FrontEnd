@@ -9,7 +9,7 @@ export function Layout() {
   const { sidebarCollapsed } = useUIStore();
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0f1117] transition-colors">
       <LicenseBanner />
       <Sidebar />
 

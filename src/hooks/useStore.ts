@@ -54,6 +54,8 @@ interface UIStore {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
   sidebarGroupsOpen: Record<string, boolean>;
   toggleSidebarGroup: (key: string) => void;
   selectedTopic: string | null;
@@ -69,6 +71,13 @@ export const useUIStore = create<UIStore>()(
       sidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      darkMode: false,
+      toggleDarkMode: () => set((state) => {
+        const next = !state.darkMode;
+        if (next) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        return { darkMode: next };
+      }),
       sidebarGroupsOpen: { protocols: true, monitoring: true, intelligence: true, system: true },
       toggleSidebarGroup: (key) =>
         set((state) => ({
@@ -97,7 +106,12 @@ export const useUIStore = create<UIStore>()(
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         sidebarGroupsOpen: state.sidebarGroupsOpen,
+        darkMode: state.darkMode,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.darkMode) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      },
     }
   )
 );

@@ -81,9 +81,9 @@ export function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-3.5 left-4 z-50 p-2 rounded-lg bg-white border border-gray-200 shadow-sm lg:hidden"
+        className="fixed top-3.5 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm lg:hidden"
       >
-        <Menu className="h-4 w-4 text-gray-600" />
+        <Menu className="h-4 w-4 text-gray-600 dark:text-gray-300" />
       </button>
 
       <aside

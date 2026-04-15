@@ -90,14 +90,14 @@ export function Users() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">{t('users.title')}</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{t('users.title')}</h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">{t('users.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button onClick={fetchUsers} disabled={isLoading} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+          <button onClick={fetchUsers} disabled={isLoading} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
           </button>
-          <button onClick={handleNew} className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors">
+          <button onClick={handleNew} className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
             <Plus className="w-3.5 h-3.5" />
             {t('users.newUser')}
           </button>
@@ -106,16 +106,16 @@ export function Users() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">
           <p className="text-[13px] text-red-500">{error}</p>
           <button onClick={() => setError('')} className="text-red-300 hover:text-red-500 p-1"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
       {/* Users list */}
-      <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
         {/* Desktop table header */}
-        <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_100px_100px_80px] px-6 py-3 border-b border-gray-100 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+        <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_100px_100px_80px] px-6 py-3 border-b border-gray-100 dark:border-gray-800 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
           <span>User</span>
           <span>Email</span>
           <span>Role</span>
@@ -132,7 +132,7 @@ export function Users() {
             <p className="text-[14px] text-gray-400">No users found</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {users.map((u) => (
               <div key={u.id} className="px-5 sm:px-6 py-4 flex flex-col sm:grid sm:grid-cols-[1fr_1fr_100px_100px_80px] sm:items-center gap-2 sm:gap-4">
                 {/* Name + avatar */}
@@ -143,7 +143,7 @@ export function Users() {
                   )}>
                     {u.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-[14px] font-medium text-gray-900 truncate">{u.name}</span>
+                  <span className="text-[14px] font-medium text-gray-900 dark:text-gray-100 truncate">{u.name}</span>
                 </div>
 
                 {/* Email */}
@@ -152,7 +152,7 @@ export function Users() {
                 {/* Role */}
                 <span className={cn(
                   'text-[11px] font-medium px-2 py-0.5 rounded w-fit',
-                  u.role === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+                  u.role === 'admin' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                 )}>
                   {u.role}
                 </span>
@@ -165,18 +165,18 @@ export function Users() {
                   {deletingId === u.id ? (
                     <>
                       <span className="text-[11px] text-red-400 mr-1">Delete?</span>
-                      <button onClick={() => handleDelete(u.id)} className="p-2 rounded-lg text-red-500 hover:bg-red-50"><Check className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => setDeletingId(null)} className="p-2 rounded-lg text-gray-300 hover:bg-gray-50"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleDelete(u.id)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Check className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDeletingId(null)} className="p-2 rounded-lg text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"><X className="w-3.5 h-3.5" /></button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => handleEdit(u)} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors" title="Edit">
+                      <button onClick={() => handleEdit(u)} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" title="Edit">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setDeletingId(u.id)}
                         disabled={u.id === user?.id}
-                        className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-20"
+                        className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-20"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -194,10 +194,10 @@ export function Users() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/20" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-md">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-md">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-gray-900">
+            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">
                 {editingUser ? t('users.editUser') : t('users.newUser')}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg">
@@ -207,17 +207,17 @@ export function Users() {
 
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               {formError && (
-                <div className="text-[13px] text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{formError}</div>
+                <div className="text-[13px] text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">{formError}</div>
               )}
 
               <FormField label={t('common.name')}>
                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Full name" required className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all" />
+                  placeholder="Full name" required className="w-full px-3.5 py-2.5 text-[14px] input-clean" />
               </FormField>
 
               <FormField label={t('common.email')}>
                 <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@example.com" required className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all" />
+                  placeholder="email@example.com" required className="w-full px-3.5 py-2.5 text-[14px] input-clean" />
               </FormField>
 
               <FormField label={`${t('common.password')}${editingUser ? ' (leave blank to keep)' : ''}`}>
@@ -226,7 +226,7 @@ export function Users() {
                     type={showPassword ? 'text' : 'password'} value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder={editingUser ? 'New password' : 'Password'} required={!editingUser}
-                    className="w-full px-3.5 py-2.5 pr-11 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                    className="w-full px-3.5 py-2.5 pr-11 text-[14px] input-clean"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-400" tabIndex={-1}>
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -243,8 +243,8 @@ export function Users() {
                       className={cn(
                         'flex-1 py-2.5 rounded-xl text-[13px] font-medium border transition-colors capitalize',
                         formData.role === role
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       )}
                     >
                       {role}
@@ -253,13 +253,13 @@ export function Users() {
                 </div>
               </FormField>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" onClick={() => setShowModal(false)} disabled={isSaving}
-                  className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                  className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   {t('common.cancel')}
                 </button>
                 <button type="submit" disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40">
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
                   {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   {editingUser ? 'Update' : 'Create'}
                 </button>

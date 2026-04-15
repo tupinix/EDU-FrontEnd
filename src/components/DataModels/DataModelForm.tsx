@@ -73,7 +73,7 @@ function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; le
         }}
         className={cn(
           'flex items-center gap-1 w-full text-left py-1 pr-2 rounded-md text-[11px] transition-colors cursor-pointer',
-          isSelected ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50',
+          isSelected ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
           node.hasValue && 'cursor-grab active:cursor-grabbing'
         )}
         style={{ paddingLeft: `${level * 12 + 6}px` }}
@@ -350,7 +350,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
@@ -359,7 +359,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
               type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="Enter model name..."
               autoFocus
-              className="text-[16px] font-semibold text-gray-900 bg-transparent outline-none placeholder:text-gray-300 border-b border-gray-200 focus:border-gray-400 transition-colors w-64 pb-0.5"
+              className="text-[16px] font-semibold text-gray-900 dark:text-gray-100 bg-transparent outline-none placeholder:text-gray-300 border-b border-gray-200 dark:border-gray-700 focus:border-gray-400 dark:focus:border-gray-500 transition-colors w-64 pb-0.5"
             />
           </div>
         </div>
@@ -368,7 +368,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
           <button
             onClick={handleSubmit}
             disabled={isPending || !name.trim() || !sourceTopic.trim() || !targetTopic.trim()}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30"
           >
             {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
             {isEditing ? 'Update' : 'Save'}
@@ -380,13 +380,13 @@ export function DataModelForm({ model, profile, onClose }: Props) {
       <div className="flex gap-4 flex-1 min-h-0">
 
         {/* LEFT — Mini Explorer */}
-        <div className="w-56 lg:w-64 bg-white rounded-2xl border border-gray-200/60 flex flex-col overflow-hidden shrink-0 hidden md:flex">
-          <div className="px-3 py-3 border-b border-gray-100">
+        <div className="w-56 lg:w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden md:flex">
+          <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Source Topic</p>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
               <input type="text" value={treeSearch} onChange={e => setTreeSearch(e.target.value)} placeholder="Search topics..."
-                className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-gray-50 border border-gray-100 rounded-lg outline-none placeholder:text-gray-300 focus:border-gray-200 transition-all" />
+                className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 transition-all" />
             </div>
           </div>
           <div className="flex-1 overflow-auto py-1 px-1">
@@ -399,9 +399,9 @@ export function DataModelForm({ model, profile, onClose }: Props) {
             )}
           </div>
           {sourceTopic && (
-            <div className="px-3 py-2 border-t border-gray-100">
+            <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800">
               <p className="text-[10px] text-gray-400">Selected:</p>
-              <p className="text-[11px] font-mono text-gray-700 truncate">{sourceTopic}</p>
+              <p className="text-[11px] font-mono text-gray-700 dark:text-gray-300 truncate">{sourceTopic}</p>
             </div>
           )}
         </div>
@@ -409,7 +409,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         {/* CENTER — Attributes */}
         <div className="flex-1 flex flex-col gap-4 overflow-auto min-w-0">
           {/* Source topic (mobile) */}
-          <div className="md:hidden bg-white rounded-2xl border border-gray-200/60 px-4 py-3">
+          <div className="md:hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-4 py-3">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Source Topic</p>
             <input type="text" value={sourceTopic} onChange={e => setSourceTopic(e.target.value)} placeholder="Select from tree or type..."
               className="input-clean font-mono text-[12px]" />
@@ -417,8 +417,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
 
           {/* Source Payload Fields */}
           {sourcePayload && payloadFields.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Source Payload</p>
                 <p className="text-[10px] text-gray-300 mt-0.5">Click a field to add it to the model</p>
               </div>
@@ -433,8 +433,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
                       className={cn(
                         'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition-colors',
                         alreadyAdded
-                          ? 'bg-emerald-50 text-emerald-600 cursor-default'
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 cursor-pointer'
+                          ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 cursor-default'
+                          : 'bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
                       )}
                     >
                       <span className="font-semibold">{field}</span>
@@ -447,8 +447,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
           )}
 
           {/* Attributes */}
-          <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden flex-1">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden flex-1">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Model Attributes</p>
                 <p className="text-[10px] text-gray-300 mt-0.5">Mapped fields + custom enrichment</p>
@@ -457,7 +457,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
                 <Plus className="w-3 h-3" /> Add field
               </button>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
               {attributes.length === 0 && (
                 <div
                   className={cn(
@@ -549,7 +549,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
           </div>
 
           {/* Target + Broker */}
-          <div className="bg-white rounded-2xl border border-gray-200/60 px-4 py-3 shrink-0">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-4 py-3 shrink-0">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Target</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
@@ -576,8 +576,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         </div>
 
         {/* RIGHT — Output Preview */}
-        <div className="w-64 lg:w-72 bg-white rounded-2xl border border-gray-200/60 flex flex-col overflow-hidden shrink-0 hidden lg:flex">
-          <div className="px-4 py-3 border-b border-gray-100">
+        <div className="w-64 lg:w-72 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden lg:flex">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Output Preview</p>
             <p className="text-[11px] font-mono text-gray-500 truncate mt-1">{targetTopic || '...'}</p>
           </div>

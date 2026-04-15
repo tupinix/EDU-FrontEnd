@@ -28,8 +28,8 @@ function TopicTreeItem({ node, level }: TopicTreeItemProps) {
         className={cn(
           'flex items-center gap-1.5 w-full text-left py-1.5 pr-3 rounded-lg text-[13px] transition-colors group',
           isSelected
-            ? 'bg-gray-900 text-white'
-            : 'text-gray-600 hover:bg-gray-50'
+            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
         )}
         style={{ paddingLeft: `${level * 16 + 10}px` }}
       >
@@ -46,7 +46,7 @@ function TopicTreeItem({ node, level }: TopicTreeItemProps) {
           'w-1.5 h-1.5 rounded-full shrink-0',
           node.hasValue
             ? isSelected ? 'bg-emerald-400' : 'bg-emerald-300'
-            : isSelected ? 'bg-white/20' : 'bg-gray-200'
+            : isSelected ? 'bg-white/20 dark:bg-gray-900/20' : 'bg-gray-200 dark:bg-gray-700'
         )} />
 
         <span className="truncate flex-1 font-mono">{node.name}</span>

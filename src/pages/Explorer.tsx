@@ -53,17 +53,17 @@ export function Explorer() {
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {t('explorer.title')}
           </h1>
           <p className="text-[13px] text-gray-400 mt-0.5">{t('explorer.subtitle')}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200/60 px-8 py-12 text-center">
-          <p className="text-[15px] font-medium text-gray-900 mb-1">{t('explorer.noBroker')}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-8 py-12 text-center">
+          <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 mb-1">{t('explorer.noBroker')}</p>
           <p className="text-[13px] text-gray-400 mb-5 max-w-md mx-auto">{t('explorer.noBrokerDesc')}</p>
           <Link
             to="/configuration"
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 hover:text-gray-600 transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             {t('dashboard.configureBrokers')}
             <ArrowRight className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export function Explorer() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 shrink-0">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {t('explorer.title')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
@@ -91,7 +91,7 @@ export function Explorer() {
         <button
           onClick={handleRefresh}
           disabled={isLoadingTree}
-          className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors self-start sm:self-auto"
+          className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors self-start sm:self-auto"
         >
           <RefreshCw className={cn('w-4 h-4', isLoadingTree && 'animate-spin')} />
         </button>
@@ -105,8 +105,8 @@ export function Explorer() {
             className={cn(
               'flex-1 py-2 text-[13px] font-medium rounded-l-lg border transition-colors',
               mobilePanel === 'tree'
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-500 border-gray-200'
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800'
             )}
           >
             Topics
@@ -116,8 +116,8 @@ export function Explorer() {
             className={cn(
               'flex-1 py-2 text-[13px] font-medium rounded-r-lg border border-l-0 transition-colors',
               mobilePanel === 'detail'
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-500 border-gray-200'
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800'
             )}
           >
             Details
@@ -129,13 +129,13 @@ export function Explorer() {
       <div className="flex gap-5 flex-1 min-h-0">
         {/* Left — Topic Tree */}
         <div className={cn(
-          'bg-white rounded-2xl border border-gray-200/60 flex flex-col overflow-hidden',
+          'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden',
           'w-full lg:w-[340px] lg:shrink-0',
           // Mobile: hide when detail panel is active
           selectedTopic && mobilePanel === 'detail' ? 'hidden lg:flex' : 'flex'
         )}>
           {/* Search */}
-          <div className="px-4 py-3 border-b border-gray-100">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
               <input
@@ -143,7 +143,7 @@ export function Explorer() {
                 placeholder={t('explorer.searchTopics')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 border border-gray-100 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100"
+                className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:border-gray-200 dark:focus:border-gray-600 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-100"
               />
             </div>
             <div className="flex items-center justify-between mt-2.5 text-[11px] text-gray-400">
@@ -189,7 +189,7 @@ export function Explorer() {
 
               {/* Detail card */}
               {isLoadingDetail ? (
-                <div className="bg-white rounded-2xl border border-gray-200/60 p-8 flex items-center justify-center">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-8 flex items-center justify-center">
                   <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
                 </div>
               ) : topicDetail ? (
@@ -213,12 +213,12 @@ export function Explorer() {
 
               {/* History */}
               {topicHistory && topicHistory.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden flex flex-col flex-1 min-h-0">
                   <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0"
+                    className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0"
                   >
-                    <span className="text-[13px] font-semibold text-gray-900">
+                    <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">
                       {t('explorer.history')}
                       <span className="text-gray-300 font-normal ml-1.5">{topicHistory.length}</span>
                     </span>
@@ -232,7 +232,7 @@ export function Explorer() {
                     <div className="flex-1 overflow-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="text-[11px] text-gray-400 border-b border-gray-50">
+                          <tr className="text-[11px] text-gray-400 border-b border-gray-50 dark:border-gray-800/50">
                             <th className="text-left font-medium px-5 py-2">{t('explorer.time')}</th>
                             <th className="text-left font-medium px-5 py-2">{t('explorer.value')}</th>
                             <th className="text-left font-medium px-5 py-2 w-16">{t('explorer.qos')}</th>
@@ -242,12 +242,12 @@ export function Explorer() {
                           {topicHistory.map((item, index) => (
                             <tr
                               key={`${item.receivedAt}-${index}`}
-                              className="border-b border-gray-50 last:border-0"
+                              className="border-b border-gray-50 dark:border-gray-800/50 last:border-0"
                             >
                               <td className="px-5 py-2 text-[12px] text-gray-400 tabular-nums">
                                 {new Date(item.receivedAt).toLocaleTimeString('pt-BR')}
                               </td>
-                              <td className="px-5 py-2 text-[12px] font-mono text-gray-700">
+                              <td className="px-5 py-2 text-[12px] font-mono text-gray-700 dark:text-gray-300">
                                 {formatValue(item.payload)}
                               </td>
                               <td className="px-5 py-2 text-[12px] text-gray-400">{item.qos}</td>
@@ -302,12 +302,12 @@ function TimeSeriesChart({ data, show, onToggle }: { data: { payload: unknown; r
   if (chartData.length < 2) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full px-5 py-3 border-b border-gray-100 flex items-center justify-between"
+        className="w-full px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between"
       >
-        <span className="text-[13px] font-semibold text-gray-900 flex items-center gap-2">
+        <span className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <BarChart3 className="w-3.5 h-3.5 text-gray-400" />
           Trend
           <span className="text-gray-300 font-normal">{chartData.length} pts</span>
@@ -341,8 +341,8 @@ function TimeSeriesChart({ data, show, onToggle }: { data: { payload: unknown; r
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'var(--color-tooltip-bg, #fff)',
+                  border: '1px solid var(--color-tooltip-border, #e5e7eb)',
                   borderRadius: '12px',
                   fontSize: '12px',
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',

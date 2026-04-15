@@ -13,15 +13,15 @@ interface TopicDetailProps {
 
 export function TopicDetail({ topic, detail, isLoading, onRefresh }: TopicDetailProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-        <p className="text-[13px] font-mono text-gray-900 font-medium truncate">{topic}</p>
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+        <p className="text-[13px] font-mono text-gray-900 dark:text-gray-100 font-medium truncate">{topic}</p>
         {onRefresh && (
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shrink-0"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
           </button>
@@ -48,8 +48,8 @@ export function TopicDetail({ topic, detail, isLoading, onRefresh }: TopicDetail
       {/* Equipment */}
       {detail.metadata?.equipment ? (
         <div className="px-5 pb-4">
-          <div className="flex items-center gap-3 text-[12px] text-gray-400 bg-gray-50 rounded-lg px-4 py-2.5">
-            <span className="font-medium text-gray-500">Equipment</span>
+          <div className="flex items-center gap-3 text-[12px] text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-4 py-2.5">
+            <span className="font-medium text-gray-500 dark:text-gray-400">Equipment</span>
             <span>{String((detail.metadata.equipment as Record<string, unknown>).name ?? '')}</span>
             {(detail.metadata.equipment as Record<string, unknown>).type ? (
               <>
@@ -68,7 +68,7 @@ function MetaField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[11px] text-gray-400">{label}</p>
-      <p className="text-[13px] font-medium text-gray-700 mt-0.5">{value}</p>
+      <p className="text-[13px] font-medium text-gray-700 dark:text-gray-300 mt-0.5">{value}</p>
     </div>
   );
 }

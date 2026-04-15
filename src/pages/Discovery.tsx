@@ -74,7 +74,7 @@ export function Discovery() {
               <Network className="w-6 h-6 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('discovery.title')}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('discovery.title')}</h1>
               <p className="text-sm text-gray-500">{t('discovery.subtitle')}</p>
             </div>
           </div>
@@ -84,7 +84,7 @@ export function Discovery() {
         <div className="card h-[calc(100%-4rem)] flex items-center justify-center">
           <div className="text-center p-8">
             <ServerOff className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="font-semibold text-gray-700 mb-2">{t('discovery.noBroker')}</h3>
+            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('discovery.noBroker')}</h3>
             <p className="text-gray-500 mb-6 max-w-md">
               {t('discovery.noBrokerDesc')}
             </p>
@@ -100,7 +100,7 @@ export function Discovery() {
   return (
     <div className={clsx(
       'flex flex-col',
-      isFullscreen ? 'fixed inset-0 z-50 bg-gray-100 p-4' : 'h-[calc(100vh-8rem)]'
+      isFullscreen ? 'fixed inset-0 z-50 bg-gray-100 dark:bg-gray-950 p-4' : 'h-[calc(100vh-8rem)]'
     )}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -109,7 +109,7 @@ export function Discovery() {
             <Network className="w-6 h-6 text-primary-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('discovery.title')}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('discovery.title')}</h1>
             <p className="text-sm text-gray-500">
               {t('discovery.subtitle')}
               {activeBroker && (
@@ -199,7 +199,7 @@ export function Discovery() {
           <div className="card h-full flex items-center justify-center">
             <div className="text-center p-8">
               <Network className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="font-semibold text-gray-700 mb-2">{t('discovery.noData')}</h3>
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('discovery.noData')}</h3>
               <p className="text-gray-500 mb-4">
                 {t('discovery.noDataDesc')}
               </p>

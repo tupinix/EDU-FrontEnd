@@ -24,10 +24,10 @@ const DURATIONS = [
 ];
 
 const planColors: Record<string, string> = {
-  demo: 'bg-gray-100 text-gray-500',
-  starter: 'bg-blue-50 text-blue-600',
-  professional: 'bg-purple-50 text-purple-600',
-  enterprise: 'bg-amber-50 text-amber-700',
+  demo: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  starter: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  professional: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+  enterprise: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
 };
 
 export function LicensesPage() {
@@ -139,7 +139,7 @@ export function LicensesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {t('sidebar.licenses')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
@@ -150,13 +150,13 @@ export function LicensesPage() {
           <button
             onClick={fetchLicenses}
             disabled={isLoading}
-            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
           </button>
           <button
             onClick={handleNew}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Generate License
@@ -166,7 +166,7 @@ export function LicensesPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">
           <p className="text-[13px] text-red-500">{error}</p>
           <button
             onClick={() => setError('')}
@@ -178,9 +178,9 @@ export function LicensesPage() {
       )}
 
       {/* Licenses list */}
-      <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
         {/* Desktop table header */}
-        <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_90px_100px_80px_100px] px-6 py-3 border-b border-gray-100 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+        <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_90px_100px_80px_100px] px-6 py-3 border-b border-gray-100 dark:border-gray-800 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
           <span>Customer</span>
           <span>Email</span>
           <span>Plan</span>
@@ -202,7 +202,7 @@ export function LicensesPage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {licenses.map((license) => (
               <div
                 key={license.id}
@@ -210,10 +210,10 @@ export function LicensesPage() {
               >
                 {/* Customer name */}
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[12px] font-semibold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-[12px] font-semibold shrink-0">
                     {license.customerName.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-[14px] font-medium text-gray-900 truncate">
+                  <span className="text-[14px] font-medium text-gray-900 dark:text-gray-100 truncate">
                     {license.customerName}
                   </span>
                 </div>
@@ -246,15 +246,15 @@ export function LicensesPage() {
                 {/* Status */}
                 <div>
                   {license.revoked ? (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-red-50 text-red-500 w-fit">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 w-fit">
                       Revoked
                     </span>
                   ) : isExpired(license.expiresAt) ? (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-orange-50 text-orange-500 w-fit">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 w-fit">
                       Expired
                     </span>
                   ) : (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 w-fit">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
                       Active
                     </span>
                   )}
@@ -267,13 +267,13 @@ export function LicensesPage() {
                       <span className="text-[11px] text-red-400 mr-1">Revoke?</span>
                       <button
                         onClick={() => handleRevoke(license.id)}
-                        className="p-2 rounded-lg text-red-500 hover:bg-red-50"
+                        className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setRevokingId(null)}
-                        className="p-2 rounded-lg text-gray-300 hover:bg-gray-50"
+                        className="p-2 rounded-lg text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -282,7 +282,7 @@ export function LicensesPage() {
                     <>
                       <button
                         onClick={() => handleDownload(license.id, license.customerName)}
-                        className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+                        className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                         title="Download license key"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -290,7 +290,7 @@ export function LicensesPage() {
                       {!license.revoked && (
                         <button
                           onClick={() => setRevokingId(license.id)}
-                          className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Revoke license"
                         >
                           <Ban className="w-3.5 h-3.5" />
@@ -309,10 +309,10 @@ export function LicensesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/20" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-md">
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-md">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-gray-900">Generate License</h3>
+            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Generate License</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"
@@ -323,7 +323,7 @@ export function LicensesPage() {
 
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               {formError && (
-                <div className="text-[13px] text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <div className="text-[13px] text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">
                   {formError}
                 </div>
               )}
@@ -336,7 +336,7 @@ export function LicensesPage() {
                   onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                   placeholder="Company or customer name"
                   required
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="w-full px-3.5 py-2.5 text-[14px] input-clean"
                 />
               </FormField>
 
@@ -348,7 +348,7 @@ export function LicensesPage() {
                   onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
                   placeholder="customer@example.com"
                   required
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="w-full px-3.5 py-2.5 text-[14px] input-clean"
                 />
               </FormField>
 
@@ -363,8 +363,8 @@ export function LicensesPage() {
                       className={cn(
                         'py-2.5 rounded-xl text-[12px] font-medium border transition-colors capitalize',
                         formData.plan === plan
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       )}
                     >
                       {plan}
@@ -384,8 +384,8 @@ export function LicensesPage() {
                       className={cn(
                         'py-2.5 rounded-xl text-[13px] font-medium border transition-colors',
                         formData.durationDays === d.value
-                          ? 'bg-gray-900 text-white border-gray-900'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                          : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       )}
                     >
                       {d.label}
@@ -405,24 +405,24 @@ export function LicensesPage() {
                   min={1}
                   max={10000}
                   required
-                  className="w-full px-3.5 py-2.5 text-[14px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100 transition-all"
+                  className="w-full px-3.5 py-2.5 text-[14px] input-clean"
                 />
               </FormField>
 
               {/* Actions */}
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40"
                 >
                   {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   Generate

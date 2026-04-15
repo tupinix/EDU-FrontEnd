@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Wifi, WifiOff } from 'lucide-react';
+import { LogOut, Wifi, WifiOff, Sun, Moon } from 'lucide-react';
 import { useActiveBroker } from '../../hooks/useMetrics';
-import { useAuthStore } from '../../hooks/useStore';
+import { useAuthStore, useUIStore } from '../../hooks/useStore';
 import { useSocketStatus } from '../../hooks/useSocket';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -30,7 +30,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-12 bg-white/80 backdrop-blur-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 h-12 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors">
       {/* Left — Broker status */}
       <div className="flex items-center gap-2.5 pl-10 lg:pl-0">
         {activeBroker ? (
@@ -59,6 +59,9 @@ export function Header() {
 
       {/* Right */}
       <div className="flex items-center gap-3">
+        {/* Dark mode toggle */}
+        <DarkModeToggle />
+
         {/* WS indicator */}
         <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
           {wsConnected ? (
@@ -104,5 +107,18 @@ export function Header() {
         </DropdownMenu>
       </div>
     </header>
+  );
+}
+
+function DarkModeToggle() {
+  const { darkMode, toggleDarkMode } = useUIStore();
+  return (
+    <button
+      onClick={toggleDarkMode}
+      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-colors"
+      title={darkMode ? 'Light mode' : 'Dark mode'}
+    >
+      {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
   );
 }

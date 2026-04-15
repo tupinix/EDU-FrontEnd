@@ -54,17 +54,17 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-100 shrink-0">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">
               <Database className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-[15px] font-semibold text-gray-900">Select Template</h3>
+              <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Select Template</h3>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+              className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -76,7 +76,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search profiles..."
-              className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 border border-gray-100 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-200 transition-all"
+              className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 transition-all"
             />
           </div>
         </div>
@@ -84,7 +84,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
         {/* Body */}
         <div className="flex flex-1 min-h-0 flex-col md:flex-row">
           {/* Left: Profile list */}
-          <div className="md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-gray-100 overflow-auto shrink-0 max-h-[35vh] md:max-h-none">
+          <div className="md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 overflow-auto shrink-0 max-h-[35vh] md:max-h-none">
             {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
@@ -111,7 +111,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                 <div key={cat}>
                   <button
                     onClick={() => toggleCategory(cat)}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <ChevronRight
                       className={cn(
@@ -134,8 +134,8 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                           className={cn(
                             'w-full flex items-center gap-2.5 px-4 pl-9 py-2 text-left transition-colors',
                             isSelected
-                              ? 'bg-gray-900 text-white'
-                              : 'text-gray-600 hover:bg-gray-50'
+                              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                           )}
                         >
                           <span className="text-[12px] font-medium truncate flex-1">{profile.name}</span>
@@ -144,7 +144,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                               'text-[10px] px-1.5 py-0.5 rounded-full shrink-0',
                               isSelected
                                 ? 'bg-white/20 text-white/80'
-                                : 'bg-gray-100 text-gray-400'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
                             )}
                           >
                             {profile.attributeCount ?? profile.attributes?.length ?? 0}
@@ -182,8 +182,8 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                 {/* Profile header */}
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-[15px] font-semibold text-gray-900">{selectedProfile.name}</h4>
-                    <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full font-medium">
+                    <h4 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">{selectedProfile.name}</h4>
+                    <span className="text-[10px] px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full font-medium">
                       {selectedProfile.source}
                     </span>
                   </div>
@@ -198,8 +198,8 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                 </div>
 
                 {/* Attributes table */}
-                <div className="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                       Attributes ({selectedProfile.attributes?.length ?? 0})
                     </p>
@@ -209,7 +209,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                       <p className="text-[12px] text-gray-300">No attributes defined</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
                       {/* Table header */}
                       <div className="grid grid-cols-3 gap-3 px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                         <span>Name</span>
@@ -219,9 +219,9 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
                       {selectedProfile.attributes.map((attr, i) => (
                         <div
                           key={i}
-                          className="grid grid-cols-3 gap-3 px-4 py-2 text-[12px] hover:bg-white transition-colors"
+                          className="grid grid-cols-3 gap-3 px-4 py-2 text-[12px] hover:bg-white dark:hover:bg-gray-900 transition-colors"
                         >
-                          <span className="font-mono text-gray-700 truncate" title={attr.displayName || attr.name}>
+                          <span className="font-mono text-gray-700 dark:text-gray-300 truncate" title={attr.displayName || attr.name}>
                             {attr.name}
                           </span>
                           <span className="text-gray-500 truncate">{attr.dataType}</span>
@@ -237,10 +237,10 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0">
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-2 shrink-0">
           <button
             onClick={onClose}
-            className="px-3.5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 rounded-xl transition-colors"
+            className="px-3.5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl transition-colors"
           >
             Cancel
           </button>
@@ -249,7 +249,7 @@ export function TemplateBrowser({ onClose, onSelect }: Props) {
               if (selectedProfile) onSelect(selectedProfile);
             }}
             disabled={!selectedProfile}
-            className="px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Use This Profile
           </button>

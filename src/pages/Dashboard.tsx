@@ -34,11 +34,11 @@ export function Dashboard() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200/60 p-8 text-center">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-8 text-center">
         <p className="text-[14px] text-gray-400 mb-3">{t('dashboard.errorLoading')}</p>
         <button
           onClick={handleRefresh}
-          className="text-[13px] font-medium text-gray-900 hover:text-gray-600 transition-colors"
+          className="text-[13px] font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           {t('common.tryAgain')}
         </button>
@@ -51,7 +51,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {t('dashboard.title')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
@@ -69,7 +69,7 @@ export function Dashboard() {
           )}
           <button
             onClick={handleRefresh}
-            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-400 transition-colors"
             title={t('common.refresh')}
           >
             <RefreshCw className="h-4 w-4" />
@@ -79,14 +79,14 @@ export function Dashboard() {
 
       {/* No broker warning */}
       {!hasActiveBroker && (
-        <div className="bg-white rounded-2xl border border-gray-200/60 px-8 py-10 text-center">
-          <p className="text-[15px] font-medium text-gray-900 mb-1">{t('dashboard.noBroker')}</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-8 py-10 text-center">
+          <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 mb-1">{t('dashboard.noBroker')}</p>
           <p className="text-[13px] text-gray-400 mb-5 max-w-md mx-auto">
             {t('dashboard.noBrokerDesc')}
           </p>
           <Link
             to="/configuration"
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 hover:text-gray-600 transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             {t('dashboard.configureBrokers')}
             <ArrowRight className="w-3.5 h-3.5" />
@@ -115,19 +115,19 @@ export function Dashboard() {
 
         {/* Top Topics */}
         {hasActiveBroker && metrics && metrics.topTopics.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-[13px] font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">
                 {t('dashboard.topActiveTopics')}
               </h3>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
               {metrics.topTopics.slice(0, 8).map((topic, index) => (
                 <div key={topic.topic} className="px-6 py-3 flex items-center gap-4">
-                  <span className="text-[12px] text-gray-300 tabular-nums w-4 text-right">
+                  <span className="text-[12px] text-gray-300 dark:text-gray-600 tabular-nums w-4 text-right">
                     {index + 1}
                   </span>
-                  <p className="flex-1 min-w-0 text-[13px] font-mono text-gray-600 truncate">
+                  <p className="flex-1 min-w-0 text-[13px] font-mono text-gray-600 dark:text-gray-400 truncate">
                     {topic.topic}
                   </p>
                   <span className="text-[12px] text-gray-300 tabular-nums shrink-0">

@@ -20,18 +20,18 @@ export function PayloadViewer({ payload, maxHeight = '300px' }: PayloadViewerPro
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <h4 className="text-[13px] font-semibold text-gray-900">Payload</h4>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <h4 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">Payload</h4>
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex bg-gray-50 rounded-lg p-0.5">
+          <div className="flex bg-gray-50 dark:bg-gray-800/50 rounded-lg p-0.5">
             <button
               onClick={() => setViewMode('tree')}
               className={cn(
                 'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors',
                 viewMode === 'tree'
-                  ? 'bg-white text-gray-900 shadow-sm'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                   : 'text-gray-400 hover:text-gray-500'
               )}
             >
@@ -42,7 +42,7 @@ export function PayloadViewer({ payload, maxHeight = '300px' }: PayloadViewerPro
               className={cn(
                 'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors',
                 viewMode === 'raw'
-                  ? 'bg-white text-gray-900 shadow-sm'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
                   : 'text-gray-400 hover:text-gray-500'
               )}
             >
@@ -58,13 +58,13 @@ export function PayloadViewer({ payload, maxHeight = '300px' }: PayloadViewerPro
         </div>
       </div>
       <div
-        className="p-4 overflow-auto font-mono text-[12px] bg-gray-50/50"
+        className="p-4 overflow-auto font-mono text-[12px] bg-gray-50/50 dark:bg-gray-800/30"
         style={{ maxHeight }}
       >
         {viewMode === 'tree' ? (
           <JsonTree data={payload} />
         ) : (
-          <pre className="whitespace-pre-wrap break-words text-gray-600">{jsonString}</pre>
+          <pre className="whitespace-pre-wrap break-words text-gray-600 dark:text-gray-400">{jsonString}</pre>
         )}
       </div>
     </div>
@@ -91,7 +91,7 @@ function JsonTree({ data, depth = 0 }: { data: unknown; depth?: number }) {
           <span className="ml-1">Array[{data.length}]</span>
         </button>
         {expanded && (
-          <div className="ml-4 border-l border-gray-100 pl-3 mt-0.5">
+          <div className="ml-4 border-l border-gray-100 dark:border-gray-800 pl-3 mt-0.5">
             {data.map((item, i) => (
               <div key={i} className="py-0.5">
                 <span className="text-gray-300">{i}: </span>
@@ -117,7 +117,7 @@ function JsonTree({ data, depth = 0 }: { data: unknown; depth?: number }) {
           <span className="ml-1">{`{${entries.length}}`}</span>
         </button>
         {expanded && (
-          <div className="ml-4 border-l border-gray-100 pl-3 mt-0.5">
+          <div className="ml-4 border-l border-gray-100 dark:border-gray-800 pl-3 mt-0.5">
             {entries.map(([key, value]) => (
               <div key={key} className="py-0.5">
                 <span className="text-purple-600">"{key}"</span>

@@ -13,10 +13,10 @@ const statusDot: Record<string, string> = {
 };
 
 const statusBadge: Record<string, { bg: string; text: string; label: string }> = {
-  good: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Good' },
-  warn: { bg: 'bg-amber-50', text: 'text-amber-600', label: 'Warning' },
-  bad: { bg: 'bg-red-50', text: 'text-red-600', label: 'Bad' },
-  unknown: { bg: 'bg-gray-50', text: 'text-gray-400', label: 'Unknown' },
+  good: { bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400', label: 'Good' },
+  warn: { bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', label: 'Warning' },
+  bad: { bg: 'bg-red-50 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400', label: 'Bad' },
+  unknown: { bg: 'bg-gray-50 dark:bg-gray-800/50', text: 'text-gray-400', label: 'Unknown' },
 };
 
 function formatTime(iso?: string): string {
@@ -50,7 +50,7 @@ export function AlertList() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-[13px] text-red-500">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3 text-[13px] text-red-500">
         Failed to load alerts: {error.message}
       </div>
     );
@@ -62,19 +62,19 @@ export function AlertList() {
         <p className="text-[13px] text-gray-400">Tag-based alerting with Discord notifications</p>
         <button
           onClick={() => setEditing({ show: true, alert: null })}
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> New Alert
         </button>
       </div>
 
       {(!alerts || alerts.length === 0) ? (
-        <div className="bg-white rounded-2xl border border-gray-200/60 px-6 py-12 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
           <p className="text-[14px] text-gray-400">No alert rules configured</p>
           <p className="text-[12px] text-gray-300 mt-1">Create an alert to start monitoring your MQTT tags</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden divide-y divide-gray-50">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden divide-y divide-gray-50 dark:divide-gray-800/50">
           {alerts.map((alert: AlertRule) => {
             const status = alert.currentStatus || 'unknown';
             const badge = statusBadge[status] || statusBadge.unknown;
@@ -84,7 +84,7 @@ export function AlertList() {
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', statusDot[status] || 'bg-gray-300')} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-medium text-gray-900">{alert.name}</p>
+                    <p className="text-[14px] font-medium text-gray-900 dark:text-gray-100">{alert.name}</p>
                     <p className="text-[11px] text-gray-400 font-mono truncate mt-0.5">{alert.sourceTopic}</p>
                   </div>
                 </div>
@@ -113,13 +113,13 @@ export function AlertList() {
                   >
                     <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform', alert.enabled ? 'translate-x-4' : 'translate-x-0.5')} />
                   </div>
-                  <button onClick={() => setEditing({ show: true, alert })} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+                  <button onClick={() => setEditing({ show: true, alert })} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => { if (confirm('Delete this alert?')) deleteMutation.mutate(alert.id); }}
                     disabled={deleteMutation.isPending}
-                    className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

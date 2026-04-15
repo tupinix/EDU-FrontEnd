@@ -90,21 +90,21 @@ function buildGraph(data: HierarchyData, showTags: boolean): GData {
 function NodeDetail({ node, onClose }: { node: GNode; onClose: () => void }) {
   const c = TYPE_COLORS[node.type];
   return (
-    <div className="bg-white rounded-2xl border border-gray-200/60 shadow-lg p-4 min-w-[240px]">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-lg p-4 min-w-[240px]">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: c?.color }}>{c?.label}</span>
         <button onClick={onClose} className="text-gray-300 hover:text-gray-500"><X className="w-3.5 h-3.5" /></button>
       </div>
-      <p className="text-[15px] font-semibold text-gray-900 mb-2">{node.name}</p>
+      <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 mb-2">{node.name}</p>
       <div className="space-y-1.5 text-[12px]">
         {node.metadata && Object.entries(node.metadata).map(([k, v]) => (
           <div key={k} className="flex justify-between gap-4">
             <span className="text-gray-400 capitalize">{k}</span>
-            <span className="text-gray-700 font-mono truncate max-w-[160px]" title={v}>{v}</span>
+            <span className="text-gray-700 dark:text-gray-300 font-mono truncate max-w-[160px]" title={v}>{v}</span>
           </div>
         ))}
         {(node.tagCount ?? 0) > 0 && (
-          <div className="flex justify-between"><span className="text-gray-400">Tags</span><span className="text-gray-700">{node.tagCount}</span></div>
+          <div className="flex justify-between"><span className="text-gray-400">Tags</span><span className="text-gray-700 dark:text-gray-300">{node.tagCount}</span></div>
         )}
       </div>
     </div>
@@ -116,7 +116,7 @@ function NodeDetail({ node, onClose }: { node: GNode; onClose: () => void }) {
 function Legend() {
   const types = ['enterprise', 'site', 'area', 'line', 'equipment', 'tag'] as const;
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/60 p-3 shadow-sm">
+    <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-200/60 dark:border-gray-800 p-3 shadow-sm">
       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2">ISA-95</p>
       <div className="space-y-1.5">
         {types.map((t) => (
@@ -143,7 +143,7 @@ function TreePanel({ data, onSelect }: { data: HierarchyData; onSelect: (id: str
       <div>
         <button
           onClick={() => { if (has) toggle(id); onSelect(id); }}
-          className="w-full flex items-center gap-1.5 py-1 px-2 hover:bg-gray-50 rounded-lg text-[12px] transition-colors"
+          className="w-full flex items-center gap-1.5 py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg text-[12px] transition-colors"
           style={{ paddingLeft: `${depth * 14 + 8}px` }}
         >
           {has ? <ChevronRight className={cn('w-3 h-3 text-gray-300 transition-transform', open && 'rotate-90')} /> : <span className="w-3" />}
@@ -156,7 +156,7 @@ function TreePanel({ data, onSelect }: { data: HierarchyData; onSelect: (id: str
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/60 p-2 max-h-[55vh] overflow-y-auto w-56 shadow-sm">
+    <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl border border-gray-200/60 dark:border-gray-800 p-2 max-h-[55vh] overflow-y-auto w-56 shadow-sm">
       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5 px-2">Hierarchy</p>
       {data.enterprises.map(ent => (
         <Item key={ent.id} id={`ent:${ent.id}`} name={ent.name} type="enterprise" depth={0}>
@@ -220,19 +220,19 @@ function CypherConsole() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
       {/* Editor */}
-      <div className="border-b border-gray-100 px-5 py-4 shrink-0">
+      <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-4 shrink-0">
         <div className="flex gap-2.5">
           <textarea
             value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onKey}
             rows={3} spellCheck={false}
-            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-3.5 py-2.5 text-[13px] font-mono text-gray-700 resize-none outline-none placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100 transition-all"
+            className="flex-1 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-[13px] font-mono text-gray-700 dark:text-gray-300 resize-none outline-none placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 transition-all"
             placeholder="MATCH (n) RETURN n LIMIT 25"
           />
           <button
             onClick={run} disabled={running || !query.trim()}
-            className="px-4 bg-gray-900 text-white rounded-xl text-[13px] font-medium hover:bg-gray-800 transition-colors disabled:opacity-30 flex items-center gap-1.5 self-end"
+            className="px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30 flex items-center gap-1.5 self-end"
           >
             {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
             Run
@@ -242,7 +242,7 @@ function CypherConsole() {
           <span className="text-[11px] text-gray-300">Examples:</span>
           {EXAMPLES.map((eq) => (
             <button key={eq.label} onClick={() => setQuery(eq.query)}
-              className="text-[11px] px-2 py-0.5 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              className="text-[11px] px-2 py-0.5 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {eq.label}
             </button>
           ))}
@@ -253,7 +253,7 @@ function CypherConsole() {
       {/* Results */}
       <div className="flex-1 overflow-auto min-h-0">
         {error && (
-          <div className="m-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2">
+          <div className="m-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl flex items-start gap-2">
             <AlertCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
             <pre className="text-[12px] text-red-500 font-mono whitespace-pre-wrap break-all">{error}</pre>
           </div>
@@ -268,10 +268,10 @@ function CypherConsole() {
               ))}
             </div>
             {result.columns.length > 0 && result.rows.length > 0 ? (
-              <div className="overflow-x-auto rounded-xl border border-gray-100">
+              <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
                 <table className="w-full text-[12px]">
                   <thead>
-                    <tr className="bg-gray-50">
+                    <tr className="bg-gray-50 dark:bg-gray-800/50">
                       {result.columns.map(col => (
                         <th key={col} className="px-4 py-2.5 text-left font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{col}</th>
                       ))}
@@ -279,7 +279,7 @@ function CypherConsole() {
                   </thead>
                   <tbody>
                     {result.rows.map((row, i) => (
-                      <tr key={i} className="border-t border-gray-50">
+                      <tr key={i} className="border-t border-gray-50 dark:border-gray-800/50">
                         {result.columns.map(col => (
                           <td key={col} className="px-4 py-2 text-gray-600 font-mono whitespace-nowrap max-w-[400px] truncate" title={fmt(row[col])}>{fmt(row[col])}</td>
                         ))}
@@ -322,7 +322,7 @@ function Stats({ data }: { data: HierarchyData }) {
         <div key={i} className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.c.color }} />
           <span className="text-gray-400">{s.c.label}</span>
-          <span className="text-gray-700 font-semibold">{s.v}</span>
+          <span className="text-gray-700 dark:text-gray-300 font-semibold">{s.v}</span>
         </div>
       ))}
     </div>
@@ -407,18 +407,18 @@ export function PlantModel() {
   }, []);
 
   return (
-    <div className={cn('flex flex-col', fullscreen ? 'fixed inset-0 z-50 bg-[#fafafa] p-4' : 'h-[calc(100vh-6rem)]')}>
+    <div className={cn('flex flex-col', fullscreen ? 'fixed inset-0 z-50 bg-[#fafafa] dark:bg-gray-950 p-4' : 'h-[calc(100vh-6rem)]')}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 shrink-0">
         <div>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">Plant Model</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Plant Model</h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">Knowledge Graph — ISA-95</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Tabs */}
-          <div className="flex bg-gray-50 rounded-xl p-0.5 mr-1">
-            <button onClick={() => setTab('graph')} className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors', tab === 'graph' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-500')}>Graph</button>
-            <button onClick={() => setTab('cypher')} className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors', tab === 'cypher' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-500')}>Cypher</button>
+          <div className="flex bg-gray-50 dark:bg-gray-800/50 rounded-xl p-0.5 mr-1">
+            <button onClick={() => setTab('graph')} className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors', tab === 'graph' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-400 hover:text-gray-500')}>Graph</button>
+            <button onClick={() => setTab('cypher')} className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors', tab === 'cypher' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-400 hover:text-gray-500')}>Cypher</button>
           </div>
 
           {tab === 'graph' && (
@@ -426,13 +426,13 @@ export function PlantModel() {
               <Pill active={showTree} onClick={() => setShowTree(!showTree)}>Tree</Pill>
               <Pill active={showLegend} onClick={() => setShowLegend(!showLegend)}>Legend</Pill>
               <Pill active={showTags} onClick={() => setShowTags(!showTags)}>Tags</Pill>
-              <button onClick={toggleFs} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+              <button onClick={toggleFs} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 {fullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
             </>
           )}
 
-          <button onClick={() => refetch()} disabled={isLoading} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+          <button onClick={() => refetch()} disabled={isLoading} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
           </button>
         </div>
@@ -452,7 +452,7 @@ export function PlantModel() {
                 <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
               </div>
             ) : hierarchy && hierarchy.enterprises.length > 0 ? (
-              <div ref={containerRef} className="absolute inset-0 rounded-2xl overflow-hidden bg-[#0f1117] border border-gray-200/60">
+              <div ref={containerRef} className="absolute inset-0 rounded-2xl overflow-hidden bg-[#0f1117] border border-gray-200/60 dark:border-gray-800">
                 <ForceGraph2D
                   ref={graphRef} graphData={graphData} width={dims.width} height={dims.height}
                   nodeCanvasObject={drawNode} linkCanvasObject={drawLink} onNodeClick={onNodeClick}
@@ -498,7 +498,7 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       onClick={onClick}
       className={cn(
         'px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors',
-        active ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-400 hover:text-gray-500'
+        active ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-50 dark:bg-gray-800/50 text-gray-400 hover:text-gray-500'
       )}
     >
       {children}

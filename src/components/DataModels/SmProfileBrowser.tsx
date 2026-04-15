@@ -69,15 +69,15 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-100 shrink-0">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <FileCode className="w-4 h-4 text-blue-500" />
-              <h3 className="text-[15px] font-semibold text-gray-900">SM Profiles — OPC-UA / CESMII</h3>
+              <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">SM Profiles — OPC-UA / CESMII</h3>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -87,7 +87,7 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
         {/* Body */}
         <div className="flex flex-1 min-h-0 flex-col md:flex-row">
           {/* Left: Profile list */}
-          <div className="md:w-72 border-b md:border-b-0 md:border-r border-gray-100 overflow-auto shrink-0 max-h-[30vh] md:max-h-none">
+          <div className="md:w-72 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 overflow-auto shrink-0 max-h-[30vh] md:max-h-none">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
@@ -104,14 +104,14 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
                     onClick={() => setSelectedId(p.id)}
                     className={cn(
                       'w-full text-left px-4 py-3 transition-colors',
-                      selectedId === p.id ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'
+                      selectedId === p.id ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-[12px] font-medium truncate flex-1">{p.name}</span>
                       <span className={cn(
                         'text-[9px] px-1.5 py-0.5 rounded-full shrink-0',
-                        selectedId === p.id ? 'bg-white/20 text-white/80' : 'bg-blue-50 text-blue-500'
+                        selectedId === p.id ? 'bg-white/20 text-white/80 dark:bg-gray-900/20 dark:text-gray-900/80' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400'
                       )}>
                         {p.fieldCount}
                       </span>
@@ -147,8 +147,8 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
                 {/* Header */}
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-[15px] font-semibold text-gray-900">{selectedProfile.name}</h4>
-                    <span className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
+                    <h4 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">{selectedProfile.name}</h4>
+                    <span className="text-[10px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full font-medium">
                       {selectedProfile.source}
                     </span>
                   </div>
@@ -162,22 +162,22 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
                 </div>
 
                 {/* Fields table */}
-                <div className="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                       Fields ({selectedProfile.fields.length})
                     </p>
                   </div>
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     <div className="grid grid-cols-[1fr_100px_60px] gap-2 px-4 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                       <span>Name</span>
                       <span>Data Type</span>
                       <span>Required</span>
                     </div>
                     {selectedProfile.fields.map((field, i) => (
-                      <div key={i} className="grid grid-cols-[1fr_100px_60px] gap-2 px-4 py-2 text-[12px] hover:bg-white transition-colors">
+                      <div key={i} className="grid grid-cols-[1fr_100px_60px] gap-2 px-4 py-2 text-[12px] hover:bg-white dark:hover:bg-gray-900 transition-colors">
                         <div>
-                          <span className="font-mono text-gray-700">{field.name}</span>
+                          <span className="font-mono text-gray-700 dark:text-gray-300">{field.name}</span>
                           {field.description && (
                             <p className="text-[10px] text-gray-400 mt-0.5 truncate" title={field.description}>{field.description}</p>
                           )}
@@ -193,8 +193,8 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
 
                 {/* Example */}
                 {selectedProfile.fields.some(f => f.example !== undefined) && (
-                  <div className="mt-3 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-100">
+                  <div className="mt-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800">
                       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Example Payload</p>
                     </div>
                     <pre className="px-4 py-3 text-[11px] font-mono text-gray-600 overflow-x-auto">
@@ -211,12 +211,12 @@ export function SmProfileBrowser({ onClose, onSelect }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0">
-          <button onClick={onClose} className="px-3.5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 rounded-xl transition-colors">Cancel</button>
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-2 shrink-0">
+          <button onClick={onClose} className="px-3.5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl transition-colors">Cancel</button>
           <button
             onClick={handleUseProfile}
             disabled={!selectedProfile}
-            className="px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-30"
+            className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30"
           >
             Use This Profile
           </button>
