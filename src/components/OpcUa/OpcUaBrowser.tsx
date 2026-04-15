@@ -11,10 +11,10 @@ function isObject(n: BrowseNode) { return n.nodeClass === 'Object' || n.nodeClas
 function isVariable(n: BrowseNode) { return n.nodeClass === 'Variable' || n.nodeClass === '2'; }
 
 function nodeClassLabel(nc: string) {
-  if (nc === 'Object' || nc === '1') return { text: 'Object', cls: 'text-amber-600 bg-amber-50' };
-  if (nc === 'Variable' || nc === '2') return { text: 'Variable', cls: 'text-blue-600 bg-blue-50' };
-  if (nc === 'Method' || nc === '4') return { text: 'Method', cls: 'text-purple-600 bg-purple-50' };
-  return { text: nc, cls: 'text-gray-500 bg-gray-50' };
+  if (nc === 'Object' || nc === '1') return { text: 'Object', cls: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' };
+  if (nc === 'Variable' || nc === '2') return { text: 'Variable', cls: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' };
+  if (nc === 'Method' || nc === '4') return { text: 'Method', cls: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-400' };
+  return { text: nc, cls: 'text-gray-500 bg-gray-50 dark:bg-gray-800/50' };
 }
 
 function suggestTopic(path: { name: string }[], nodeName: string): string {
@@ -56,19 +56,19 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl border border-gray-200/60 shadow-xl w-full max-w-md">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-gray-900">Publish to MQTT</h3>
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-md">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Publish to MQTT</h3>
           <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
         </div>
         <div className="px-6 py-5 space-y-4">
           {/* Node info */}
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] text-gray-400">Tag</span>
               {(() => { const l = nodeClassLabel(node.nodeClass); return <span className={cn('text-[10px] font-mono px-1.5 py-0.5 rounded', l.cls)}>{l.text}</span>; })()}
             </div>
-            <p className="text-[13px] font-medium text-gray-900">{node.displayName}</p>
+            <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{node.displayName}</p>
             <p className="text-[11px] font-mono text-gray-400 break-all mt-0.5">{node.nodeId}</p>
           </div>
 
@@ -95,7 +95,7 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             <div className="flex gap-1.5">
               {[100, 500, 1000, 5000].map(ms => (
                 <button key={ms} type="button" onClick={() => setInterval(ms)}
-                  className={cn('flex-1 py-1.5 text-[11px] font-medium rounded-lg border transition-colors', interval === ms ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200')}>
+                  className={cn('flex-1 py-1.5 text-[11px] font-medium rounded-lg border transition-colors', interval === ms ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700')}>
                   {ms}ms
                 </button>
               ))}
@@ -107,12 +107,12 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
             {showPreview ? 'Hide payload preview' : 'Show payload preview'}
           </button>
-          {showPreview && <pre className="bg-gray-50 rounded-xl px-3.5 py-2.5 text-[11px] font-mono text-gray-600 overflow-x-auto">{preview}</pre>}
+          {showPreview && <pre className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3.5 py-2.5 text-[11px] font-mono text-gray-600 dark:text-gray-400 overflow-x-auto">{preview}</pre>}
         </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2.5">
-          <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2.5">
+          <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
           <button onClick={handleSave} disabled={!topic.trim() || !brokerId || createSub.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-30">
+            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30">
             <Rss className="w-3.5 h-3.5" /> {createSub.isPending ? 'Publishing...' : 'Publish'}
           </button>
         </div>
@@ -152,25 +152,25 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"><ArrowLeft className="w-4 h-4" /></button>
+        <button onClick={onBack} className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><ArrowLeft className="w-4 h-4" /></button>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-semibold text-gray-900">Browse — {connection.name}</h3>
+          <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Browse — {connection.name}</h3>
           <p className="text-[11px] text-gray-400 font-mono truncate">{connection.endpointUrl}</p>
         </div>
         <button onClick={() => setShowSubs(!showSubs)}
-          className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors', showSubs ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-400 hover:text-gray-500')}>
+          className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors', showSubs ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-50 dark:bg-gray-800/50 text-gray-400 hover:text-gray-500')}>
           <Rss className="w-3 h-3" /> Subscriptions ({allSubs.length})
         </button>
       </div>
 
       {/* Subscriptions panel */}
       {showSubs && (
-        <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100"><p className="text-[12px] font-semibold text-gray-900">Active subscriptions</p></div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800"><p className="text-[12px] font-semibold text-gray-900 dark:text-gray-100">Active subscriptions</p></div>
           {allSubs.length === 0 ? (
             <div className="px-5 py-4 text-[12px] text-gray-400">No subscriptions configured</div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
               {allSubs.map(sub => (
                 <div key={sub.id} className="px-5 py-2.5 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
@@ -200,7 +200,7 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter by name or NodeID..."
-          className="w-full pl-9 pr-8 py-2 text-[13px] bg-gray-50 border border-gray-100 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100 transition-all" />
+          className="w-full pl-9 pr-8 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl outline-none placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100 dark:focus:border-gray-700 dark:focus:ring-gray-800 transition-all" />
         {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"><X className="w-3 h-3" /></button>}
       </div>
 
@@ -210,21 +210,21 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
       ) : filteredNodes.length === 0 ? (
         <div className="text-center py-8 text-[13px] text-gray-300">{search ? `No nodes for "${search}"` : 'No nodes found'}</div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-          <div className="hidden sm:grid sm:grid-cols-[1fr_auto_auto] gap-2 px-5 py-2.5 bg-gray-50 border-b border-gray-100 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+          <div className="hidden sm:grid sm:grid-cols-[1fr_auto_auto] gap-2 px-5 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
             <span>Name / NodeID</span><span>Type</span><span className="w-8" />
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {filteredNodes.map((node, i) => {
               const subscribed = subscribedIds.has(node.nodeId);
               const ncl = nodeClassLabel(node.nodeClass);
               return (
-                <div key={i} className={cn('grid grid-cols-[1fr_auto_auto] gap-2 items-center px-5 py-2.5 hover:bg-gray-50/50 transition-colors', subscribed && 'bg-blue-50/30')}>
+                <div key={i} className={cn('grid grid-cols-[1fr_auto_auto] gap-2 items-center px-5 py-2.5 hover:bg-gray-50/50 dark:hover:bg-gray-800 transition-colors', subscribed && 'bg-blue-50/30 dark:bg-blue-900/10')}>
                   <button onClick={() => handleNav(node)} className={cn('flex items-center gap-2 text-left min-w-0', isObject(node) ? 'cursor-pointer' : 'cursor-default')}>
                     <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', isObject(node) ? 'bg-amber-400' : isVariable(node) ? 'bg-blue-400' : 'bg-gray-300')} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-[13px] font-medium text-gray-900 truncate">{node.displayName}</span>
+                        <span className="text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate">{node.displayName}</span>
                         {subscribed && <Rss className="w-2.5 h-2.5 text-blue-400 shrink-0" />}
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">

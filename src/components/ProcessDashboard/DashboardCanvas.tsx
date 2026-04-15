@@ -360,18 +360,18 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200/60 shrink-0 rounded-t-2xl">
+      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200/60 dark:border-gray-800 shrink-0 rounded-t-2xl">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+          <button onClick={onBack} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <input type="text" value={name} onChange={e => setName(e.target.value)}
-            className="text-[15px] font-semibold text-gray-900 bg-transparent outline-none border-b border-transparent hover:border-gray-200 focus:border-gray-400 transition-colors w-48 sm:w-64 pb-0.5" />
-          <span className="text-[10px] text-gray-300 bg-gray-50 px-1.5 py-0.5 rounded hidden sm:inline">
+            className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 bg-transparent outline-none border-b border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-400 dark:focus:border-gray-500 transition-colors w-48 sm:w-64 pb-0.5" />
+          <span className="text-[10px] text-gray-300 bg-gray-50 dark:bg-gray-800/50 px-1.5 py-0.5 rounded hidden sm:inline">
             {dashboard.canvasWidth}x{dashboard.canvasHeight}
           </span>
           {selectedIds.size > 0 && (
-            <span className="text-[10px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">
               {selectedIds.size} selected
             </span>
           )}
@@ -382,14 +382,14 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
             <div className="flex items-center gap-1.5 mr-1">
               <button
                 onClick={() => setGridEnabled(!gridEnabled)}
-                className={cn('p-1.5 rounded-lg transition-colors', gridEnabled ? 'bg-blue-50 text-blue-500' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50')}
+                className={cn('p-1.5 rounded-lg transition-colors', gridEnabled ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400' : 'text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800')}
                 title={gridEnabled ? `Grid ${gridSize}px (on)` : 'Grid snap (off)'}
               >
                 <Grid3X3 className="w-3.5 h-3.5" />
               </button>
               {gridEnabled && (
                 <select value={gridSize} onChange={e => setGridSize(Number(e.target.value))}
-                  className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded px-1 py-0.5 outline-none">
+                  className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded px-1 py-0.5 outline-none">
                   <option value={10}>10px</option>
                   <option value={20}>20px</option>
                   <option value={40}>40px</option>
@@ -402,11 +402,11 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
           {isEditMode && (
             <div className="flex items-center gap-0.5 mr-1">
               <button onClick={undo} disabled={!canUndo}
-                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-20" title="Undo (Ctrl+Z)">
+                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-20" title="Undo (Ctrl+Z)">
                 <Undo2 className="w-3.5 h-3.5" />
               </button>
               <button onClick={redo} disabled={!canRedo}
-                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-20" title="Redo (Ctrl+Shift+Z)">
+                className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-20" title="Redo (Ctrl+Shift+Z)">
                 <Redo2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -417,18 +417,18 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
             <span>Ctrl+C/V</span>
             <span>Del</span>
           </div>
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
             <button onClick={() => setIsEditMode(true)}
-              className={cn('flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium rounded-md transition-colors', isEditMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400')}>
+              className={cn('flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium rounded-md transition-colors', isEditMode ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-400')}>
               <Pencil className="w-3 h-3" /> Edit
             </button>
             <button onClick={() => { setIsEditMode(false); setSelectedIds(new Set()); setSnapGuides([]); }}
-              className={cn('flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium rounded-md transition-colors', !isEditMode ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400')}>
+              className={cn('flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium rounded-md transition-colors', !isEditMode ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-400')}>
               <Eye className="w-3 h-3" /> View
             </button>
           </div>
           <button onClick={handleSave} disabled={updateMutation.isPending}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50">
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50">
             {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
             Save
           </button>

@@ -19,9 +19,9 @@ export function OpcUaForm({ onClose }: OpcUaFormProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
-      <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="text-[14px] font-semibold text-gray-900">New OPC-UA Connection</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+      <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">New OPC-UA Connection</h3>
         <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
       </div>
       <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 space-y-4">
@@ -31,7 +31,7 @@ export function OpcUaForm({ onClose }: OpcUaFormProps) {
             <div className="flex gap-1.5">
               {SECURITY_MODES.map(m => (
                 <button key={m} type="button" onClick={() => setForm({ ...form, securityMode: m })}
-                  className={`flex-1 py-2 text-[11px] font-medium rounded-lg border transition-colors ${form.securityMode === m ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                  className={`flex-1 py-2 text-[11px] font-medium rounded-lg border transition-colors ${form.securityMode === m ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>
                   {m === 'None' ? 'None' : m === 'Sign' ? <span className="flex items-center justify-center gap-1"><Lock className="w-3 h-3" />Sign</span> : <span className="flex items-center justify-center gap-1"><Lock className="w-3 h-3" />Encrypt</span>}
                 </button>
               ))}
@@ -44,9 +44,9 @@ export function OpcUaForm({ onClose }: OpcUaFormProps) {
           <Field label="Password (optional)"><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
         </div>
         {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Failed to create connection'}</p>}
-        <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
-          <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-[13px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40">
+        <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+          <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
             {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
           </button>
         </div>

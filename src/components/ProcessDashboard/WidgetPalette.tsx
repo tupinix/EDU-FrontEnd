@@ -78,8 +78,8 @@ export function WidgetPalette() {
   };
 
   return (
-    <div className="w-52 shrink-0 bg-white border-r border-gray-200/60 overflow-auto">
-      <div className="px-4 py-3 border-b border-gray-100">
+    <div className="w-52 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200/60 dark:border-gray-800 overflow-auto">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Widgets</p>
       </div>
 
@@ -98,7 +98,7 @@ export function WidgetPalette() {
                     draggable
                     onDragStart={(e) => handleDragStart(e, item.type)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-grab active:cursor-grabbing
-                               text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors select-none"
+                               text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors select-none"
                   >
                     <Icon className="w-4 h-4 text-gray-400 shrink-0" />
                     <span className="text-[12px] font-medium">{item.label}</span>

@@ -34,8 +34,8 @@ function ConfigInput({ label, value, onChange, type = 'text', placeholder, min, 
         min={min}
         max={max}
         step={step}
-        className="w-full px-3 py-1.5 text-[12px] bg-gray-50 border border-gray-100 rounded-lg outline-none
-                   transition-all placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100"
+        className="w-full px-3 py-1.5 text-[12px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none
+                   transition-all placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200"
       />
     </div>
   );
@@ -53,8 +53,8 @@ function ConfigSelect({ label, value, onChange, options }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-1.5 text-[12px] bg-gray-50 border border-gray-100 rounded-lg outline-none
-                   transition-all focus:border-gray-200 focus:ring-2 focus:ring-gray-100"
+        className="w-full px-3 py-1.5 text-[12px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none
+                   transition-all focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -97,12 +97,12 @@ function TagBindingInput({ value, onChange }: { value: string; onChange: (val: s
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="Search topic..."
-          className="w-full pl-7 pr-3 py-1.5 text-[11px] font-mono bg-gray-50 border border-gray-100 rounded-lg outline-none
-                     transition-all placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100"
+          className="w-full pl-7 pr-3 py-1.5 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none
+                     transition-all placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200"
         />
       </div>
       {open && filtered.length > 0 && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
           {filtered.map((t) => (
             <button
               key={t}
@@ -113,8 +113,8 @@ function TagBindingInput({ value, onChange }: { value: string; onChange: (val: s
                 setOpen(false);
               }}
               className={cn(
-                'w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors hover:bg-gray-50',
-                t === value ? 'text-blue-600 bg-blue-50' : 'text-gray-600',
+                'w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors hover:bg-gray-50 dark:hover:bg-gray-800',
+                t === value ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-600 dark:text-gray-400',
               )}
             >
               {t}
@@ -220,8 +220,8 @@ function TypeSpecificConfig({ widget, onConfigChange }: { widget: DashboardWidge
               value={String(c.text ?? '')}
               onChange={(e) => onConfigChange({ text: e.target.value })}
               rows={3}
-              className="w-full px-3 py-1.5 text-[12px] bg-gray-50 border border-gray-100 rounded-lg outline-none
-                         transition-all placeholder:text-gray-300 focus:border-gray-200 focus:ring-2 focus:ring-gray-100 resize-none"
+              className="w-full px-3 py-1.5 text-[12px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none
+                         transition-all placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200 resize-none"
               placeholder="Enter text..."
             />
           </div>
@@ -312,11 +312,11 @@ export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Pro
   const needsBinding = !['text', 'rectangle', 'image'].includes(widget.type);
 
   return (
-    <div className="w-64 shrink-0 bg-white border-l border-gray-200/60 overflow-auto flex flex-col">
+    <div className="w-64 shrink-0 bg-white dark:bg-gray-900 border-l border-gray-200/60 dark:border-gray-800 overflow-auto flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Widget Config</p>
-        <p className="text-[13px] font-medium text-gray-900 mt-0.5">{WIDGET_TYPE_LABELS[widget.type] ?? widget.type}</p>
+        <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100 mt-0.5">{WIDGET_TYPE_LABELS[widget.type] ?? widget.type}</p>
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-3 space-y-4">
@@ -337,13 +337,13 @@ export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Pro
         )}
 
         {/* Separator */}
-        {needsBinding && <div className="border-t border-gray-100" />}
+        {needsBinding && <div className="border-t border-gray-100 dark:border-gray-800" />}
 
         {/* Type-specific */}
         <TypeSpecificConfig widget={widget} onConfigChange={onConfigChange} />
 
         {/* Separator */}
-        <div className="border-t border-gray-100" />
+        <div className="border-t border-gray-100 dark:border-gray-800" />
 
         {/* Position & Size */}
         <div>
@@ -368,11 +368,11 @@ export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Pro
       </div>
 
       {/* Delete button */}
-      <div className="px-4 py-3 border-t border-gray-100">
+      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
         <button
           onClick={onDelete}
           className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[12px] font-medium
-                     text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
+                     text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Delete Widget

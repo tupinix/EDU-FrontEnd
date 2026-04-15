@@ -43,7 +43,7 @@ function renderWidgetContent(widget: DashboardWidget, value: unknown) {
     case 'pipe': return <PipeWidget {...props} />;
     case 'sparkline': return <SparklineWidget {...props} />;
     case 'alarm': return <AlarmIndicatorWidget {...props} />;
-    default: return <div className="text-gray-500 text-xs p-2">Unknown widget: {widget.type}</div>;
+    default: return <div className="text-gray-500 dark:text-gray-400 text-xs p-2">Unknown widget: {widget.type}</div>;
   }
 }
 
