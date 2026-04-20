@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Loader2, ArrowLeft, Plus, Trash2, ChevronRight, Search, ArrowRight, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreateDataModel, useUpdateDataModel } from '../../hooks/useDataModels';
@@ -49,11 +49,10 @@ function getChildren(node: any): TopicNode[] {
   return [];
 }
 
-function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; level: number; onSelect: (path: string) => void; selected: string }) {
+function MiniTreeItem({ node, level }: { node: TopicNode; level: number }) {
   const [expanded, setExpanded] = useState(level < 1);
   const children = getChildren(node);
   const hasChildren = children.length > 0;
-  const isSelected = selected === node.fullPath;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!node.hasValue) return;
@@ -67,13 +66,10 @@ function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; le
       <div
         draggable={node.hasValue}
         onDragStart={handleDragStart}
-        onClick={() => {
-          if (hasChildren) setExpanded(!expanded);
-          if (node.hasValue) onSelect(node.fullPath);
-        }}
+        onClick={() => hasChildren && setExpanded(!expanded)}
         className={cn(
-          'flex items-center gap-1 w-full text-left py-1 pr-2 rounded-md text-[11px] transition-colors cursor-pointer',
-          isSelected ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
+          'flex items-center gap-1 w-full text-left py-1 pr-2 rounded-md text-[11px] transition-colors text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
+          hasChildren && 'cursor-pointer',
           node.hasValue && 'cursor-grab active:cursor-grabbing'
         )}
         style={{ paddingLeft: `${level * 12 + 6}px` }}
@@ -83,14 +79,11 @@ function MiniTreeItem({ node, level, onSelect, selected }: { node: TopicNode; le
           expanded && 'rotate-90',
           !hasChildren && 'invisible'
         )} />
-        <span className={cn('w-1 h-1 rounded-full shrink-0', node.hasValue ? isSelected ? 'bg-emerald-400' : 'bg-emerald-300' : 'bg-gray-200')} />
+        <span className={cn('w-1 h-1 rounded-full shrink-0', node.hasValue ? 'bg-emerald-300' : 'bg-gray-200')} />
         <span className="truncate font-mono">{node.name}</span>
-        {node.hasValue && (
-          <span className="ml-auto text-[9px] text-gray-300 shrink-0 hidden group-hover:inline">drag</span>
-        )}
       </div>
       {expanded && hasChildren && children.map((child) => (
-        <MiniTreeItem key={child.fullPath} node={child} level={level + 1} onSelect={onSelect} selected={selected} />
+        <MiniTreeItem key={child.fullPath} node={child} level={level + 1} />
       ))}
     </div>
   );
@@ -105,7 +98,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
 
   // Core state
   const [name, setName] = useState(model?.name ?? ((!model && profile) ? profile.name : ''));
-  const [sourceTopic, setSourceTopic] = useState(model?.sourceTopic ?? '');
+  // Kept for backwards compatibility with legacy models that persisted a source topic
+  const [sourceTopic] = useState(model?.sourceTopic ?? '');
   const [targetTopic, setTargetTopic] = useState(model?.targetTopic ?? '');
   const [sourceBrokerId, setSourceBrokerId] = useState(model?.sourceBrokerId ?? '');
   const [targetBrokerId, setTargetBrokerId] = useState(model?.targetBrokerId ?? '');
@@ -152,9 +146,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     return attrs;
   });
 
-  // Source payload preview
+  // Source payload (kept in state so existing models with fromPayload attributes can resolve values in the output preview)
   const [sourcePayload, setSourcePayload] = useState<Record<string, unknown> | null>(null);
-  const [payloadFields, setPayloadFields] = useState<string[]>([]);
 
   // Data fetching
   const { data: topicTree = [] } = useQuery<TopicNode[]>({
@@ -172,9 +165,9 @@ export function DataModelForm({ model, profile, onClose }: Props) {
   });
   const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
 
-  // Fetch payload when source topic changes
+  // Fetch payload when source topic changes (used by output preview for legacy fromPayload attributes)
   useEffect(() => {
-    if (!sourceTopic.trim()) { setSourcePayload(null); setPayloadFields([]); return; }
+    if (!sourceTopic.trim()) { setSourcePayload(null); return; }
     let cancelled = false;
     const fetch = async () => {
       try {
@@ -182,9 +175,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         if (!cancelled && data.data?.payload != null) {
           const p = typeof data.data.payload === 'object' ? data.data.payload : { value: data.data.payload };
           setSourcePayload(p);
-          setPayloadFields(Object.keys(p));
         }
-      } catch { if (!cancelled) { setSourcePayload(null); setPayloadFields([]); } }
+      } catch { if (!cancelled) setSourcePayload(null); }
     };
     const timer = setTimeout(fetch, 300);
     return () => { cancelled = true; clearTimeout(timer); };
@@ -203,12 +195,6 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     };
     return topicTree.map(filterNode).filter(Boolean) as TopicNode[];
   }, [topicTree, treeSearch]);
-
-  // Add a payload field as attribute
-  const addPayloadField = useCallback((field: string) => {
-    if (attributes.some(a => a.fromPayload && a.sourceField === field)) return;
-    setAttributes(prev => [...prev, { key: field, value: '', fromPayload: true, sourceField: field, transform: 'none' }]);
-  }, [attributes]);
 
   // Add a free-form attribute
   const addCustomAttribute = () => {
@@ -290,7 +276,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         }
       }
     }
-    out.source = sourceTopic || '...';
+    const firstLinked = attributes.find(a => a.valueMode === 'tag' && a.linkedTopic)?.linkedTopic;
+    out.source = sourceTopic || firstLinked || '...';
     out.quality = 'good';
     out.timestamp = new Date().toISOString();
     return out;
@@ -313,10 +300,14 @@ export function DataModelForm({ model, profile, onClose }: Props) {
       .filter(a => a.fromPayload && a.sourceField)
       .map(a => ({ source: a.sourceField!, target: a.key || a.sourceField!, transform: a.transform }));
 
+    // Derive source topic: use existing (when editing a legacy model) or the first tag-linked attribute
+    const firstLinkedTopic = attributes.find(a => a.valueMode === 'tag' && a.linkedTopic)?.linkedTopic ?? '';
+    const effectiveSourceTopic = sourceTopic.trim() || firstLinkedTopic;
+
     const extraFromAttrs = attributes.filter(a => !a.fromPayload && a.key);
     const body: Record<string, unknown> = {
       name: name.trim(),
-      sourceTopic: sourceTopic.trim(),
+      sourceTopic: effectiveSourceTopic,
       targetTopic: targetTopic.trim(),
       sourceBrokerId: sourceBrokerId || undefined,
       targetBrokerId: targetBrokerId || undefined,
@@ -367,7 +358,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
           <button onClick={onClose} className="px-3 py-1.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 rounded-lg transition-colors">Cancel</button>
           <button
             onClick={handleSubmit}
-            disabled={isPending || !name.trim() || !sourceTopic.trim() || !targetTopic.trim()}
+            disabled={isPending || !name.trim() || !targetTopic.trim() || !attributes.some(a => a.valueMode === 'tag' && a.linkedTopic)}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30"
           >
             {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
@@ -382,7 +373,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         {/* LEFT — Mini Explorer */}
         <div className="w-56 lg:w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden md:flex">
           <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Source Topic</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Topics</p>
+            <p className="text-[10px] text-gray-300 mb-2">Drag a tag onto an attribute to link it</p>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
               <input type="text" value={treeSearch} onChange={e => setTreeSearch(e.target.value)} placeholder="Search topics..."
@@ -394,70 +386,26 @@ export function DataModelForm({ model, profile, onClose }: Props) {
               <p className="text-[11px] text-gray-300 text-center py-4">No topics</p>
             ) : (
               filteredTree.map(node => (
-                <MiniTreeItem key={node.fullPath} node={node} level={0} onSelect={setSourceTopic} selected={sourceTopic} />
+                <MiniTreeItem key={node.fullPath} node={node} level={0} />
               ))
             )}
           </div>
-          {sourceTopic && (
-            <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800">
-              <p className="text-[10px] text-gray-400">Selected:</p>
-              <p className="text-[11px] font-mono text-gray-700 dark:text-gray-300 truncate">{sourceTopic}</p>
-            </div>
-          )}
         </div>
 
         {/* CENTER — Attributes */}
         <div className="flex-1 flex flex-col gap-4 overflow-auto min-w-0">
-          {/* Source topic (mobile) */}
-          <div className="md:hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Source Topic</p>
-            <input type="text" value={sourceTopic} onChange={e => setSourceTopic(e.target.value)} placeholder="Select from tree or type..."
-              className="input-clean font-mono text-[12px]" />
-          </div>
-
-          {/* Source Payload Fields */}
-          {sourcePayload && payloadFields.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Source Payload</p>
-                <p className="text-[10px] text-gray-300 mt-0.5">Click a field to add it to the model</p>
-              </div>
-              <div className="px-4 py-2 flex flex-wrap gap-1.5">
-                {payloadFields.map(field => {
-                  const alreadyAdded = attributes.some(a => a.fromPayload && a.sourceField === field);
-                  const val = sourcePayload[field];
-                  return (
-                    <button
-                      key={field} onClick={() => addPayloadField(field)}
-                      disabled={alreadyAdded}
-                      className={cn(
-                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition-colors',
-                        alreadyAdded
-                          ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 cursor-default'
-                          : 'bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
-                      )}
-                    >
-                      <span className="font-semibold">{field}</span>
-                      <span className="text-gray-400">: {typeof val === 'number' ? val : typeof val === 'string' ? `"${val.slice(0, 15)}"` : String(val)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Attributes */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden flex-1">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
               <div>
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Model Attributes</p>
-                <p className="text-[10px] text-gray-300 mt-0.5">Mapped fields + custom enrichment</p>
+                <p className="text-[10px] text-gray-300 mt-0.5">Add custom fields or drag tags from the tree</p>
               </div>
               <button onClick={addCustomAttribute} className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors">
                 <Plus className="w-3 h-3" /> Add field
               </button>
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800/50 flex-1 overflow-y-auto">
               {attributes.length === 0 && (
                 <div
                   className={cn(
