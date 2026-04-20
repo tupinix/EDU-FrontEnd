@@ -830,6 +830,34 @@ export const dashboardsApi = {
   share: async (id: string) => { const { data } = await apiClient.post(`/dashboards/${id}/share`); return data.data; },
   unshare: async (id: string) => { await apiClient.delete(`/dashboards/${id}/share`); },
   getShared: async (token: string) => { const { data } = await apiClient.get(`/dashboards/shared/${token}`); return data.data; },
+  listTemplates: async () => { const { data } = await apiClient.get('/dashboards/templates'); return data.data; },
+  getTemplate: async (id: string) => { const { data } = await apiClient.get(`/dashboards/templates/${id}`); return data.data; },
+};
+
+// ===========================================
+// Network Discovery API (Edge only)
+// ===========================================
+
+export const discoveryApi = {
+  startScan: async (cidr: string, protocols?: string[]) => {
+    const { data } = await apiClient.post('/discovery/scan', { cidr, protocols });
+    return data.data;
+  },
+  getScan: async (id: string) => {
+    const { data } = await apiClient.get(`/discovery/scan/${id}`);
+    return data.data;
+  },
+  cancelScan: async (id: string) => {
+    await apiClient.post(`/discovery/scan/${id}/cancel`);
+  },
+  getLatest: async () => {
+    const { data } = await apiClient.get('/discovery/latest');
+    return data.data;
+  },
+  getSuggestedCidr: async () => {
+    const { data } = await apiClient.get('/discovery/interfaces');
+    return data.data as { cidr: string; interface: string; ip: string } | null;
+  },
 };
 
 // ===========================================

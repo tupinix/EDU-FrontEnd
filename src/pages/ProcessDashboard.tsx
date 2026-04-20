@@ -2,13 +2,32 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { DashboardList, DashboardCanvas } from '../components/ProcessDashboard';
 import { useDashboard } from '../hooks/useDashboards';
+import type { ProcessDashboard as ProcessDashboardType } from '../types';
+
+type OpenState =
+  | { kind: 'existing'; id: string }
+  | { kind: 'draft'; draft: ProcessDashboardType }
+  | null;
 
 export function ProcessDashboard() {
-  const [openDashboardId, setOpenDashboardId] = useState<string | null>(null);
-  const { data: dashboard, isLoading } = useDashboard(openDashboardId);
+  const [open, setOpen] = useState<OpenState>(null);
+  const { data: dashboard, isLoading } = useDashboard(
+    open?.kind === 'existing' ? open.id : null,
+  );
 
-  // If a dashboard is selected, show the canvas
-  if (openDashboardId) {
+  if (open?.kind === 'draft') {
+    return (
+      <DashboardCanvas
+        key="draft"
+        dashboard={open.draft}
+        isDraft
+        onBack={() => setOpen(null)}
+        onCreated={(newId) => setOpen({ kind: 'existing', id: newId })}
+      />
+    );
+  }
+
+  if (open?.kind === 'existing') {
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
@@ -16,20 +35,23 @@ export function ProcessDashboard() {
         </div>
       );
     }
-
     if (dashboard) {
       return (
         <DashboardCanvas
           key={dashboard.id}
           dashboard={dashboard}
-          onBack={() => setOpenDashboardId(null)}
+          onBack={() => setOpen(null)}
         />
       );
     }
-
-    // Dashboard not found — fall back to list
-    setOpenDashboardId(null);
+    // Not found — fall back
+    setOpen(null);
   }
 
-  return <DashboardList onOpen={setOpenDashboardId} />;
+  return (
+    <DashboardList
+      onOpen={(id) => setOpen({ kind: 'existing', id })}
+      onOpenDraft={(draft) => setOpen({ kind: 'draft', draft })}
+    />
+  );
 }

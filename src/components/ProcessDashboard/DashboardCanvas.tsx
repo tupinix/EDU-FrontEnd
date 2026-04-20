@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { ArrowLeft, Save, Eye, Pencil, Loader2, Grid3X3, Undo2, Redo2 } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../../types';
-import { useUpdateDashboard } from '../../hooks/useDashboards';
+import { useUpdateDashboard, useCreateDashboard } from '../../hooks/useDashboards';
 import { useDashboardLiveValues } from '../../hooks/useDashboardLiveValues';
 import { WidgetPalette, getWidgetDefaults } from './WidgetPalette';
 import { WidgetConfig } from './WidgetConfig';
@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 interface Props {
   dashboard: ProcessDashboard;
   onBack: () => void;
+  isDraft?: boolean;
+  onCreated?: (id: string) => void;
 }
 
 function generateId(): string {
@@ -106,7 +108,7 @@ function computeSnapGuides(dragWidget: DashboardWidget, otherWidgets: DashboardW
 
 // ── Main Canvas ──────────────────────────────────────────────────────
 
-export function DashboardCanvas({ dashboard, onBack }: Props) {
+export function DashboardCanvas({ dashboard, onBack, isDraft, onCreated }: Props) {
   const [widgets, setWidgets] = useState<DashboardWidget[]>(dashboard.widgets || []);
   const [isEditMode, setIsEditMode] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -120,6 +122,7 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const updateMutation = useUpdateDashboard();
+  const createMutation = useCreateDashboard();
 
   // ── Undo/Redo ───────────────────────────────────────────────
   const historyRef = useRef<DashboardWidget[][]>([dashboard.widgets || []]);
@@ -352,7 +355,20 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
 
   const handleSave = async () => {
     try {
-      await updateMutation.mutateAsync({ id: dashboard.id, name: name.trim(), widgets });
+      if (isDraft) {
+        const created = await createMutation.mutateAsync({
+          name: name.trim() || 'Untitled Screen',
+          description: dashboard.description || '',
+          canvasWidth: dashboard.canvasWidth,
+          canvasHeight: dashboard.canvasHeight,
+          backgroundColor: dashboard.backgroundColor,
+          widgets,
+          isDefault: false,
+        });
+        if (created?.id && onCreated) onCreated(created.id);
+      } else {
+        await updateMutation.mutateAsync({ id: dashboard.id, name: name.trim(), widgets });
+      }
     } catch { /* handled */ }
   };
 
@@ -427,10 +443,10 @@ export function DashboardCanvas({ dashboard, onBack }: Props) {
               <Eye className="w-3 h-3" /> View
             </button>
           </div>
-          <button onClick={handleSave} disabled={updateMutation.isPending}
+          <button onClick={handleSave} disabled={updateMutation.isPending || createMutation.isPending}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50">
-            {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-            Save
+            {(updateMutation.isPending || createMutation.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            {isDraft ? 'Create' : 'Save'}
           </button>
         </div>
       </div>
