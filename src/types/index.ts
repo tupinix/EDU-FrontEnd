@@ -485,3 +485,40 @@ export interface LicenseStatus {
   limits: Record<string, number>;
 }
 
+// ===========================================
+// Network Discovery Types
+// ===========================================
+
+export type DiscoveryProtocolKind = 'modbus' | 'ethernetip' | 'opcua' | 'mqtt' | 's7' | 'http-hmi';
+
+export interface DiscoveredProtocol {
+  kind: DiscoveryProtocolKind;
+  port: number;
+  vendor?: string;
+  product?: string;
+  firmware?: string;
+  details?: Record<string, unknown>;
+  connectHint?: { protocol: string; fields: Record<string, unknown> };
+}
+
+export interface DiscoveredDevice {
+  id: string;
+  ip: string;
+  hostname?: string;
+  protocols: DiscoveredProtocol[];
+  discoveredAt: string;
+}
+
+export interface DiscoveryScan {
+  id: string;
+  cidr: string;
+  startedAt: string;
+  completedAt?: string;
+  status: 'running' | 'completed' | 'cancelled' | 'error';
+  hostsTotal: number;
+  hostsScanned: number;
+  devicesFound: number;
+  devices: DiscoveredDevice[];
+  error?: string;
+}
+

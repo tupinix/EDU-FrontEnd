@@ -2,11 +2,28 @@ import { useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { useCreateModbusConnection } from '../../hooks/useModbus';
 
-interface ModbusFormProps { onClose: () => void; }
+export interface ModbusFormInitial {
+  name?: string;
+  host?: string;
+  port?: number;
+  unitId?: number;
+  timeoutMs?: number;
+}
 
-export function ModbusForm({ onClose }: ModbusFormProps) {
+interface ModbusFormProps {
+  onClose: () => void;
+  initialValues?: ModbusFormInitial;
+}
+
+export function ModbusForm({ onClose, initialValues }: ModbusFormProps) {
   const createMutation = useCreateModbusConnection();
-  const [form, setForm] = useState({ name: '', host: '', port: 502, unitId: 1, timeoutMs: 5000 });
+  const [form, setForm] = useState({
+    name: initialValues?.name ?? (initialValues?.host ? `Modbus ${initialValues.host}` : ''),
+    host: initialValues?.host ?? '',
+    port: initialValues?.port ?? 502,
+    unitId: initialValues?.unitId ?? 1,
+    timeoutMs: initialValues?.timeoutMs ?? 5000,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

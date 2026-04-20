@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, NetworkScan } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
@@ -81,6 +81,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="neo4j" element={<EditionRoute path="/neo4j"><Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense></EditionRoute>} />
             <Route path="discovery" element={<Discovery />} />
+            <Route path="network-scan" element={<EditionRoute path="/network-scan"><NetworkScan /></EditionRoute>} />
             <Route path="explorer" element={<Explorer />} />
             <Route path="modbus" element={<EditionRoute path="/modbus"><ModbusPage /></EditionRoute>} />
             <Route path="opcua" element={<EditionRoute path="/opcua"><OpcUaPage /></EditionRoute>} />

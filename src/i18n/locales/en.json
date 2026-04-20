@@ -66,6 +66,7 @@
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
     "ethip": "EtherNet/IP",
+    "networkScan": "Network Scan",
     "connections": "Connections",
     "neo4j": "Neo4J",
     "dataModels": "Data Models",

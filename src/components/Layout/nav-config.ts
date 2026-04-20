@@ -5,6 +5,7 @@ import {
   CircuitBoard,
   Network,
   Radio,
+  Radar,
   Users,
   Cable,
   Factory,
@@ -40,6 +41,7 @@ export const standaloneItems: NavItem[] = [
   { path: '/data-models', labelKey: 'sidebar.dataModels', icon: Workflow },
   { path: '/alerts', labelKey: 'sidebar.alerts', icon: Bell },
   { path: '/process', labelKey: 'sidebar.process', icon: LayoutGrid },
+  { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
 ];
 
 export const navGroups: NavGroup[] = [

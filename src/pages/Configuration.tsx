@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Plus,
@@ -52,6 +53,7 @@ export function Configuration() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<BrokerFormData>(initialFormData);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [prefillBanner, setPrefillBanner] = useState<string>('');
 
   const fetchBrokers = useCallback(async () => {
     try {
@@ -69,6 +71,31 @@ export function Configuration() {
   useEffect(() => {
     fetchBrokers();
   }, [fetchBrokers]);
+
+  // Handle prefill from Network Scan → "Connect MQTT" button
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const prefill = (location.state as { prefill?: { host?: string; port?: number; useTls?: boolean } } | null)?.prefill;
+    if (!prefill || loading || !prefill.host) return;
+    const port = prefill.port ?? 1883;
+    const existing = brokers.find((b) => b.host === prefill.host && b.port === port);
+    if (existing) {
+      setPrefillBanner(`Broker for ${existing.host}:${existing.port} already exists`);
+      if (existing.id !== activeBrokerId) handleActivate(existing.id);
+    } else {
+      setFormData({
+        ...initialFormData,
+        name: `MQTT ${prefill.host}`,
+        host: prefill.host,
+        port,
+        useTls: prefill.useTls ?? port === 8883,
+      });
+      setShowForm(true);
+    }
+    navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, loading, brokers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +197,16 @@ export function Configuration() {
           </button>
         </div>
       </div>
+
+      {/* Prefill banner (from Network Scan) */}
+      {prefillBanner && (
+        <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl px-4 py-3">
+          <p className="text-[13px] text-blue-600 dark:text-blue-400">{prefillBanner}</p>
+          <button onClick={() => setPrefillBanner('')} className="text-blue-300 hover:text-blue-600 p-1">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Error */}
       {error && (

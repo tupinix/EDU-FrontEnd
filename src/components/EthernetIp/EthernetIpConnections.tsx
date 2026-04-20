@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Plug, Unplug, Trash2, Loader2, Activity, Tags } from 'lucide-react';
 import { useEthipConnections, useConnectEthip, useDisconnectEthip, useDeleteEthipConnection } from '../../hooks/useEthernetIp';
-import { EthernetIpForm } from './EthernetIpForm';
+import { EthernetIpForm, type EthernetIpFormInitial } from './EthernetIpForm';
 import { EthernetIpTagBrowser } from './EthernetIpTagBrowser';
 import { EthernetIpMonitor } from './EthernetIpMonitor';
 import { EthipConnection } from '../../types';
@@ -26,8 +27,26 @@ export function EthernetIpConnections() {
   const disconnectMutation = useDisconnectEthip();
   const deleteMutation = useDeleteEthipConnection();
   const [showForm, setShowForm] = useState(false);
+  const [formInitial, setFormInitial] = useState<EthernetIpFormInitial | undefined>();
   const [browsingConn, setBrowsingConn] = useState<EthipConnection | null>(null);
   const [monitoringConn, setMonitoringConn] = useState<EthipConnection | null>(null);
+  const [prefillBanner, setPrefillBanner] = useState<string>('');
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const prefill = (location.state as { prefill?: EthernetIpFormInitial } | null)?.prefill;
+    if (!prefill || !connections) return;
+    const existing = connections.find((c) => c.host === prefill.host && (c.slot ?? 0) === (prefill.slot ?? 0));
+    if (existing) {
+      setPrefillBanner(`Connection for ${existing.host} already exists`);
+      if (existing.status !== 'connected') connectMutation.mutate(existing.id);
+    } else {
+      setFormInitial(prefill);
+      setShowForm(true);
+    }
+    navigate(location.pathname, { replace: true });
+  }, [location.state, connections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 text-gray-300 animate-spin" /></div>;
   if (error) return <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3 text-[13px] text-red-500">Failed to load EtherNet/IP connections: {error.message}</div>;
@@ -43,7 +62,14 @@ export function EthernetIpConnections() {
         </button>
       </div>
 
-      {showForm && <EthernetIpForm onClose={() => setShowForm(false)} />}
+      {prefillBanner && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl px-4 py-3 text-[13px] text-blue-600 dark:text-blue-400 flex items-center justify-between">
+          <span>{prefillBanner}</span>
+          <button onClick={() => setPrefillBanner('')} className="text-blue-400 hover:text-blue-600">×</button>
+        </div>
+      )}
+
+      {showForm && <EthernetIpForm onClose={() => { setShowForm(false); setFormInitial(undefined); }} initialValues={formInitial} />}
 
       {(!connections || connections.length === 0) ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">

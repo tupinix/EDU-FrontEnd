@@ -2,13 +2,36 @@ import { useState } from 'react';
 import { X, Loader2, Lock } from 'lucide-react';
 import { useCreateOpcUaConnection } from '../../hooks/useOpcUa';
 
-interface OpcUaFormProps { onClose: () => void; }
+export interface OpcUaFormInitial {
+  name?: string;
+  endpointUrl?: string;
+  securityMode?: string;
+  username?: string;
+  password?: string;
+}
+
+interface OpcUaFormProps {
+  onClose: () => void;
+  initialValues?: OpcUaFormInitial;
+}
 
 const SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const;
 
-export function OpcUaForm({ onClose }: OpcUaFormProps) {
+function defaultName(endpoint: string | undefined): string {
+  if (!endpoint) return '';
+  const m = endpoint.match(/opc\.tcp:\/\/([^:/]+)/i);
+  return m ? `OPC-UA ${m[1]}` : '';
+}
+
+export function OpcUaForm({ onClose, initialValues }: OpcUaFormProps) {
   const createMutation = useCreateOpcUaConnection();
-  const [form, setForm] = useState({ name: '', endpointUrl: 'opc.tcp://', securityMode: 'None', username: '', password: '' });
+  const [form, setForm] = useState({
+    name: initialValues?.name ?? defaultName(initialValues?.endpointUrl),
+    endpointUrl: initialValues?.endpointUrl ?? 'opc.tcp://',
+    securityMode: initialValues?.securityMode ?? 'None',
+    username: initialValues?.username ?? '',
+    password: initialValues?.password ?? '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

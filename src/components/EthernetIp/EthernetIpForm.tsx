@@ -3,7 +3,17 @@ import { Loader2, X } from 'lucide-react';
 import { useCreateEthipConnection } from '../../hooks/useEthernetIp';
 import { cn } from '@/lib/utils';
 
-interface EthernetIpFormProps { onClose: () => void; }
+export interface EthernetIpFormInitial {
+  name?: string;
+  host?: string;
+  slot?: number;
+  plcType?: 'logix' | 'slc' | 'micro800';
+}
+
+interface EthernetIpFormProps {
+  onClose: () => void;
+  initialValues?: EthernetIpFormInitial;
+}
 
 const plcTypes = [
   { value: 'logix', label: 'Logix' },
@@ -11,9 +21,14 @@ const plcTypes = [
   { value: 'micro800', label: 'Micro800' },
 ] as const;
 
-export function EthernetIpForm({ onClose }: EthernetIpFormProps) {
+export function EthernetIpForm({ onClose, initialValues }: EthernetIpFormProps) {
   const createMutation = useCreateEthipConnection();
-  const [form, setForm] = useState({ name: '', host: '', slot: 0, plcType: 'logix' as 'logix' | 'slc' | 'micro800' });
+  const [form, setForm] = useState({
+    name: initialValues?.name ?? (initialValues?.host ? `EIP ${initialValues.host}` : ''),
+    host: initialValues?.host ?? '',
+    slot: initialValues?.slot ?? 0,
+    plcType: (initialValues?.plcType ?? 'logix') as 'logix' | 'slc' | 'micro800',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

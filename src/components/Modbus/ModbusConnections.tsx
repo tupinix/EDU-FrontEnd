@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Plug, Unplug, Trash2, Loader2, Activity, ListChecks } from 'lucide-react';
 import { useModbusConnections, useConnectModbus, useDisconnectModbus, useDeleteModbusConnection } from '../../hooks/useModbus';
-import { ModbusForm } from './ModbusForm';
+import { ModbusForm, type ModbusFormInitial } from './ModbusForm';
 import { ModbusRegisterConfig } from './ModbusRegisterConfig';
 import { ModbusMonitor } from './ModbusMonitor';
 import { ModbusConnection } from '../../types';
@@ -20,8 +21,28 @@ export function ModbusConnections() {
   const disconnectMutation = useDisconnectModbus();
   const deleteMutation = useDeleteModbusConnection();
   const [showForm, setShowForm] = useState(false);
+  const [formInitial, setFormInitial] = useState<ModbusFormInitial | undefined>();
   const [configuringConn, setConfiguringConn] = useState<ModbusConnection | null>(null);
   const [monitoringConn, setMonitoringConn] = useState<ModbusConnection | null>(null);
+  const [prefillBanner, setPrefillBanner] = useState<string>('');
+
+  // Handle prefill from Network Scan → "Connect" button
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const prefill = (location.state as { prefill?: ModbusFormInitial } | null)?.prefill;
+    if (!prefill || !connections) return;
+    const port = prefill.port ?? 502;
+    const existing = connections.find((c) => c.host === prefill.host && c.port === port);
+    if (existing) {
+      setPrefillBanner(`Connection for ${existing.host}:${existing.port} already exists`);
+      if (existing.status !== 'connected') connectMutation.mutate(existing.id);
+    } else {
+      setFormInitial(prefill);
+      setShowForm(true);
+    }
+    navigate(location.pathname, { replace: true });
+  }, [location.state, connections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 text-gray-300 animate-spin" /></div>;
   if (error) return <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3 text-[13px] text-red-500">Failed to load Modbus connections: {error.message}</div>;
@@ -37,7 +58,14 @@ export function ModbusConnections() {
         </button>
       </div>
 
-      {showForm && <ModbusForm onClose={() => setShowForm(false)} />}
+      {prefillBanner && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl px-4 py-3 text-[13px] text-blue-600 dark:text-blue-400 flex items-center justify-between">
+          <span>{prefillBanner}</span>
+          <button onClick={() => setPrefillBanner('')} className="text-blue-400 hover:text-blue-600">×</button>
+        </div>
+      )}
+
+      {showForm && <ModbusForm onClose={() => { setShowForm(false); setFormInitial(undefined); }} initialValues={formInitial} />}
 
       {(!connections || connections.length === 0) ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
