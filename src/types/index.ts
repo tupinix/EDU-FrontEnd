@@ -405,10 +405,11 @@ export interface AlertRule {
   enabled: boolean;
   sourceTopic: string;
   valueField: string;
-  goodMin?: number;
-  goodMax?: number;
-  warnMin?: number;
-  warnMax?: number;
+  // Thresholds support either a static number or a dynamic `{{topic.field}}` reference
+  goodMin?: number | string;
+  goodMax?: number | string;
+  warnMin?: number | string;
+  warnMax?: number | string;
   webhookUrl?: string;
   notifyDiscord: boolean;
   notifyWhatsapp: boolean;

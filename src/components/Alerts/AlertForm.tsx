@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Loader2, ArrowLeft, ChevronRight, Search, Save } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Loader2, ArrowLeft, ChevronRight, Search, Save, Link2, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreateAlert, useUpdateAlert } from '../../hooks/useAlerts';
 import { AlertRule, TopicNode } from '../../types';
@@ -79,6 +79,194 @@ function getStatusFromValue(
   return 'bad';
 }
 
+// ── Threshold (static number OR `{{topic.field}}` dynamic reference) ──
+
+const isDynamicRef = (s: string) => s.startsWith('{{') && s.endsWith('}}');
+
+function parseThreshold(s: string): number | undefined {
+  if (s === '' || isDynamicRef(s)) return undefined;
+  const n = parseFloat(s);
+  return isNaN(n) ? undefined : n;
+}
+
+function ThresholdInput({
+  value, onChange, color, topicTree, currentSourcePayload,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  color: 'emerald' | 'amber';
+  topicTree: TopicNode[];
+  currentSourcePayload: Record<string, unknown> | null;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTopic, setPickerTopic] = useState('');
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerFields, setPickerFields] = useState<string[]>([]);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  const isDynamic = isDynamicRef(value);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [pickerOpen]);
+
+  // Fetch payload fields when a topic is picked
+  useEffect(() => {
+    if (!pickerTopic) { setPickerFields([]); return; }
+    let cancelled = false;
+    apiClient.get(`/topics/${encodeURIComponent(pickerTopic)}/details`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const p = data.data?.payload;
+        if (p && typeof p === 'object') setPickerFields(Object.keys(p));
+        else setPickerFields(['value']);
+      })
+      .catch(() => { if (!cancelled) setPickerFields(['value']); });
+    return () => { cancelled = true; };
+  }, [pickerTopic]);
+
+  const filteredTree = useMemo(() => {
+    if (!pickerSearch.trim()) return topicTree;
+    const q = pickerSearch.toLowerCase();
+    const filter = (node: TopicNode): TopicNode | null => {
+      if (node.fullPath.toLowerCase().includes(q)) return node;
+      const children = getChildren(node);
+      const filtered = children.map(filter).filter(Boolean) as TopicNode[];
+      if (filtered.length > 0) return { ...node, children: filtered as unknown as TopicNode['children'] };
+      return null;
+    };
+    return topicTree.map(filter).filter(Boolean) as TopicNode[];
+  }, [topicTree, pickerSearch]);
+
+  const pickField = (field: string) => {
+    onChange(`{{${pickerTopic}.${field}}}`);
+    setPickerOpen(false);
+    setPickerTopic('');
+    setPickerFields([]);
+    setPickerSearch('');
+  };
+
+  const accentBorder = color === 'emerald' ? 'border-emerald-300 dark:border-emerald-700' : 'border-amber-300 dark:border-amber-700';
+  const accentBg = color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20';
+  const accentText = color === 'emerald' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300';
+
+  return (
+    <div className="relative flex-1" ref={pickerRef}>
+      {isDynamic ? (
+        <div className={cn('flex items-center gap-1.5 px-2 py-2 rounded-xl border font-mono text-[11px]', accentBorder, accentBg, accentText)}>
+          <Link2 className="w-3 h-3 shrink-0" />
+          <span className="truncate flex-1" title={value}>{value.slice(2, -2)}</span>
+          <button onClick={() => onChange('')} className="p-0.5 hover:bg-black/5 dark:hover:bg-white/10 rounded">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="--"
+            className="input-clean font-mono text-[12px] pr-8"
+          />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(!pickerOpen)}
+            title="Link to live tag value"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+          >
+            <Link2 className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {pickerOpen && (
+        <div className="absolute z-30 top-full left-0 mt-1 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+          <div className="px-2 py-1.5 border-b border-gray-100 dark:border-gray-800">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
+              <input
+                type="text"
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+                placeholder="Search topic..."
+                autoFocus
+                className="w-full pl-7 pr-2 py-1 text-[11px] bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-md outline-none"
+              />
+            </div>
+          </div>
+          <div className="max-h-64 overflow-auto">
+            {!pickerTopic ? (
+              <div className="py-1">
+                {filteredTree.length === 0 ? (
+                  <p className="text-center py-3 text-[11px] text-gray-300">No topics</p>
+                ) : (
+                  filteredTree.map((node) => (
+                    <PickerNode key={node.fullPath} node={node} level={0} onSelect={setPickerTopic} />
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="py-1">
+                <div className="px-2 py-1.5 flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-800">
+                  <button onClick={() => { setPickerTopic(''); setPickerFields([]); }}
+                    className="text-[11px] text-gray-400 hover:text-gray-600">
+                    ←
+                  </button>
+                  <span className="text-[11px] font-mono text-gray-600 dark:text-gray-300 truncate">{pickerTopic}</span>
+                </div>
+                <p className="text-[10px] text-gray-400 px-2 pt-2 pb-1">Choose field:</p>
+                {pickerFields.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => pickField(f)}
+                    className="w-full text-left px-3 py-1.5 text-[11px] font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Mark the unused prop to avoid TS warning (used in future extensions) */}
+      {currentSourcePayload === null && null}
+    </div>
+  );
+}
+
+function PickerNode({ node, level, onSelect }: { node: TopicNode; level: number; onSelect: (topic: string) => void }) {
+  const [expanded, setExpanded] = useState(level < 1);
+  const children = getChildren(node);
+  const hasChildren = children.length > 0;
+  return (
+    <div>
+      <div
+        onClick={() => { if (hasChildren) setExpanded(!expanded); if (node.hasValue) onSelect(node.fullPath); }}
+        className={cn(
+          'flex items-center gap-1 w-full text-left py-1 pr-2 rounded text-[11px] transition-colors cursor-pointer',
+          'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800',
+        )}
+        style={{ paddingLeft: `${level * 10 + 6}px` }}
+      >
+        <ChevronRight className={cn('w-2.5 h-2.5 shrink-0 transition-transform', expanded && 'rotate-90', !hasChildren && 'invisible')} />
+        <span className={cn('w-1 h-1 rounded-full shrink-0', node.hasValue ? 'bg-emerald-300' : 'bg-gray-200')} />
+        <span className="truncate font-mono">{node.name}</span>
+      </div>
+      {expanded && hasChildren && children.map((c) => (
+        <PickerNode key={c.fullPath} node={c} level={level + 1} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+}
+
 const statusColors: Record<string, { ring: string; bg: string; text: string }> = {
   good: { ring: 'ring-emerald-200', bg: 'bg-emerald-400', text: 'text-emerald-600' },
   warn: { ring: 'ring-amber-200', bg: 'bg-amber-400', text: 'text-amber-600' },
@@ -99,11 +287,12 @@ export function AlertForm({ alert, onClose }: Props) {
   const [valueField, setValueField] = useState(alert?.valueField ?? 'value');
   const [treeSearch, setTreeSearch] = useState('');
 
-  // Thresholds
-  const [goodMin, setGoodMin] = useState<string>(alert?.goodMin != null ? String(alert.goodMin) : '');
-  const [goodMax, setGoodMax] = useState<string>(alert?.goodMax != null ? String(alert.goodMax) : '');
-  const [warnMin, setWarnMin] = useState<string>(alert?.warnMin != null ? String(alert.warnMin) : '');
-  const [warnMax, setWarnMax] = useState<string>(alert?.warnMax != null ? String(alert.warnMax) : '');
+  // Thresholds (string: either numeric literal or `{{topic.field}}` ref)
+  const thresholdToString = (v: number | string | undefined | null): string => v == null ? '' : String(v);
+  const [goodMin, setGoodMin] = useState<string>(thresholdToString(alert?.goodMin));
+  const [goodMax, setGoodMax] = useState<string>(thresholdToString(alert?.goodMax));
+  const [warnMin, setWarnMin] = useState<string>(thresholdToString(alert?.warnMin));
+  const [warnMax, setWarnMax] = useState<string>(thresholdToString(alert?.warnMax));
 
   // Notification settings
   const [webhookUrl, setWebhookUrl] = useState(alert?.webhookUrl ?? '');
@@ -164,11 +353,12 @@ export function AlertForm({ alert, onClose }: Props) {
   }, [sourcePayload, valueField]);
 
   const previewStatus = useMemo(() => {
-    const gMin = goodMin !== '' ? parseFloat(goodMin) : undefined;
-    const gMax = goodMax !== '' ? parseFloat(goodMax) : undefined;
-    const wMin = warnMin !== '' ? parseFloat(warnMin) : undefined;
-    const wMax = warnMax !== '' ? parseFloat(warnMax) : undefined;
-    return getStatusFromValue(currentValue, gMin, gMax, wMin, wMax);
+    // Preview only works for static numbers; dynamic refs require runtime resolution
+    return getStatusFromValue(
+      currentValue,
+      parseThreshold(goodMin), parseThreshold(goodMax),
+      parseThreshold(warnMin), parseThreshold(warnMax),
+    );
   }, [currentValue, goodMin, goodMax, warnMin, warnMax]);
 
   const wouldNotify = useMemo(() => {
@@ -180,16 +370,24 @@ export function AlertForm({ alert, onClose }: Props) {
 
   const colors = statusColors[previewStatus] || statusColors.unknown;
 
+  // Serialize threshold: dynamic ref -> string, static number -> number, empty -> null
+  const serializeThreshold = (s: string): number | string | null => {
+    if (s === '') return null;
+    if (isDynamicRef(s)) return s;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  };
+
   // Submit
   const handleSubmit = async () => {
     const body: Record<string, unknown> = {
       name: name.trim(),
       sourceTopic: sourceTopic.trim(),
       valueField: valueField.trim() || 'value',
-      goodMin: goodMin !== '' ? parseFloat(goodMin) : null,
-      goodMax: goodMax !== '' ? parseFloat(goodMax) : null,
-      warnMin: warnMin !== '' ? parseFloat(warnMin) : null,
-      warnMax: warnMax !== '' ? parseFloat(warnMax) : null,
+      goodMin: serializeThreshold(goodMin),
+      goodMax: serializeThreshold(goodMax),
+      warnMin: serializeThreshold(warnMin),
+      warnMax: serializeThreshold(warnMax),
       webhookUrl: webhookUrl.trim() || null,
       notifyOnGood,
       notifyOnWarn,
@@ -338,43 +536,41 @@ export function AlertForm({ alert, onClose }: Props) {
             </div>
             <div className="px-4 py-3 space-y-4">
               {/* Good Range */}
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/30 px-4 py-3">
+              <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-900/10 px-4 py-3">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                  <span className="text-[12px] font-medium text-emerald-700">Good Range</span>
+                  <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400">Good Range</span>
+                  <span className="text-[10px] text-emerald-500/60 dark:text-emerald-400/50 ml-auto">Static or 🔗 live tag</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <label className="text-[10px] text-emerald-600/70 mb-1 block">Min</label>
-                    <input type="number" value={goodMin} onChange={e => setGoodMin(e.target.value)}
-                      placeholder="--" className="input-clean font-mono text-[12px]" />
+                    <ThresholdInput value={goodMin} onChange={setGoodMin} color="emerald" topicTree={topicTree} currentSourcePayload={sourcePayload} />
                   </div>
                   <span className="text-gray-300 text-[12px] mt-4">to</span>
                   <div className="flex-1">
                     <label className="text-[10px] text-emerald-600/70 mb-1 block">Max</label>
-                    <input type="number" value={goodMax} onChange={e => setGoodMax(e.target.value)}
-                      placeholder="--" className="input-clean font-mono text-[12px]" />
+                    <ThresholdInput value={goodMax} onChange={setGoodMax} color="emerald" topicTree={topicTree} currentSourcePayload={sourcePayload} />
                   </div>
                 </div>
               </div>
 
               {/* Warning Range */}
-              <div className="rounded-xl border border-amber-100 bg-amber-50/30 px-4 py-3">
+              <div className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 px-4 py-3">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                  <span className="text-[12px] font-medium text-amber-700">Warning Range</span>
+                  <span className="text-[12px] font-medium text-amber-700 dark:text-amber-400">Warning Range</span>
+                  <span className="text-[10px] text-amber-500/60 dark:text-amber-400/50 ml-auto">Static or 🔗 live tag</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <label className="text-[10px] text-amber-600/70 mb-1 block">Min</label>
-                    <input type="number" value={warnMin} onChange={e => setWarnMin(e.target.value)}
-                      placeholder="--" className="input-clean font-mono text-[12px]" />
+                    <ThresholdInput value={warnMin} onChange={setWarnMin} color="amber" topicTree={topicTree} currentSourcePayload={sourcePayload} />
                   </div>
                   <span className="text-gray-300 text-[12px] mt-4">to</span>
                   <div className="flex-1">
                     <label className="text-[10px] text-amber-600/70 mb-1 block">Max</label>
-                    <input type="number" value={warnMax} onChange={e => setWarnMax(e.target.value)}
-                      placeholder="--" className="input-clean font-mono text-[12px]" />
+                    <ThresholdInput value={warnMax} onChange={setWarnMax} color="amber" topicTree={topicTree} currentSourcePayload={sourcePayload} />
                   </div>
                 </div>
               </div>
@@ -388,8 +584,9 @@ export function AlertForm({ alert, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Visual Range Indicator */}
-              {warnMin !== '' && warnMax !== '' && goodMin !== '' && goodMax !== '' && (
+              {/* Visual Range Indicator — only show when all thresholds are static numbers */}
+              {warnMin !== '' && warnMax !== '' && goodMin !== '' && goodMax !== '' &&
+               !isDynamicRef(warnMin) && !isDynamicRef(warnMax) && !isDynamicRef(goodMin) && !isDynamicRef(goodMax) && (
                 <div className="px-1 pt-2">
                   <div className="flex h-3 rounded-full overflow-hidden">
                     <div className="bg-red-300 flex-1" />
