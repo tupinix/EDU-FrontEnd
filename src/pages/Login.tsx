@@ -181,15 +181,7 @@ export function Login() {
               )}
             </button>
           </form>
-
-          {/* Credentials hint */}
-          <div className="px-7 pb-6">
-            <div className="flex items-center justify-center gap-3 text-[12px] text-gray-300">
-              <span>{t('auth.defaultCredentials')}:</span>
-              <code className="text-gray-400 font-mono">admin@tupinix.com</code>
-              <span className="text-gray-200">/</span>
-              <code className="text-gray-400 font-mono">admin123</code>
-            </div>
+           <div className="px-7 pb-6">
           </div>
         </div>
 

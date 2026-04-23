@@ -13,7 +13,7 @@ export const editionPages: Record<EditionMode, string[]> = {
 
 export const editionLabels: Record<EditionMode, { title: string; description: string }> = {
   standard: {
-    title: 'EDU Standard',
+    title: 'EDU Cloud',
     description: 'Plataforma central de dados industriais',
   },
   edge: {
