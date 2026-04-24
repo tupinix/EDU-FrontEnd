@@ -96,16 +96,19 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex items-center h-14 px-4 border-b border-white/5">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
-              <span className="text-white font-bold text-sm">E</span>
-            </div>
+            <img
+              src="/edu-logo.png"
+              alt="EDU"
+              className={cn(
+                'shrink-0 select-none',
+                sidebarCollapsed ? 'h-7 w-auto' : 'h-8 w-auto'
+              )}
+              draggable={false}
+            />
             {!sidebarCollapsed && (
-              <div className="min-w-0">
-                <span className="font-semibold text-[14px] tracking-tight block">EDU Platform</span>
-                <span className="text-[10px] text-white/30 font-medium block -mt-0.5">
-                  {editionLabels[editionMode].title}
-                </span>
-              </div>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">
+                {editionLabels[editionMode].title.replace('EDU ', '')}
+              </span>
             )}
           </div>
         </div>

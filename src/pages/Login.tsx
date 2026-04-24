@@ -1,11 +1,11 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2, Server, Cpu } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
-import { editionLabels, type EditionMode } from '../config/edition';
+import { type EditionMode } from '../config/edition';
 
 export function Login() {
   const navigate = useNavigate();
@@ -72,9 +72,12 @@ export function Login() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-950 mb-5">
-            <span className="text-white font-bold text-lg tracking-tight">E</span>
-          </div>
+          <img
+            src="/edu-logo.png"
+            alt="EDU"
+            className="h-14 w-auto mx-auto mb-5 select-none"
+            draggable={false}
+          />
           <h1 className="text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">
             {t('auth.loginTitle')}
           </h1>
@@ -88,22 +91,28 @@ export function Login() {
           {/* Edition toggle */}
           <div className="px-7 pt-7 pb-1">
             <div className="flex rounded-xl bg-gray-50 p-1 gap-1">
-              {(Object.keys(editionLabels) as EditionMode[]).map((mode) => {
+              {([
+                { mode: 'standard' as EditionMode, img: '/edu-cloud.png', alt: 'Cloud' },
+                { mode: 'edge' as EditionMode, img: '/edu-edge.png', alt: 'Edge' },
+              ]).map(({ mode, img, alt }) => {
                 const isSelected = selectedEdition === mode;
-                const Icon = mode === 'standard' ? Server : Cpu;
                 return (
                   <button
                     key={mode}
                     type="button"
                     onClick={() => setSelectedEdition(mode)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center py-2.5 rounded-lg transition-all duration-200 ${
                       isSelected
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-400 hover:text-gray-500'
+                        ? 'bg-white shadow-sm'
+                        : 'opacity-40 hover:opacity-70'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {editionLabels[mode].title}
+                    <img
+                      src={img}
+                      alt={alt}
+                      className="h-5 w-auto select-none"
+                      draggable={false}
+                    />
                   </button>
                 );
               })}
