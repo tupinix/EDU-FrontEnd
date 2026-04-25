@@ -47,20 +47,20 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/network-scan',  labelKey: 'sidebar.networkScan', icon: Radar },
-      { path: '/configuration', labelKey: 'sidebar.mqtt',        icon: Radio },
-      { path: '/modbus',        labelKey: 'sidebar.modbus',      icon: Cpu },
-      { path: '/opcua',         labelKey: 'sidebar.opcua',       icon: Network },
-      { path: '/ethip',         labelKey: 'sidebar.ethip',       icon: CircuitBoard },
+      { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
+      { path: '/modbus',       labelKey: 'sidebar.modbus',      icon: Cpu },
+      { path: '/opcua',        labelKey: 'sidebar.opcua',       icon: Network },
+      { path: '/ethip',        labelKey: 'sidebar.ethip',       icon: CircuitBoard },
       // Neo4j is Cloud-only; the edition filter hides it on Edge automatically
-      { path: '/neo4j',         labelKey: 'sidebar.neo4j',       icon: Factory },
+      { path: '/neo4j',        labelKey: 'sidebar.neo4j',       icon: Factory },
     ],
   },
   {
     key: 'transformation',
     labelKey: 'sidebar.groups.transformation',
     items: [
-      { path: '/data-models', labelKey: 'sidebar.dataModels', icon: Workflow },
+      { path: '/configuration', labelKey: 'sidebar.mqtt',        icon: Radio },
+      { path: '/data-models',   labelKey: 'sidebar.dataModels', icon: Workflow },
     ],
   },
   {
