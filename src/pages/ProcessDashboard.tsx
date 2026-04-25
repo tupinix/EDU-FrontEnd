@@ -22,7 +22,8 @@ export function ProcessDashboard() {
         dashboard={open.draft}
         isDraft
         onBack={() => setOpen(null)}
-        onCreated={(newId) => setOpen({ kind: 'existing', id: newId })}
+        // On first save, return to the list so the user sees their new screen
+        onCreated={() => setOpen(null)}
       />
     );
   }

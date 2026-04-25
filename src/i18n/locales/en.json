@@ -57,7 +57,7 @@
     "invalidCredentials": "Invalid credentials"
   },
   "sidebar": {
-    "dashboard": "Dashboard",
+    "dashboard": "Home",
     "discovery": "Discovery",
     "explorer": "Explorer",
     "configuration": "Configuration",
@@ -71,7 +71,7 @@
     "neo4j": "Neo4J",
     "dataModels": "Data Models",
     "alerts": "Alerts",
-    "process": "Process",
+    "process": "Dashboards",
     "licenses": "Licenses",
     "collapse": "Collapse",
     "expand": "Expand menu",

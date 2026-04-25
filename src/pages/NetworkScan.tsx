@@ -76,7 +76,11 @@ export function NetworkScan() {
       const s = await discoveryApi.startScan(cidr);
       setScan(s);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scan failed');
+      // Surface backend's user-friendly message ("CIDR too large", etc.) instead of "Request failed with status code 400"
+      // axios attaches it on err.response.data.error
+      const axiosErr = err as { response?: { data?: { error?: string } }; message?: string };
+      const msg = axiosErr.response?.data?.error || axiosErr.message || 'Scan failed';
+      setError(msg);
     }
   };
 
