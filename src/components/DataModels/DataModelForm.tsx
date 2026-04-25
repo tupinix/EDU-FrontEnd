@@ -101,7 +101,9 @@ export function DataModelForm({ model, profile, onClose }: Props) {
   // Kept for backwards compatibility with legacy models that persisted a source topic
   const [sourceTopic] = useState(model?.sourceTopic ?? '');
   const [targetTopic, setTargetTopic] = useState(model?.targetTopic ?? '');
-  const [sourceBrokerId, setSourceBrokerId] = useState(model?.sourceBrokerId ?? '');
+  // Source broker is implicit (it's the broker that delivers the source topic);
+  // we keep the value for backwards compatibility with already-saved models
+  const sourceBrokerId = model?.sourceBrokerId ?? '';
   const [targetBrokerId, setTargetBrokerId] = useState(model?.targetBrokerId ?? '');
   const [treeSearch, setTreeSearch] = useState('');
 
@@ -505,17 +507,10 @@ export function DataModelForm({ model, profile, onClose }: Props) {
                 <input type="text" value={targetTopic} onChange={e => setTargetTopic(e.target.value)}
                   placeholder="enterprise/site/area/equipment/tag" className="input-clean font-mono text-[12px]" />
               </div>
-              <div className="w-full sm:w-48">
-                <label className="text-[11px] text-gray-400 mb-1 block">Broker</label>
+              <div className="w-full sm:w-56">
+                <label className="text-[11px] text-gray-400 mb-1 block">Broker Destination</label>
                 <select value={targetBrokerId} onChange={e => setTargetBrokerId(e.target.value)} className="input-clean text-[12px]">
                   <option value="">Default</option>
-                  {brokers.map(b => <option key={b.id} value={b.id}>{b.name}{b.status === 'connected' ? ' ✓' : ''}</option>)}
-                </select>
-              </div>
-              <div className="w-full sm:w-48">
-                <label className="text-[11px] text-gray-400 mb-1 block">Source Broker</label>
-                <select value={sourceBrokerId} onChange={e => setSourceBrokerId(e.target.value)} className="input-clean text-[12px]">
-                  <option value="">Any</option>
                   {brokers.map(b => <option key={b.id} value={b.id}>{b.name}{b.status === 'connected' ? ' ✓' : ''}</option>)}
                 </select>
               </div>
