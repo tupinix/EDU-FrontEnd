@@ -146,7 +146,7 @@ export function Configuration() {
 
   const handleConnect = async (id: string) => {
     setActionLoading(id);
-    try { await brokersApi.activate(id); await fetchBrokers(); await refetchAll(); }
+    try { await brokersApi.connect(id); await fetchBrokers(); await refetchAll(); }
     catch (err) { setError(err instanceof Error ? err.message : t('configuration.errorConnecting')); }
     finally { setActionLoading(null); }
   };
