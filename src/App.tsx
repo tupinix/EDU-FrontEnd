@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
@@ -23,22 +23,15 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected Route wrapper — sends unauthenticated visitors to the public landing
-function PrivateRoute({ children }: { children: ReactNode }) {
+// Root route: Landing for guests (only at "/"), app shell for authed users,
+// and a redirect to the landing for guests typing a deep URL directly.
+function RootRoute() {
   const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/welcome" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-// Welcome route — public landing; logged-in users skip straight to the app
-function WelcomeRoute() {
-  const { isAuthenticated } = useAuthStore();
-  if (isAuthenticated) return <Navigate to="/" replace />;
-  return <Landing />;
+  if (isAuthenticated) return <Layout />;
+  if (location.pathname === '/') return <Landing />;
+  return <Navigate to="/" replace />;
 }
 
 // Edition Route wrapper - redirects if page not allowed in current edition
@@ -73,19 +66,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
-          <Route path="/welcome" element={<WelcomeRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/view/:token" element={<SharedDashboard />} />
 
-          {/* Protected app shell */}
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Layout />
-              </PrivateRoute>
-            }
-          >
+          {/* Root — Landing for guests, app shell for authed users */}
+          <Route path="/" element={<RootRoute />}>
             <Route index element={<Dashboard />} />
             <Route path="neo4j" element={<EditionRoute path="/neo4j"><Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense></EditionRoute>} />
             <Route path="discovery" element={<Discovery />} />
