@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ArrowLeft, Plus, Trash2, Loader2, X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useModbusRegisters, useCreateModbusRegister, useDeleteModbusRegister } from '../../hooks/useModbus';
-import { ModbusConnection } from '../../types';
+import { ModbusConnection, BrokerConfig } from '../../types';
+import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
 
 interface Props { connection: ModbusConnection; onBack: () => void; }
@@ -21,9 +23,17 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...defaultForm });
 
+  const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
+    queryKey: ['brokers-list-modal'],
+    queryFn: async () => { const { data } = await apiClient.get('/brokers'); return data; },
+    staleTime: 15000,
+  });
+  const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await createMutation.mutateAsync({ ...form, brokerId: form.brokerId || undefined }); setShowForm(false); setForm({ ...defaultForm }); } catch { /* handled */ }
+    if (!form.brokerId) return;
+    try { await createMutation.mutateAsync({ ...form }); setShowForm(false); setForm({ ...defaultForm }); } catch { /* handled */ }
   };
 
   return (
@@ -53,8 +63,22 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Name *"><input type="text" required placeholder="Motor Temperature" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
-                <Field label="MQTT Topic *"><input type="text" required placeholder="Modbus/PLC1/Temperature" value={form.mqttTopic} onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })} className="input-clean font-mono" /></Field>
+                <Field label="MQTT Broker *">
+                  {brokers.length === 0 ? (
+                    <p className="text-[12px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
+                  ) : (
+                    <select value={form.brokerId} onChange={(e) => setForm({ ...form, brokerId: e.target.value })} className="input-clean" required>
+                      <option value="">— Select a broker —</option>
+                      {brokers.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} ({b.host}:{b.port}){b.status === 'connected' ? ' ✓' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
               </div>
+              <Field label="MQTT Topic *"><input type="text" required placeholder="Modbus/PLC1/Temperature" value={form.mqttTopic} onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })} className="input-clean font-mono" /></Field>
               <div className="grid grid-cols-4 gap-3">
                 <Field label="Register Type">
                   <select value={form.registerType} onChange={(e) => setForm({ ...form, registerType: e.target.value as typeof form.registerType })} className="input-clean">
@@ -69,14 +93,11 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
                 </Field>
                 <Field label="Scale"><input type="number" value={form.scaleFactor} onChange={(e) => setForm({ ...form, scaleFactor: parseFloat(e.target.value) || 1 })} step="0.001" className="input-clean" /></Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Polling (ms)"><input type="number" value={form.samplingIntervalMs} onChange={(e) => setForm({ ...form, samplingIntervalMs: parseInt(e.target.value) || 1000 })} min={100} max={60000} step={100} className="input-clean" /></Field>
-                <Field label="Broker ID (optional)"><input type="text" value={form.brokerId} onChange={(e) => setForm({ ...form, brokerId: e.target.value })} placeholder="Leave blank for active broker" className="input-clean" /></Field>
-              </div>
+              <Field label="Polling (ms)"><input type="number" value={form.samplingIntervalMs} onChange={(e) => setForm({ ...form, samplingIntervalMs: parseInt(e.target.value) || 1000 })} min={100} max={60000} step={100} className="input-clean" /></Field>
               {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Error'}</p>}
               <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
+                <button type="submit" disabled={createMutation.isPending || !form.brokerId} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
                   {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
                 </button>
               </div>
