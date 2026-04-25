@@ -76,9 +76,10 @@
     "collapse": "Collapse",
     "expand": "Expand menu",
     "groups": {
-      "protocols": "Protocols",
-      "monitoring": "Monitoring",
-      "intelligence": "Intelligence",
+      "connections": "Connections",
+      "transformation": "Transformation",
+      "analytics": "Analytics",
+      "aiTools": "AI Tools",
       "system": "System"
     }
   },
