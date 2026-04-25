@@ -360,7 +360,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
           <button onClick={onClose} className="px-3 py-1.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 rounded-lg transition-colors">Cancel</button>
           <button
             onClick={handleSubmit}
-            disabled={isPending || !name.trim() || !targetTopic.trim() || !attributes.some(a => a.valueMode === 'tag' && a.linkedTopic)}
+            disabled={isPending || !name.trim() || !targetTopic.trim()}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30"
           >
             {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
