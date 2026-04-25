@@ -84,6 +84,85 @@
       "system": "Sistema"
     }
   },
+  "landing": {
+    "nav": {
+      "features": "Recursos",
+      "editions": "Edições",
+      "pricing": "Preços",
+      "login": "Entrar"
+    },
+    "hero": {
+      "tag": "Espaço de Dados Unificado",
+      "title": "Conecte cada PLC. Modele cada tag.",
+      "subtitle": "A plataforma de Unified Namespace para sua planta — sem o peso enterprise. Pronta em minutos, com Cloud ou Edge.",
+      "ctaPrimary": "Começar grátis",
+      "ctaSecondary": "Ver demo"
+    },
+    "protocols": {
+      "title": "Conectividade industrial nativa"
+    },
+    "features": {
+      "title": "Tudo que sua operação precisa",
+      "subtitle": "De descoberta a dashboards SCADA, em uma única plataforma",
+      "scan": {
+        "title": "Network Scan",
+        "desc": "Encontre cada CLP da rede e conecte com 1 clique. Modbus, EtherNet/IP, OPC-UA, MQTT — descobertos em segundos."
+      },
+      "uns": {
+        "title": "Unified Namespace",
+        "desc": "Brokers, OPC-UA, Modbus, EtherNet/IP convergindo em um Namespace ISA-95. Sua planta toda em um único caminho de tópicos."
+      },
+      "models": {
+        "title": "Data Models",
+        "desc": "Transforme tags brutas em modelos limpos. Templates CESMII prontos, mapeamentos com referências dinâmicas {{topic.field}}."
+      },
+      "screens": {
+        "title": "Process Screens",
+        "desc": "Telas SCADA com canvas livre, 13 widgets, templates de Cooling Tower, Tank Farm e mais. Drag, drop, link de tags."
+      },
+      "alerts": {
+        "title": "Alertas inteligentes",
+        "desc": "Thresholds estáticos ou dinâmicos baseados em outros tags. Notificações em Discord e WhatsApp."
+      },
+      "ai": {
+        "title": "Pronta para IA",
+        "desc": "Servidor MCP integrado. Pergunte ao Claude sobre sua planta e receba dados ao vivo, sem código."
+      }
+    },
+    "editions": {
+      "title": "Cloud ou Edge. Você escolhe.",
+      "subtitle": "Mesma plataforma, deploy do jeito que faz sentido para você",
+      "cloud": {
+        "tag": "Hospedado por nós",
+        "items": [
+          "Pronta em segundos",
+          "Atualizações automáticas",
+          "ISA-95 + Neo4j inclusos",
+          "MQTT na nuvem (HiveMQ, AWS IoT, etc.)"
+        ]
+      },
+      "edge": {
+        "tag": "On-premises",
+        "items": [
+          "Roda na sua planta",
+          "Acesso direto aos dispositivos",
+          "Licença offline JWT",
+          "Network Scan da rede industrial"
+        ]
+      }
+    },
+    "cta": {
+      "title": "Coloque sua planta online em minutos.",
+      "subtitle": "Sem cartão de crédito. Sem implantação enterprise.",
+      "primary": "Começar agora",
+      "secondary": "Falar com a gente"
+    },
+    "footer": {
+      "tagline": "Espaço de Dados Unificado",
+      "rights": "Todos os direitos reservados.",
+      "made": "Feito no Brasil"
+    }
+  },
   "users": {
     "title": "Gerenciamento de Usuarios",
     "subtitle": "Administre os acessos a plataforma",

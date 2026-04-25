@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, NetworkScan } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, NetworkScan, Landing } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
@@ -23,15 +23,22 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected Route wrapper
+// Protected Route wrapper — sends unauthenticated visitors to the public landing
 function PrivateRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   return <>{children}</>;
+}
+
+// Welcome route — public landing; logged-in users skip straight to the app
+function WelcomeRoute() {
+  const { isAuthenticated } = useAuthStore();
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return <Landing />;
 }
 
 // Edition Route wrapper - redirects if page not allowed in current edition
@@ -65,11 +72,12 @@ function App() {
       <SocketProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public route */}
+          {/* Public routes */}
+          <Route path="/welcome" element={<WelcomeRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/view/:token" element={<SharedDashboard />} />
 
-          {/* Protected routes */}
+          {/* Protected app shell */}
           <Route
             path="/"
             element={

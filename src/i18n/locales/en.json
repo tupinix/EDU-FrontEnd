@@ -84,6 +84,85 @@
       "system": "System"
     }
   },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "editions": "Editions",
+      "pricing": "Pricing",
+      "login": "Sign in"
+    },
+    "hero": {
+      "tag": "Unified Namespace platform",
+      "title": "Connect every PLC. Model every tag.",
+      "subtitle": "A Unified Namespace for your plant — without the enterprise bloat. Up and running in minutes, on Cloud or Edge.",
+      "ctaPrimary": "Start free",
+      "ctaSecondary": "Watch demo"
+    },
+    "protocols": {
+      "title": "Native industrial connectivity"
+    },
+    "features": {
+      "title": "Everything your operation needs",
+      "subtitle": "From discovery to SCADA dashboards, on a single platform",
+      "scan": {
+        "title": "Network Scan",
+        "desc": "Find every PLC on the network and connect in 1 click. Modbus, EtherNet/IP, OPC-UA, MQTT — discovered in seconds."
+      },
+      "uns": {
+        "title": "Unified Namespace",
+        "desc": "Brokers, OPC-UA, Modbus, EtherNet/IP converging into an ISA-95 namespace. Your whole plant in a single topic path."
+      },
+      "models": {
+        "title": "Data Models",
+        "desc": "Turn raw tags into clean models. CESMII templates ready to use, mappings with dynamic {{topic.field}} references."
+      },
+      "screens": {
+        "title": "Process Screens",
+        "desc": "SCADA-style canvas with 13 widgets, templates for Cooling Tower, Tank Farm and more. Drag, drop, bind tags."
+      },
+      "alerts": {
+        "title": "Smart alerts",
+        "desc": "Static or dynamic thresholds based on other tags. Discord and WhatsApp notifications out of the box."
+      },
+      "ai": {
+        "title": "AI-ready",
+        "desc": "Built-in MCP server. Ask Claude about your plant and get live data, no code required."
+      }
+    },
+    "editions": {
+      "title": "Cloud or Edge. You decide.",
+      "subtitle": "Same platform, deployed the way that fits your reality",
+      "cloud": {
+        "tag": "Hosted by us",
+        "items": [
+          "Up in seconds",
+          "Automatic updates",
+          "ISA-95 + Neo4j included",
+          "Cloud MQTT (HiveMQ, AWS IoT, etc.)"
+        ]
+      },
+      "edge": {
+        "tag": "On-premises",
+        "items": [
+          "Runs in your plant",
+          "Direct device access",
+          "Offline JWT licensing",
+          "Industrial network scanner"
+        ]
+      }
+    },
+    "cta": {
+      "title": "Get your plant online in minutes.",
+      "subtitle": "No credit card. No enterprise rollout.",
+      "primary": "Start now",
+      "secondary": "Talk to us"
+    },
+    "footer": {
+      "tagline": "Unified Data Space",
+      "rights": "All rights reserved.",
+      "made": "Made in Brazil"
+    }
+  },
   "users": {
     "title": "User Management",
     "subtitle": "Manage platform access",
