@@ -196,7 +196,7 @@ export function Login() {
 
         {/* Footer */}
         <p className="text-center text-[12px] text-gray-300 mt-6 tracking-wide">
-          EDU Platform v1.0 &middot; Tupinix Engineering
+          EDU Platform v1.0
         </p>
       </div>
     </div>

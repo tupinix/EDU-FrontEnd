@@ -97,8 +97,8 @@ export function LicenseBanner() {
 
       <span className="text-[11px] opacity-70">
         or visit{' '}
-        <a href="https://edu.tupinix.com" target="_blank" rel="noopener noreferrer" className="underline">
-          edu.tupinix.com
+        <a href="https://espacodedadosunificado.com.br" target="_blank" rel="noopener noreferrer" className="underline">
+          espacodedadosunificado.com.br
         </a>
       </span>
 
