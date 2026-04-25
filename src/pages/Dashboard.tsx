@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useDashboardMetrics, useBrokersStatus, useActiveBroker } from '../hooks/useMetrics';
-import { HealthStatus, MetricsCards, BrokersStatus } from '../components/Dashboard';
+import { useDashboardMetrics, useActiveBroker } from '../hooks/useMetrics';
+import { HealthStatus, MetricsCards, ConnectionsStatus } from '../components/Dashboard';
 import { Loader2, RefreshCw, ArrowRight } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -10,7 +10,6 @@ import { editionLabels } from '../config/edition';
 export function Dashboard() {
   const { t } = useTranslation();
   const { data: metrics, isLoading, error, refetch } = useDashboardMetrics();
-  const { data: brokersData } = useBrokersStatus();
   const { data: activeBroker } = useActiveBroker();
   const { editionMode } = useAuthStore();
   const queryClient = useQueryClient();
@@ -106,12 +105,7 @@ export function Dashboard() {
 
       {/* Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {brokersData && (
-          <BrokersStatus
-            brokers={brokersData.brokers}
-            activeBrokerId={brokersData.activeBrokerId}
-          />
-        )}
+        <ConnectionsStatus />
 
         {/* Top Topics */}
         {hasActiveBroker && metrics && metrics.topTopics.length > 0 && (
