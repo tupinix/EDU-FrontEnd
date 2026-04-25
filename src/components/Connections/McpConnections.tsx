@@ -77,10 +77,7 @@ export function McpConnections() {
   return (
     <div className="space-y-5">
       {/* Actions */}
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-gray-400">
-          MCP tokens allow Claude Desktop to access your industrial data
-        </p>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"

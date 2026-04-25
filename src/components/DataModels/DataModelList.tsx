@@ -56,8 +56,7 @@ export function DataModelList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-gray-400">Transform and enrich MQTT data for the UNS</p>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => setShowChoice(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"

@@ -8,6 +8,7 @@ import {
   Radar,
   Users,
   Cable,
+  Factory,
   Workflow,
   Bell,
   LayoutGrid,
@@ -46,11 +47,13 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
+      { path: '/network-scan',  labelKey: 'sidebar.networkScan', icon: Radar },
       { path: '/configuration', labelKey: 'sidebar.mqtt',        icon: Radio },
       { path: '/modbus',        labelKey: 'sidebar.modbus',      icon: Cpu },
       { path: '/opcua',         labelKey: 'sidebar.opcua',       icon: Network },
       { path: '/ethip',         labelKey: 'sidebar.ethip',       icon: CircuitBoard },
+      // Neo4j is Cloud-only; the edition filter hides it on Edge automatically
+      { path: '/neo4j',         labelKey: 'sidebar.neo4j',       icon: Factory },
     ],
   },
   {
@@ -72,7 +75,7 @@ export const navGroups: NavGroup[] = [
     key: 'aiTools',
     labelKey: 'sidebar.groups.aiTools',
     items: [
-      { path: '/connections', labelKey: 'sidebar.connections', icon: Cable, adminOnly: true },
+      { path: '/connections', labelKey: 'sidebar.mcpServer', icon: Cable, adminOnly: true },
     ],
   },
   {
