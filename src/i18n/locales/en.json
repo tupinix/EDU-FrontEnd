@@ -93,10 +93,10 @@
     },
     "hero": {
       "tag": "Unified Namespace platform",
-      "title": "Connect every PLC. Model every tag.",
-      "subtitle": "A Unified Namespace for your plant — without the enterprise bloat. Up and running in minutes, on Cloud or Edge.",
-      "ctaPrimary": "Start free",
-      "ctaSecondary": "Watch demo"
+      "title": "Your plant, in a Unified Namespace.",
+      "subtitle": "Connect MQTT, OPC-UA, Modbus and EtherNet/IP, shape the data into industrial standards, and visualize everything in SCADA screens. Cloud or Edge.",
+      "ctaPrimary": "Get started",
+      "ctaSecondary": "Explore features"
     },
     "protocols": {
       "title": "Native industrial connectivity"
@@ -106,7 +106,7 @@
       "subtitle": "From discovery to SCADA dashboards, on a single platform",
       "scan": {
         "title": "Network Scan",
-        "desc": "Find every PLC on the network and connect in 1 click. Modbus, EtherNet/IP, OPC-UA, MQTT — discovered in seconds."
+        "desc": "Discover devices on your industrial network and pre-fill the connection form with 1 click. Detects Modbus, EtherNet/IP, OPC-UA and MQTT."
       },
       "uns": {
         "title": "Unified Namespace",
