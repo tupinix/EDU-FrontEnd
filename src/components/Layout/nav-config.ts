@@ -49,8 +49,8 @@ export const navGroups: NavGroup[] = [
     items: [
       { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
       { path: '/modbus',       labelKey: 'sidebar.modbus',      icon: Cpu },
-      { path: '/opcua',        labelKey: 'sidebar.opcua',       icon: Network },
       { path: '/ethip',        labelKey: 'sidebar.ethip',       icon: CircuitBoard },
+      { path: '/opcua',        labelKey: 'sidebar.opcua',       icon: Network },
       // Neo4j is Cloud-only; the edition filter hides it on Edge automatically
       { path: '/neo4j',        labelKey: 'sidebar.neo4j',       icon: Factory },
     ],
