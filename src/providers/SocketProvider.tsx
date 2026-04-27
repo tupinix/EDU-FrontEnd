@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSocket, connectSocket, disconnectSocket } from '../services/socket';
@@ -34,8 +34,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setIsConnected(false);
   }, []);
 
-  // Invalidate React Query caches on WS events
+  // Invalidate React Query caches on WS events. The MQTT firehose can hit
+  // dozens of messages per second (Modbus + OPC-UA + EtherNet/IP polling),
+  // so throttle the topic-tree refresh to once every 5s to keep the UI calm.
+  const lastTopicInvalidate = useRef(0);
   const handleMqttMessage = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTopicInvalidate.current < 5000) return;
+    lastTopicInvalidate.current = now;
     queryClient.invalidateQueries({ queryKey: ['topics-tree'] });
   }, [queryClient]);
 

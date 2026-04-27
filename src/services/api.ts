@@ -46,8 +46,23 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiResponse>) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('edu_token');
-      window.location.href = '/login';
+      // Clear stored auth if we still think we're logged in. Don't hard-reload
+      // (window.location.href triggers an F5 loop when a polled endpoint
+      // intermittently 401s); let the route guards redirect on next render.
+      const token = localStorage.getItem('edu_token');
+      if (token) {
+        localStorage.removeItem('edu_token');
+        localStorage.removeItem('edu_refresh_token');
+        // Best-effort: clear the persisted Zustand state so guards re-evaluate.
+        try {
+          const raw = localStorage.getItem('edu-auth');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.state = { ...parsed.state, user: null, isAuthenticated: false };
+            localStorage.setItem('edu-auth', JSON.stringify(parsed));
+          }
+        } catch { /* ignore */ }
+      }
     }
     return Promise.reject(error);
   }
