@@ -53,11 +53,11 @@ export function Landing() {
               {t('landing.nav.editions')}
             </a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSelector variant="minimal" />
             <a
               href="#demo"
-              className={`inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium rounded-xl transition-all ${
+              className={`hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium rounded-xl transition-all ${
                 scrolled
                   ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
                   : 'bg-white text-gray-900 hover:bg-gray-50 shadow-md shadow-black/20'
@@ -66,6 +66,16 @@ export function Landing() {
               {t('landing.nav.demo')}
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
+            <Link
+              to="/login"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium rounded-xl transition-all border ${
+                scrolled
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70 hover:bg-emerald-100 hover:border-emerald-300'
+                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-400/30 hover:bg-emerald-500/20 hover:border-emerald-400/50 backdrop-blur-sm'
+              }`}
+            >
+              {t('landing.nav.login')}
+            </Link>
           </div>
         </div>
       </header>

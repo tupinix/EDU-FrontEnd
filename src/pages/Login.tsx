@@ -99,34 +99,12 @@ export function Login() {
             aria-label="EDU Home"
             className="block mx-auto mb-7 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-opacity hover:opacity-80"
           >
-            {/* Slot-machine slide: colored → white → colored (downward motion) */}
-            <span className="relative inline-block h-12 overflow-hidden align-bottom">
-              <span
-                className="flex flex-col"
-                style={{ animation: 'eduLogoSlide 5s cubic-bezier(0.65, 0, 0.35, 1) infinite' }}
-              >
-                <img
-                  src="/edu-logo.png"
-                  alt=""
-                  aria-hidden
-                  className="h-12 w-auto select-none block"
-                  draggable={false}
-                />
-                <img
-                  src="/edu-logo.png"
-                  alt=""
-                  aria-hidden
-                  className="h-12 w-auto select-none block brightness-0 invert"
-                  draggable={false}
-                />
-                <img
-                  src="/edu-logo.png"
-                  alt="EDU"
-                  className="h-12 w-auto select-none block"
-                  draggable={false}
-                />
-              </span>
-            </span>
+            <img
+              src="/edu-logo.png"
+              alt="EDU"
+              className="h-12 w-auto select-none"
+              draggable={false}
+            />
           </button>
           <h1 className="text-[30px] font-semibold text-white tracking-tight leading-tight">
             {t('auth.loginTitle')}
@@ -252,16 +230,6 @@ export function Login() {
         </p>
       </div>
 
-      <style>{`
-        @keyframes eduLogoSlide {
-          /* Item 2 (colored) visible */
-          0%, 25%   { transform: translateY(-96px); }
-          /* Item 1 (white) slides DOWN in from above */
-          35%, 65%  { transform: translateY(-48px); }
-          /* Item 0 (colored) slides DOWN in from above */
-          75%, 100% { transform: translateY(0px); }
-        }
-      `}</style>
     </div>
   );
 }
