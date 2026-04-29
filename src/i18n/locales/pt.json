@@ -47,14 +47,17 @@
   "auth": {
     "login": "Entrar",
     "logout": "Sair",
-    "loginTitle": "Entrar na Plataforma",
-    "loginSubtitle": "Espaco de Dados Unificado",
+    "tag": "Acesso de cliente",
+    "loginTitle": "Entrar na plataforma",
+    "loginSubtitle": "Espaço de Dados Unificado",
     "emailPlaceholder": "seu@email.com",
     "passwordPlaceholder": "Digite sua senha",
     "loggingIn": "Entrando...",
     "loginError": "Erro ao fazer login",
-    "defaultCredentials": "Credenciais de acesso padrao",
-    "invalidCredentials": "Credenciais invalidas"
+    "defaultCredentials": "Credenciais de acesso padrão",
+    "invalidCredentials": "Credenciais inválidas",
+    "edition": "Edição",
+    "backToSite": "Voltar para o site"
   },
   "sidebar": {
     "dashboard": "Home",
@@ -86,24 +89,48 @@
   },
   "landing": {
     "nav": {
+      "product": "Produto",
       "features": "Recursos",
       "editions": "Edições",
       "pricing": "Preços",
-      "login": "Entrar"
+      "login": "Entrar",
+      "demo": "Solicitar demo"
     },
     "hero": {
-      "tag": "Espaço de Dados Unificado",
+      "tag": "Por convite · Acesso antecipado",
+      "titleLine1": "A plataforma industrial",
+      "titleLine2": "que pensa o dado por inteiro.",
       "title": "Sua planta, em um Unified Namespace.",
-      "subtitle": "Conecte MQTT, OPC-UA, Modbus e EtherNet/IP, modele os dados em padrões industriais e visualize tudo em telas SCADA. Cloud ou Edge.",
-      "ctaPrimary": "Começar agora",
-      "ctaSecondary": "Conhecer recursos"
+      "subtitle": "Da coleta MQTT/OPC-UA até o dashboard SCADA — uma única plataforma para convergência ISA-95, governança de Unified Namespace e operações com IA.",
+      "ctaPrimary": "Solicitar demonstração",
+      "ctaSecondary": "Ver a plataforma",
+      "note": "Programa de acesso antecipado · Curadoria por convite",
+      "stats": {
+        "protocols": "Protocolos industriais",
+        "widgets": "Widgets SCADA prontos",
+        "standard": "Hierarquia padrão",
+        "edge": "Cloud ou Edge"
+      }
+    },
+    "showcase": {
+      "tag": "Plataforma",
+      "title": "Da tag bruta ao insight, sem código de cola.",
+      "subtitle": "EDU é a camada que falta entre o chão de fábrica e quem precisa do dado — engenharia, manutenção, IA. Tudo em uma origem só.",
+      "bullets": [
+        "Convergência MQTT, OPC-UA, Modbus, EtherNet/IP em UNS ISA-95",
+        "Data Models com referências dinâmicas e templates CESMII",
+        "API i3X (CESMII) + MCP server para LLMs prontos para uso",
+        "Dashboards SCADA com canvas livre e 13 widgets industriais"
+      ],
+      "cta": "Veja rodando na sua planta"
     },
     "protocols": {
-      "title": "Conectividade industrial nativa"
+      "title": "Padrões e protocolos suportados nativamente"
     },
     "features": {
-      "title": "Tudo que sua operação precisa",
-      "subtitle": "De descoberta a dashboards SCADA, em uma única plataforma",
+      "tag": "O que está incluído",
+      "title": "Tudo o que sua operação precisa.",
+      "subtitle": "De descoberta a dashboards SCADA, em uma única plataforma sob curadoria.",
       "scan": {
         "title": "Network Scan",
         "desc": "Descubra dispositivos da sua rede industrial e pré-preencha o cadastro com 1 clique. Identifica Modbus, EtherNet/IP, OPC-UA e MQTT."
@@ -130,8 +157,9 @@
       }
     },
     "editions": {
+      "tag": "Deploy flexível",
       "title": "Cloud ou Edge. Você escolhe.",
-      "subtitle": "Mesma plataforma, deploy do jeito que faz sentido para você",
+      "subtitle": "Mesma plataforma, deploy do jeito que faz sentido para a sua operação.",
       "cloud": {
         "tag": "Hospedado por nós",
         "items": [
@@ -151,16 +179,58 @@
         ]
       }
     },
-    "cta": {
-      "title": "Coloque sua planta online em minutos.",
-      "subtitle": "Sem cartão de crédito. Sem implantação enterprise.",
-      "primary": "Começar agora",
-      "secondary": "Falar com a gente"
+    "midCta": {
+      "title": "Veja o EDU rodando com seus dados.",
+      "subtitle": "Demonstrações são feitas com gente — não bots. Reservamos 30 minutos para entender seu contexto antes de mostrar a plataforma.",
+      "cta": "Solicitar demonstração"
+    },
+    "demo": {
+      "tag": "Solicite uma demonstração",
+      "title": "Quer ver o EDU rodando?",
+      "subtitle": "Recebemos novos parceiros em pequenos lotes. Conte um pouco do seu contexto e nós marcamos uma conversa pra entender se faz sentido — sem pressão de venda.",
+      "formTitle": "Cadastre-se para a demo",
+      "formSubtitle": "Só seu e-mail é obrigatório. Os outros campos ajudam a personalizar a conversa.",
+      "submit": "Solicitar demonstração",
+      "sending": "Enviando…",
+      "submitAnother": "Enviar outra solicitação",
+      "legal": "Sem spam. Usamos seus dados apenas para entrar em contato sobre o programa.",
+      "fields": {
+        "email": "E-mail",
+        "name": "Nome",
+        "company": "Empresa",
+        "role": "Função / cargo",
+        "message": "Conte mais sobre o que você quer resolver"
+      },
+      "expect": {
+        "items": [
+          {
+            "title": "30 minutos, direto ao ponto",
+            "desc": "Sem deck genérico. Você diz o problema, a gente mostra como a plataforma resolve."
+          },
+          {
+            "title": "Conversa com quem constrói",
+            "desc": "Você fala com engenheiros do time, não com SDR. Acertamos arquitetura na hora."
+          },
+          {
+            "title": "Curadoria por convite",
+            "desc": "Recebemos poucos parceiros por mês. Damos prioridade a operações com bom encaixe."
+          }
+        ]
+      },
+      "ok": {
+        "title": "Recebemos sua solicitação.",
+        "body": "Vamos avaliar e retornar em breve com os próximos passos. Nosso atendimento é manual — pode levar alguns dias úteis."
+      },
+      "already": {
+        "title": "Você já está na lista.",
+        "body": "Atualizamos seus dados. Continue acompanhando — entraremos em contato assim que houver uma vaga disponível."
+      }
     },
     "footer": {
       "tagline": "Espaço de Dados Unificado",
       "rights": "Todos os direitos reservados.",
-      "made": "Feito no Brasil"
+      "made": "Feito no Brasil",
+      "clientLogin": "Acesso de cliente"
     }
   },
   "users": {

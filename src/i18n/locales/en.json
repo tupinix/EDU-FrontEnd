@@ -47,14 +47,17 @@
   "auth": {
     "login": "Login",
     "logout": "Logout",
-    "loginTitle": "Sign in to Platform",
+    "tag": "Client access",
+    "loginTitle": "Sign in to the platform",
     "loginSubtitle": "Unified Data Space",
     "emailPlaceholder": "your@email.com",
     "passwordPlaceholder": "Enter your password",
     "loggingIn": "Signing in...",
     "loginError": "Login failed",
     "defaultCredentials": "Default access credentials",
-    "invalidCredentials": "Invalid credentials"
+    "invalidCredentials": "Invalid credentials",
+    "edition": "Edition",
+    "backToSite": "Back to site"
   },
   "sidebar": {
     "dashboard": "Home",
@@ -86,24 +89,48 @@
   },
   "landing": {
     "nav": {
+      "product": "Product",
       "features": "Features",
       "editions": "Editions",
       "pricing": "Pricing",
-      "login": "Sign in"
+      "login": "Sign in",
+      "demo": "Request a demo"
     },
     "hero": {
-      "tag": "Unified Namespace platform",
+      "tag": "By invitation · Early access",
+      "titleLine1": "The industrial platform",
+      "titleLine2": "that thinks data end to end.",
       "title": "Your plant, in a Unified Namespace.",
-      "subtitle": "Connect MQTT, OPC-UA, Modbus and EtherNet/IP, shape the data into industrial standards, and visualize everything in SCADA screens. Cloud or Edge.",
-      "ctaPrimary": "Get started",
-      "ctaSecondary": "Explore features"
+      "subtitle": "From MQTT/OPC-UA collection to SCADA dashboards — one platform for ISA-95 convergence, Unified Namespace governance, and AI-ready operations.",
+      "ctaPrimary": "Request a demo",
+      "ctaSecondary": "See the platform",
+      "note": "Early-access program · Curated by invitation",
+      "stats": {
+        "protocols": "Industrial protocols",
+        "widgets": "SCADA widgets ready",
+        "standard": "Standard hierarchy",
+        "edge": "Cloud or Edge"
+      }
+    },
+    "showcase": {
+      "tag": "Platform",
+      "title": "From raw tag to insight, with no glue code.",
+      "subtitle": "EDU is the missing layer between the shop floor and whoever needs the data — engineering, maintenance, AI. All from one source.",
+      "bullets": [
+        "MQTT, OPC-UA, Modbus, EtherNet/IP convergence into ISA-95 UNS",
+        "Data Models with dynamic references and CESMII templates",
+        "i3X (CESMII) API + MCP server for LLMs, ready to use",
+        "SCADA dashboards with free canvas and 13 industrial widgets"
+      ],
+      "cta": "See it running on your plant"
     },
     "protocols": {
-      "title": "Native industrial connectivity"
+      "title": "Standards and protocols supported natively"
     },
     "features": {
-      "title": "Everything your operation needs",
-      "subtitle": "From discovery to SCADA dashboards, on a single platform",
+      "tag": "What's included",
+      "title": "Everything your operation needs.",
+      "subtitle": "From discovery to SCADA dashboards, on a single curated platform.",
       "scan": {
         "title": "Network Scan",
         "desc": "Discover devices on your industrial network and pre-fill the connection form with 1 click. Detects Modbus, EtherNet/IP, OPC-UA and MQTT."
@@ -130,8 +157,9 @@
       }
     },
     "editions": {
+      "tag": "Flexible deploy",
       "title": "Cloud or Edge. You decide.",
-      "subtitle": "Same platform, deployed the way that fits your reality",
+      "subtitle": "Same platform, deployed the way that fits your operation.",
       "cloud": {
         "tag": "Hosted by us",
         "items": [
@@ -151,16 +179,58 @@
         ]
       }
     },
-    "cta": {
-      "title": "Get your plant online in minutes.",
-      "subtitle": "No credit card. No enterprise rollout.",
-      "primary": "Start now",
-      "secondary": "Talk to us"
+    "midCta": {
+      "title": "See EDU running on your data.",
+      "subtitle": "Demos are with humans — not bots. We block 30 minutes to understand your context before we show the platform.",
+      "cta": "Request a demo"
+    },
+    "demo": {
+      "tag": "Request a demo",
+      "title": "Want to see EDU in action?",
+      "subtitle": "We onboard new partners in small batches. Tell us about your context and we'll set up a conversation to see if it's a good fit — no sales pressure.",
+      "formTitle": "Sign up for the demo",
+      "formSubtitle": "Only your email is required. The other fields help us tailor the conversation.",
+      "submit": "Request a demo",
+      "sending": "Sending…",
+      "submitAnother": "Submit another request",
+      "legal": "No spam. We only use your data to reach out about the program.",
+      "fields": {
+        "email": "Email",
+        "name": "Name",
+        "company": "Company",
+        "role": "Role / title",
+        "message": "Tell us more about what you'd like to solve"
+      },
+      "expect": {
+        "items": [
+          {
+            "title": "30 minutes, straight to the point",
+            "desc": "No generic deck. You describe the problem, we show how the platform handles it."
+          },
+          {
+            "title": "Talk to the people who build it",
+            "desc": "You'll be on a call with our engineers, not an SDR. Architecture decisions on the spot."
+          },
+          {
+            "title": "Curated by invitation",
+            "desc": "We onboard a few partners per month. Priority goes to operations that fit our approach."
+          }
+        ]
+      },
+      "ok": {
+        "title": "We've received your request.",
+        "body": "We'll review and follow up shortly with next steps. Our outreach is manual — it may take a few business days."
+      },
+      "already": {
+        "title": "You're already on the list.",
+        "body": "We've updated your details. Stay tuned — we'll reach out as soon as a seat opens."
+      }
     },
     "footer": {
       "tagline": "Unified Data Space",
       "rights": "All rights reserved.",
-      "made": "Made in Brazil"
+      "made": "Made in Brazil",
+      "clientLogin": "Client sign-in"
     }
   },
   "users": {

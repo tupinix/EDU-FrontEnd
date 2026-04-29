@@ -922,3 +922,32 @@ export const dataModelsApi = {
     return data.data;
   },
 };
+
+// ===========================================
+// Waitlist API — public, invite-only early access list
+// ===========================================
+
+export interface WaitlistSubscribePayload {
+  email:    string;
+  name?:    string;
+  company?: string;
+  role?:    string;
+  useCase?: string;
+  source?:  string;
+  locale?:  string;
+}
+
+export interface WaitlistSubscribeResult {
+  id:                string;
+  email:             string;
+  createdAt:         string;
+  alreadySubscribed: boolean;
+}
+
+export const waitlistApi = {
+  subscribe: async (payload: WaitlistSubscribePayload): Promise<WaitlistSubscribeResult> => {
+    const { data } = await apiClient.post<ApiResponse<WaitlistSubscribeResult>>('/waitlist', payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to subscribe');
+    return data.data;
+  },
+};

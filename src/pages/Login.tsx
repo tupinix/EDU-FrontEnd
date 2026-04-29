@@ -1,7 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
@@ -54,43 +54,96 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fafafa] relative">
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white via-[#f5f5f7] to-[#e8e8ed]" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-emerald-50/40 to-transparent rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0E14] text-white relative overflow-hidden">
+      {/* Grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,1) 0.5px, transparent 0.5px),' +
+            'linear-gradient(90deg, rgba(255,255,255,1) 0.5px, transparent 0.5px)',
+          backgroundSize: '64px 64px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black, transparent 80%)',
+        }}
+      />
+      {/* Glows */}
+      <div className="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-[140px] pointer-events-none" />
 
-      {/* Language */}
+      {/* Top bar — back to site + language */}
+      <div className="absolute top-5 left-6 z-20">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          {t('auth.backToSite')}
+        </Link>
+      </div>
       <div className="absolute top-5 right-6 z-20">
         <LanguageSelector variant="minimal" />
       </div>
 
       {/* Card */}
       <div
-        className={`relative z-10 w-full max-w-[400px] mx-4 transition-all duration-700 ease-out ${
+        className={`relative z-10 w-full max-w-[420px] mx-4 transition-all duration-700 ease-out ${
           mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
         {/* Header */}
-        <div className="text-center mb-8">
-          <img
-            src="/edu-logo.png"
-            alt="EDU"
-            className="h-14 w-auto mx-auto mb-5 select-none"
-            draggable={false}
-          />
-          <h1 className="text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">
+        <div className="text-center mb-7">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label="EDU Home"
+            className="block mx-auto mb-7 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-opacity hover:opacity-80"
+          >
+            {/* Slot-machine slide: colored → white → colored (downward motion) */}
+            <span className="relative inline-block h-12 overflow-hidden align-bottom">
+              <span
+                className="flex flex-col"
+                style={{ animation: 'eduLogoSlide 5s cubic-bezier(0.65, 0, 0.35, 1) infinite' }}
+              >
+                <img
+                  src="/edu-logo.png"
+                  alt=""
+                  aria-hidden
+                  className="h-12 w-auto select-none block"
+                  draggable={false}
+                />
+                <img
+                  src="/edu-logo.png"
+                  alt=""
+                  aria-hidden
+                  className="h-12 w-auto select-none block brightness-0 invert"
+                  draggable={false}
+                />
+                <img
+                  src="/edu-logo.png"
+                  alt="EDU"
+                  className="h-12 w-auto select-none block"
+                  draggable={false}
+                />
+              </span>
+            </span>
+          </button>
+          <h1 className="text-[30px] font-semibold text-white tracking-tight leading-tight">
             {t('auth.loginTitle')}
           </h1>
-          <p className="text-[15px] text-gray-400 mt-1.5 font-normal">
+          <p className="text-[14.5px] text-gray-400 mt-2 font-light">
             {t('auth.loginSubtitle')}
           </p>
         </div>
 
-        {/* Form card */}
-        <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm shadow-gray-100/50 overflow-hidden">
+        {/* Form card — white island on dark */}
+        <div className="bg-white rounded-2xl border border-white/10 shadow-2xl shadow-emerald-500/10 overflow-hidden">
           {/* Edition toggle */}
-          <div className="px-7 pt-7 pb-1">
-            <div className="flex rounded-xl bg-gray-50 p-1 gap-1">
+          <div className="px-7 pt-6 pb-1">
+            <span className="text-[10px] font-semibold text-gray-500 tracking-[0.18em] uppercase block mb-2.5">
+              {t('auth.edition')}
+            </span>
+            <div className="flex rounded-xl bg-gray-100/80 p-1 gap-1">
               {([
                 { mode: 'standard' as EditionMode, img: '/edu-cloud.png', alt: 'Cloud' },
                 { mode: 'edge' as EditionMode, img: '/edu-edge.png', alt: 'Edge' },
@@ -123,14 +176,15 @@ export function Login() {
           <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
             {/* Error */}
             {error && (
-              <div className="text-[13px] text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                {error}
+              <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
             {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-[13px] font-medium text-gray-500">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
                 {t('common.email')}
               </label>
               <input
@@ -138,7 +192,7 @@ export function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 text-[15px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100"
+                className="w-full px-4 py-3 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
                 placeholder={t('auth.emailPlaceholder')}
                 required
                 disabled={isLoading}
@@ -147,8 +201,8 @@ export function Login() {
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-[13px] font-medium text-gray-500">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="password" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
                 {t('common.password')}
               </label>
               <div className="relative">
@@ -157,7 +211,7 @@ export function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-11 text-[15px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-300 focus:ring-4 focus:ring-gray-100"
+                  className="w-full px-4 py-3 pr-11 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
                   placeholder={t('auth.passwordPlaceholder')}
                   required
                   disabled={isLoading}
@@ -166,7 +220,7 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-400 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -178,27 +232,36 @@ export function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white text-[15px] font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
                   {t('auth.loginTitle')}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
             </button>
           </form>
-           <div className="px-7 pb-6">
-          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[12px] text-gray-300 mt-6 tracking-wide">
-          EDU Platform v1.0
+        <p className="text-center text-[11px] text-gray-500 mt-7 tracking-[0.14em] uppercase font-mono">
+          EDU Platform · v1.0
         </p>
       </div>
+
+      <style>{`
+        @keyframes eduLogoSlide {
+          /* Item 2 (colored) visible */
+          0%, 25%   { transform: translateY(-96px); }
+          /* Item 1 (white) slides DOWN in from above */
+          35%, 65%  { transform: translateY(-48px); }
+          /* Item 0 (colored) slides DOWN in from above */
+          75%, 100% { transform: translateY(0px); }
+        }
+      `}</style>
     </div>
   );
 }
