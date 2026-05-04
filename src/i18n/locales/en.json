@@ -99,11 +99,11 @@
     "hero": {
       "tag": "By invitation · Early access",
       "titleLine1": "The industrial platform",
-      "titleLine2": "that thinks data end to end.",
+      "titleLine2": "for Artificial Intelligence.",
       "title": "Your plant, in a Unified Namespace.",
-      "subtitle": "From MQTT/OPC-UA collection to SCADA dashboards — one platform for ISA-95 convergence, Unified Namespace governance, and AI-ready operations.",
+      "subtitle": "EDU turns fragmented industrial data into a structured system, ready for Industrial AI across every operation.",
       "ctaPrimary": "Request a demo",
-      "ctaSecondary": "See the platform",
+      "ctaSecondary": "Early register",
       "note": "Early-access program · Curated by invitation",
       "stats": {
         "protocols": "Industrial protocols",
@@ -113,14 +113,14 @@
       }
     },
     "showcase": {
-      "tag": "Platform",
-      "title": "From raw tag to insight, with no glue code.",
-      "subtitle": "EDU is the missing layer between the shop floor and whoever needs the data — engineering, maintenance, AI. All from one source.",
+      "tag": "Conversational AI",
+      "title": "Talk to your factory.",
+      "subtitle": "Use agents to analyze your industrial data and build dynamic dashboards through natural-language conversation with the best LLMs.",
       "bullets": [
-        "MQTT, OPC-UA, Modbus, EtherNet/IP convergence into ISA-95 UNS",
-        "Data Models with dynamic references and CESMII templates",
-        "i3X (CESMII) API + MCP server for LLMs, ready to use",
-        "SCADA dashboards with free canvas and 13 industrial widgets"
+        "Local LLM running in your plant — no internet required, Zero Trust security",
+        "Knowledge Graph for AI: industrial data modeling and structuring",
+        "Multi-tenant with full isolation between environments and LGPD compliance",
+        "Secure access from anywhere, on any device"
       ],
       "cta": "See it running on your plant"
     },
@@ -128,9 +128,9 @@
       "title": "Standards and protocols supported natively"
     },
     "features": {
-      "tag": "What's included",
-      "title": "Everything your operation needs.",
-      "subtitle": "From discovery to SCADA dashboards, on a single curated platform.",
+      "tag": "Platform",
+      "title": "Your plant in a Unified Namespace.",
+      "subtitle": "Industrial protocol convergence, data modeling, dashboards and AI — all from a single source of truth.",
       "scan": {
         "title": "Network Scan",
         "desc": "Discover devices on your industrial network and pre-fill the connection form with 1 click. Detects Modbus, EtherNet/IP, OPC-UA and MQTT."
@@ -152,14 +152,14 @@
         "desc": "Static or dynamic thresholds based on other tags. Discord and WhatsApp notifications out of the box."
       },
       "ai": {
-        "title": "AI-ready",
-        "desc": "Built-in MCP server. Ask Claude about your plant and get live data, no code required."
+        "title": "Plantscape AI",
+        "desc": "Agents that talk to your plant. Built-in MCP server: ask Claude about processes and get live data, no code required."
       }
     },
     "editions": {
       "tag": "Flexible deploy",
       "title": "Cloud or Edge. You decide.",
-      "subtitle": "Same platform, deployed the way that fits your operation.",
+      "subtitle": "Centralized Cloud layer with global intelligence; distributed Edge layer with local sovereignty. Your architecture, the way it makes sense.",
       "cloud": {
         "tag": "Hosted by us",
         "items": [
@@ -183,6 +183,25 @@
       "title": "Get your plant online.",
       "subtitle": "Demos are with humans — not bots. We block 30 minutes to understand your context before we show the platform.",
       "cta": "Request a demo"
+    },
+    "support": {
+      "tag": "Technical partnership",
+      "title": "Support and Service Level.",
+      "subtitle": "Close technical support, technical partnership, hands-on follow-up from day one. We work side by side with your team to ensure rapid evolution, continuous feedback and real outcomes.",
+      "pillars": [
+        {
+          "title": "Hands-on from day one",
+          "desc": "Guided onboarding with our engineers present from the first setup until go-live."
+        },
+        {
+          "title": "Fast, continuous evolution",
+          "desc": "Public backlog, frequent releases and prioritization driven by what unblocks your operation."
+        },
+        {
+          "title": "Side-by-side delivery",
+          "desc": "Direct line to the people who build it. No ticket queues, no tier escalations."
+        }
+      ]
     },
     "demo": {
       "tag": "Request a demo",

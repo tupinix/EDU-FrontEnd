@@ -98,12 +98,12 @@
     },
     "hero": {
       "tag": "Por convite · Acesso antecipado",
-      "titleLine1": "A plataforma industrial",
-      "titleLine2": "que pensa o dado por inteiro.",
+      "titleLine1": "Plataforma industrial para",
+      "titleLine2": "Inteligência Artificial.",
       "title": "Sua planta, em um Unified Namespace.",
-      "subtitle": "Da coleta MQTT/OPC-UA até o dashboard SCADA — uma única plataforma para convergência ISA-95, governança de Unified Namespace e operações com IA.",
+      "subtitle": "O EDU transforma dados industriais fragmentados em um sistema estruturado para aplicação de IA Industrial em todas as suas operações.",
       "ctaPrimary": "Solicitar demonstração",
-      "ctaSecondary": "Ver a plataforma",
+      "ctaSecondary": "Acesso antecipado",
       "note": "Programa de acesso antecipado · Curadoria por convite",
       "stats": {
         "protocols": "Protocolos industriais",
@@ -113,14 +113,14 @@
       }
     },
     "showcase": {
-      "tag": "Plataforma",
-      "title": "Da tag bruta ao insight, sem código de cola.",
-      "subtitle": "EDU é a camada que falta entre o chão de fábrica e quem precisa do dado — engenharia, manutenção, IA. Tudo em uma origem só.",
+      "tag": "Conversational AI",
+      "title": "Fale com sua Fábrica.",
+      "subtitle": "Utilize agentes para analisar seus dados industriais e crie dashboards dinâmicos através de conversação natural com as melhores LLMs.",
       "bullets": [
-        "Convergência MQTT, OPC-UA, Modbus, EtherNet/IP em UNS ISA-95",
-        "Data Models com referências dinâmicas e templates CESMII",
-        "API i3X (CESMII) + MCP server para LLMs prontos para uso",
-        "Dashboards SCADA com canvas livre e 13 widgets industriais"
+        "LLM local na sua planta — sem conexão com a internet, com segurança Zero Trust",
+        "Knowledge Graph para IA: modelagem e estruturação de dados industriais",
+        "Multi-tenant com isolamento total entre ambientes e conformidade LGPD",
+        "Acesso seguro de qualquer lugar, em qualquer dispositivo"
       ],
       "cta": "Veja rodando na sua planta"
     },
@@ -128,9 +128,9 @@
       "title": "Padrões e protocolos suportados nativamente"
     },
     "features": {
-      "tag": "O que está incluído",
-      "title": "Tudo o que sua operação precisa.",
-      "subtitle": "De descoberta a dashboards SCADA, em uma única plataforma sob curadoria.",
+      "tag": "Plataforma",
+      "title": "Sua planta em um Unified Namespace.",
+      "subtitle": "Convergência de protocolos industriais, modelagem de dados, dashboards e IA — tudo em uma única origem.",
       "scan": {
         "title": "Network Scan",
         "desc": "Descubra dispositivos da sua rede industrial e pré-preencha o cadastro com 1 clique. Identifica Modbus, EtherNet/IP, OPC-UA e MQTT."
@@ -152,14 +152,14 @@
         "desc": "Thresholds estáticos ou dinâmicos baseados em outros tags. Notificações em Discord e WhatsApp."
       },
       "ai": {
-        "title": "Pronta para IA",
-        "desc": "Servidor MCP integrado. Pergunte ao Claude sobre sua planta e receba dados ao vivo, sem código."
+        "title": "Plantscape AI",
+        "desc": "Agentes que conversam com sua planta. Servidor MCP integrado: pergunte ao Claude sobre processos e receba dados ao vivo, sem código."
       }
     },
     "editions": {
       "tag": "Deploy flexível",
       "title": "Cloud ou Edge. Você escolhe.",
-      "subtitle": "Mesma plataforma, deploy do jeito que faz sentido para a sua operação.",
+      "subtitle": "Camada Cloud centralizada com inteligência global; camada Edge distribuída com soberania local. Sua arquitetura, do jeito que faz sentido.",
       "cloud": {
         "tag": "Hospedado por nós",
         "items": [
@@ -183,6 +183,25 @@
       "title": "Coloque sua planta online.",
       "subtitle": "Demonstrações são feitas com gente — não bots. Reservamos 30 minutos para entender seu contexto antes de mostrar a plataforma.",
       "cta": "Solicitar demonstração"
+    },
+    "support": {
+      "tag": "Parceria técnica",
+      "title": "Suporte e Nível de Serviço.",
+      "subtitle": "Suporte técnico próximo, parceria técnica, acompanhamento desde o primeiro dia. Trabalhamos lado a lado com sua equipe para garantir evolução rápida, feedback contínuo e resultados reais.",
+      "pillars": [
+        {
+          "title": "Acompanhamento desde o dia um",
+          "desc": "Onboarding guiado, com engenheiros do nosso time presentes desde o primeiro setup até o go-live."
+        },
+        {
+          "title": "Evolução rápida e contínua",
+          "desc": "Backlog público, releases frequentes e priorização guiada pelo que destrava sua operação."
+        },
+        {
+          "title": "Trabalho lado a lado",
+          "desc": "Canal direto com quem constrói. Sem fila de tickets nem repasses entre níveis."
+        }
+      ]
     },
     "demo": {
       "tag": "Solicite uma demonstração",

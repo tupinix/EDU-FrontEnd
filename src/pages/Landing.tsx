@@ -5,6 +5,7 @@ import {
   ArrowRight, Radar, Waypoints, Workflow, LayoutDashboard, Bell, Sparkles,
   Activity, Gauge, Database, Zap,
   CheckCircle2, Loader2, AlertCircle,
+  HeartHandshake, GitBranch, Headphones,
 } from 'lucide-react';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { waitlistApi } from '../services/api';
@@ -95,6 +96,9 @@ export function Landing() {
       {/* ── Editions ───────────────────────────────────────────────── */}
       <EditionsSection />
 
+      {/* ── Support ────────────────────────────────────────────────── */}
+      <SupportSection />
+
       {/* ── Mid CTA ────────────────────────────────────────────────── */}
       <MidCta />
 
@@ -164,7 +168,7 @@ function DarkHero() {
           {t('landing.hero.subtitle')}
         </p>
 
-        {/* CTAs */}
+        {/* CTAs — dual: demo (primary) + early register (secondary, accent) */}
         <div
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
           style={{ animation: 'fadeInUp 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) 0.35s both' }}
@@ -177,10 +181,11 @@ function DarkHero() {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </a>
           <a
-            href="#showcase"
-            className="inline-flex items-center justify-center px-6 py-3.5 text-[14px] font-medium text-white/80 hover:text-white rounded-xl border border-white/10 hover:border-white/30 hover:bg-white/5 backdrop-blur-sm transition-all w-full sm:w-auto"
+            href="#demo"
+            className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 text-[14px] font-semibold text-emerald-300 rounded-xl border border-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 hover:border-emerald-400/60 backdrop-blur-sm transition-all w-full sm:w-auto"
           >
             {t('landing.hero.ctaSecondary')}
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
 
@@ -310,7 +315,7 @@ function ProductMock() {
           <span className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/60" />
-          <span className="ml-3 text-[11px] text-gray-400 font-mono">edu &middot; Cooling Tower BR-Plant2</span>
+          <span className="ml-3 text-[11px] text-gray-400 font-mono">edu &middot; Plantscape AI &middot; Cooling Tower BR-Plant2</span>
           <div className="ml-auto flex items-center gap-2 text-[10px] text-emerald-400 font-mono">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
@@ -320,35 +325,96 @@ function ProductMock() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 grid grid-cols-12 gap-3">
-          {/* Top KPIs */}
-          <MockTile className="col-span-3" icon={<Gauge />}    label="Inlet T°"   value="42.8" unit="°C"  tone="emerald" />
-          <MockTile className="col-span-3" icon={<Gauge />}    label="Outlet T°"  value="28.1" unit="°C"  tone="blue" />
-          <MockTile className="col-span-3" icon={<Activity />} label="Flow"       value="118"  unit="m³/h" tone="emerald" />
-          <MockTile className="col-span-3" icon={<Bell />}     label="Alarms"     value="0"                tone="gray" />
-
-          {/* Chart */}
-          <div className="col-span-8 bg-[#1A1F2E] border border-white/5 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono">Process trend · last 12h</div>
-                <div className="mt-0.5 text-sm text-white font-medium tabular-nums">42.8 → 28.1 °C</div>
-              </div>
-              <div className="text-[10px] text-gray-500 font-mono">+ 0.3 °C/min</div>
+        {/* Content — chat + dashboard side by side */}
+        <div className="grid grid-cols-12">
+          {/* Chat panel */}
+          <div className="col-span-5 border-r border-white/5 bg-[#0B0F1A] flex flex-col min-h-[420px]">
+            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-400/30 to-emerald-600/20 border border-emerald-400/30 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-emerald-300" />
+              </span>
+              <span className="text-[11px] text-gray-300 font-medium tracking-wide">Plantscape AI</span>
+              <span className="ml-auto text-[9px] text-gray-500 font-mono uppercase tracking-[0.16em]">Local LLM</span>
             </div>
-            <MockChart />
+
+            <div className="flex-1 px-4 py-4 space-y-3 overflow-hidden">
+              <ChatBubble role="user">
+                Como está a torre de resfriamento agora?
+              </ChatBubble>
+              <ChatBubble role="ai">
+                <span className="text-emerald-300">Cooling Tower BR-Plant2</span> está estável.
+                Inlet 42.8 °C, Outlet 28.1 °C, ΔT de 14.7 °C — dentro do esperado nas últimas 12h.
+                Bombas P1 e P2 ON.
+              </ChatBubble>
+              <ChatBubble role="user">
+                Crie um dashboard com essas métricas.
+              </ChatBubble>
+              <ChatBubble role="ai" pending>
+                <span className="inline-flex items-center gap-1.5 text-emerald-300">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Construindo painel
+                </span>
+                <span className="block mt-1 text-gray-400">Process trend · KPIs · alarmes</span>
+              </ChatBubble>
+            </div>
+
+            <div className="px-4 py-3 border-t border-white/5">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1A1F2E] border border-white/5">
+                <span className="text-[11px] text-gray-500 flex-1 truncate font-mono">Pergunte algo sobre sua planta…</span>
+                <span className="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+                  <ArrowRight className="w-2.5 h-2.5 text-emerald-300" />
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Side stats */}
-          <div className="col-span-4 grid grid-cols-1 gap-3">
-            <MockTile icon={<Zap />}     label="Pump 1"  value="ON"   tone="emerald" small />
-            <MockTile icon={<Zap />}     label="Pump 2"  value="ON"   tone="emerald" small />
-            <MockTile icon={<Database />} label="Tags"    value="312"  tone="blue" small />
+          {/* Dashboard panel */}
+          <div className="col-span-7 p-5 grid grid-cols-2 gap-3 content-start">
+            <MockTile icon={<Gauge />}    label="Inlet T°"   value="42.8" unit="°C"   tone="emerald" small />
+            <MockTile icon={<Gauge />}    label="Outlet T°"  value="28.1" unit="°C"   tone="blue"    small />
+            <MockTile icon={<Activity />} label="Flow"       value="118"  unit="m³/h" tone="emerald" small />
+            <MockTile icon={<Bell />}     label="Alarms"     value="0"                tone="gray"    small />
+
+            <div className="col-span-2 bg-[#1A1F2E] border border-white/5 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono">Process trend · last 12h</div>
+                  <div className="mt-0.5 text-sm text-white font-medium tabular-nums">42.8 → 28.1 °C</div>
+                </div>
+                <div className="text-[10px] text-gray-500 font-mono">+ 0.3 °C/min</div>
+              </div>
+              <MockChart />
+            </div>
+
+            <div className="col-span-2 grid grid-cols-3 gap-3">
+              <MockTile icon={<Zap />}      label="Pump 1" value="ON"   tone="emerald" small />
+              <MockTile icon={<Zap />}      label="Pump 2" value="ON"   tone="emerald" small />
+              <MockTile icon={<Database />} label="Tags"   value="312"  tone="blue"    small />
+            </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
+function ChatBubble({
+  role, pending, children,
+}: { role: 'user' | 'ai'; pending?: boolean; children: React.ReactNode }) {
+  if (role === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-tr-sm bg-emerald-500/15 border border-emerald-400/20 text-[12px] text-emerald-100 leading-snug">
+          {children}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-start">
+      <div className={`max-w-[88%] px-3.5 py-2 rounded-2xl rounded-tl-sm bg-[#1A1F2E] border border-white/5 text-[12px] text-gray-300 leading-snug ${pending ? 'opacity-90' : ''}`}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -522,6 +588,87 @@ function EditionCard({
         ))}
       </ul>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Support — dark band, 3 pillars (parceria técnica)
+// ─────────────────────────────────────────────────────────────────────
+function SupportSection() {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { setVisible(true); io.disconnect(); } }),
+      { threshold: 0.18 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const pillars = t('landing.support.pillars', { returnObjects: true }) as Array<{
+    title: string; desc: string;
+  }>;
+
+  const icons = [
+    <HeartHandshake key="h" className="w-5 h-5" />,
+    <GitBranch key="g" className="w-5 h-5" />,
+    <Headphones key="p" className="w-5 h-5" />,
+  ];
+
+  return (
+    <section className="relative py-28 bg-[#0A0E14] text-white overflow-hidden">
+      {/* Backdrop — subtle grid + glows */}
+      <div
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,1) 0.5px, transparent 0.5px),' +
+            'linear-gradient(90deg, rgba(255,255,255,1) 0.5px, transparent 0.5px)',
+          backgroundSize: '60px 60px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 80%)',
+        }}
+      />
+      <div className="absolute top-[-150px] left-[-150px] w-[500px] h-[500px] bg-emerald-500/10 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-150px] right-[-150px] w-[500px] h-[500px] bg-blue-500/8 blur-[140px] rounded-full pointer-events-none" />
+
+      <div
+        ref={ref}
+        className={`relative max-w-6xl mx-auto px-6 sm:px-8 transition-all duration-700 ease-out ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        }`}
+      >
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm text-[11px] font-medium text-emerald-300 tracking-wider uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            {t('landing.support.tag')}
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white leading-[1.08]">
+            {t('landing.support.title')}
+          </h2>
+          <p className="mt-5 text-[15px] sm:text-[16px] text-gray-400 leading-relaxed">
+            {t('landing.support.subtitle')}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+          {pillars.map((p, i) => (
+            <div key={i} className="bg-[#0A0E14] px-7 py-9 hover:bg-white/[0.02] transition-colors">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-400/20 text-emerald-300 flex items-center justify-center mb-5">
+                {icons[i]}
+              </div>
+              <h3 className="text-[16px] font-semibold text-white mb-2 tracking-tight">{p.title}</h3>
+              <p className="text-[13.5px] text-gray-400 leading-relaxed">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
