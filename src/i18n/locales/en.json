@@ -64,6 +64,8 @@
       "downloadWindows": "Windows (.exe)",
       "downloadLinux": "Linux (.AppImage)",
       "comingSoon": "Soon",
+      "beta": "Beta",
+      "viewAllReleases": "View all releases and changelog",
       "notify": "Notify me on release",
       "alreadyInstalled": "Already have EDU Edge on your PC? Open the app directly.",
       "requirementsTitle": "System requirements",

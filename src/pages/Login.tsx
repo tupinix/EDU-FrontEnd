@@ -1,7 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle, Download, Bell, Monitor, Terminal } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle, Download, Monitor, Terminal } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
@@ -254,24 +254,27 @@ function EdgeDownloadPanel() {
         <DownloadButton
           icon={<Monitor className="w-6 h-6" strokeWidth={1.5} />}
           label={t('auth.edge.downloadWindows')}
-          comingSoon={t('auth.edge.comingSoon')}
+          href={EDGE_RELEASES_URL}
+          badge={t('auth.edge.beta')}
         />
         <DownloadButton
           icon={<Terminal className="w-6 h-6" strokeWidth={1.5} />}
           label={t('auth.edge.downloadLinux')}
-          comingSoon={t('auth.edge.comingSoon')}
+          href={EDGE_RELEASES_URL}
+          badge={t('auth.edge.beta')}
         />
       </div>
 
-      {/* Notify CTA */}
-      <Link
-        to="/#demo"
-        className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[13.5px] font-semibold rounded-xl hover:bg-black transition-all shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5"
+      {/* Releases / changelog hint */}
+      <a
+        href={EDGE_RELEASES_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group w-full flex items-center justify-center gap-2 py-3 text-[12.5px] font-medium text-gray-500 hover:text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
       >
-        <Bell className="w-4 h-4" />
-        {t('auth.edge.notify')}
-        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-      </Link>
+        {t('auth.edge.viewAllReleases')}
+        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      </a>
 
       {/* Requirements table */}
       <div className="pt-2">
@@ -309,25 +312,30 @@ function EdgeDownloadPanel() {
   );
 }
 
+const EDGE_RELEASES_URL = 'https://github.com/tupinix/EDU-Edge/releases/latest';
+
 function DownloadButton({
-  icon, label, comingSoon,
-}: { icon: React.ReactNode; label: string; comingSoon: string }) {
+  icon, label, href, badge,
+}: { icon: React.ReactNode; label: string; href: string; badge?: string }) {
   return (
-    <button
-      type="button"
-      disabled
-      className="group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl border border-gray-200 bg-gray-50/60 text-gray-700 cursor-not-allowed transition-all"
-      aria-label={`${label} — ${comingSoon}`}
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-sm transition-all"
+      aria-label={label}
     >
-      <span className="absolute top-1.5 right-1.5 text-[9px] font-medium tracking-[0.14em] uppercase text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-        {comingSoon}
-      </span>
-      <span className="w-7 h-7 flex items-center justify-center text-gray-500">{icon}</span>
-      <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
+      {badge && (
+        <span className="absolute top-1.5 right-1.5 text-[9px] font-semibold tracking-[0.14em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+          {badge}
+        </span>
+      )}
+      <span className="w-7 h-7 flex items-center justify-center text-gray-600 group-hover:text-emerald-600 transition-colors">{icon}</span>
+      <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
         <Download className="w-3.5 h-3.5" />
         {label}
       </span>
-    </button>
+    </a>
   );
 }
 
