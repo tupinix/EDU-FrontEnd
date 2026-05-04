@@ -1,16 +1,19 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle, Download, Bell, Monitor, Terminal } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
+
+type ProductView = 'cloud' | 'edge';
 
 export function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { setAuth, isAuthenticated } = useAuthStore();
 
+  const [view, setView] = useState<ProductView>('cloud');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +54,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A0E14] text-white relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0E14] text-white relative overflow-hidden py-10">
       {/* Grid pattern */}
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
@@ -84,7 +87,7 @@ export function Login() {
 
       {/* Card */}
       <div
-        className={`relative z-10 w-full max-w-[420px] mx-4 transition-all duration-700 ease-out ${
+        className={`relative z-10 w-full max-w-[460px] mx-4 transition-all duration-700 ease-out ${
           mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
@@ -104,87 +107,124 @@ export function Login() {
             />
           </button>
           <h1 className="text-[30px] font-semibold text-white tracking-tight leading-tight">
-            {t('auth.loginTitle')}
+            {view === 'cloud' ? t('auth.loginTitle') : t('auth.edge.title')}
           </h1>
           <p className="text-[14.5px] text-gray-400 mt-2 font-light">
-            {t('auth.loginSubtitle')}
+            {view === 'cloud' ? t('auth.loginSubtitle') : t('auth.edge.subtitle')}
           </p>
         </div>
 
         {/* Form card — white island on dark */}
         <div className="bg-white rounded-2xl border border-white/10 shadow-2xl shadow-emerald-500/10 overflow-hidden">
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="px-7 py-7 space-y-5">
-            {/* Error */}
-            {error && (
-              <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Email */}
-            <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-                {t('common.email')}
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
-                placeholder={t('auth.emailPlaceholder')}
-                required
-                disabled={isLoading}
-                autoComplete="email"
-              />
+          {/* Product toggle (Cloud / Edge) */}
+          <div className="px-7 pt-6 pb-1">
+            <span className="text-[10px] font-semibold text-gray-500 tracking-[0.18em] uppercase block mb-2.5">
+              {t('auth.edition')}
+            </span>
+            <div className="flex rounded-xl bg-gray-100/80 p-1 gap-1">
+              {([
+                { mode: 'cloud' as ProductView, img: '/edu-cloud.png', alt: 'EDU Cloud' },
+                { mode: 'edge'  as ProductView, img: '/edu-edge.png',  alt: 'EDU Edge' },
+              ]).map(({ mode, img, alt }) => {
+                const isSelected = view === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setView(mode)}
+                    className={`flex-1 flex items-center justify-center py-2.5 rounded-lg transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-white shadow-sm'
+                        : 'opacity-40 hover:opacity-70'
+                    }`}
+                    aria-pressed={isSelected}
+                    aria-label={alt}
+                  >
+                    <img
+                      src={img}
+                      alt={alt}
+                      className="h-5 w-auto select-none"
+                      draggable={false}
+                    />
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Password */}
-            <div className="flex flex-col gap-2">
-              <label htmlFor="password" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-                {t('common.password')}
-              </label>
-              <div className="relative">
+          {view === 'cloud' ? (
+            /* Cloud → login form */
+            <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
+              {error && (
+                <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="email" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
+                  {t('common.email')}
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-11 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
-                  placeholder={t('auth.passwordPlaceholder')}
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
+                  placeholder={t('auth.emailPlaceholder')}
                   required
                   disabled={isLoading}
-                  autoComplete="current-password"
+                  autoComplete="email"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  {t('auth.loginTitle')}
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </>
-              )}
-            </button>
-          </form>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="password" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
+                  {t('common.password')}
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 pr-11 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
+                    placeholder={t('auth.passwordPlaceholder')}
+                    required
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    {t('auth.loginTitle')}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            /* Edge → download panel */
+            <EdgeDownloadPanel />
+          )}
         </div>
 
         {/* Footer */}
@@ -192,7 +232,102 @@ export function Login() {
           EDU Platform · v1.0
         </p>
       </div>
-
     </div>
   );
 }
+
+function EdgeDownloadPanel() {
+  const { t } = useTranslation();
+
+  const requirements: Array<{ label: string; min: string; rec: string }> = [
+    { label: t('auth.edge.reqOs'),   min: t('auth.edge.reqOsMin'),   rec: t('auth.edge.reqOsRec') },
+    { label: t('auth.edge.reqCpu'),  min: t('auth.edge.reqCpuMin'),  rec: t('auth.edge.reqCpuRec') },
+    { label: t('auth.edge.reqRam'),  min: t('auth.edge.reqRamMin'),  rec: t('auth.edge.reqRamRec') },
+    { label: t('auth.edge.reqDisk'), min: t('auth.edge.reqDiskMin'), rec: t('auth.edge.reqDiskRec') },
+    { label: t('auth.edge.reqGpu'),  min: t('auth.edge.reqGpuMin'),  rec: t('auth.edge.reqGpuRec') },
+  ];
+
+  return (
+    <div className="px-7 py-6 space-y-5">
+      {/* Download buttons */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <DownloadButton
+          icon={<Monitor className="w-6 h-6" strokeWidth={1.5} />}
+          label={t('auth.edge.downloadWindows')}
+          comingSoon={t('auth.edge.comingSoon')}
+        />
+        <DownloadButton
+          icon={<Terminal className="w-6 h-6" strokeWidth={1.5} />}
+          label={t('auth.edge.downloadLinux')}
+          comingSoon={t('auth.edge.comingSoon')}
+        />
+      </div>
+
+      {/* Notify CTA */}
+      <Link
+        to="/#demo"
+        className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[13.5px] font-semibold rounded-xl hover:bg-black transition-all shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5"
+      >
+        <Bell className="w-4 h-4" />
+        {t('auth.edge.notify')}
+        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
+      {/* Requirements table */}
+      <div className="pt-2">
+        <div className="flex items-baseline justify-between mb-2.5">
+          <span className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
+            {t('auth.edge.requirementsTitle')}
+          </span>
+        </div>
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3.5 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
+            <span></span>
+            <span className="text-right w-[110px]">{t('auth.edge.min')}</span>
+            <span className="text-right w-[140px]">{t('auth.edge.recommended')}</span>
+          </div>
+          {requirements.map((row, i) => (
+            <div
+              key={row.label}
+              className={`grid grid-cols-[1fr_auto_auto] gap-x-3 px-3.5 py-2.5 text-[12.5px] ${
+                i < requirements.length - 1 ? 'border-b border-gray-100' : ''
+              }`}
+            >
+              <span className="text-gray-700 font-medium">{row.label}</span>
+              <span className="text-right text-gray-500 w-[110px] tabular-nums">{row.min}</span>
+              <span className="text-right text-gray-900 w-[140px] tabular-nums">{row.rec}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Already installed hint */}
+      <p className="text-[11.5px] text-gray-400 text-center pt-1 leading-relaxed">
+        {t('auth.edge.alreadyInstalled')}
+      </p>
+    </div>
+  );
+}
+
+function DownloadButton({
+  icon, label, comingSoon,
+}: { icon: React.ReactNode; label: string; comingSoon: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      className="group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl border border-gray-200 bg-gray-50/60 text-gray-700 cursor-not-allowed transition-all"
+      aria-label={`${label} — ${comingSoon}`}
+    >
+      <span className="absolute top-1.5 right-1.5 text-[9px] font-medium tracking-[0.14em] uppercase text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+        {comingSoon}
+      </span>
+      <span className="w-7 h-7 flex items-center justify-center text-gray-500">{icon}</span>
+      <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
+        <Download className="w-3.5 h-3.5" />
+        {label}
+      </span>
+    </button>
+  );
+}
+
