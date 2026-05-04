@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { dashboardItem, standaloneItems, getNavGroups, type NavItem } from './nav-config';
-import { editionPages, editionLabels } from '../../config/edition';
 
 function getInitials(name?: string, email?: string): string {
   const source = name || email || 'U';
@@ -68,8 +67,8 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { sidebarCollapsed, toggleSidebar, sidebarGroupsOpen, toggleSidebarGroup } = useUIStore();
-  const { user, clearAuth, editionMode } = useAuthStore();
-  const filteredNavGroups = getNavGroups(editionMode);
+  const { user, clearAuth } = useAuthStore();
+  const filteredNavGroups = getNavGroups();
 
   const handleLogout = () => {
     clearAuth();
@@ -107,7 +106,7 @@ export function Sidebar() {
             />
             {!sidebarCollapsed && (
               <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">
-                {editionLabels[editionMode].title.replace('EDU ', '')}
+                Cloud
               </span>
             )}
           </div>
@@ -119,12 +118,9 @@ export function Sidebar() {
             <SidebarNavItem item={dashboardItem} collapsed={sidebarCollapsed} />
 
             {/* Standalone items (Explorer, Data Models) */}
-            {standaloneItems
-              .filter(item => new Set(editionPages[editionMode]).has(item.path))
-              .map(item => (
-                <SidebarNavItem key={item.path} item={item} collapsed={sidebarCollapsed} />
-              ))
-            }
+            {standaloneItems.map(item => (
+              <SidebarNavItem key={item.path} item={item} collapsed={sidebarCollapsed} />
+            ))}
 
             {sidebarCollapsed ? (
               <>

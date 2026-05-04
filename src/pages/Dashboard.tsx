@@ -4,14 +4,11 @@ import { HealthStatus, MetricsCards, ConnectionsStatus } from '../components/Das
 import { Loader2, RefreshCw, ArrowRight } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from '../hooks/useStore';
-import { editionLabels } from '../config/edition';
 
 export function Dashboard() {
   const { t } = useTranslation();
   const { data: metrics, isLoading, error, refetch } = useDashboardMetrics();
   const { data: activeBroker } = useActiveBroker();
-  const { editionMode } = useAuthStore();
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
@@ -54,7 +51,7 @@ export function Dashboard() {
             {t('dashboard.title')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
-            {editionLabels[editionMode].title} &middot; {t('dashboard.overview')}
+            EDU Cloud &middot; {t('dashboard.overview')}
           </p>
         </div>
         <div className="flex items-center gap-4">

@@ -5,12 +5,11 @@ import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide
 import { useAuthStore } from '../hooks/useStore';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
-import { type EditionMode } from '../config/edition';
 
 export function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setAuth, setEditionMode, editionMode, isAuthenticated } = useAuthStore();
+  const { setAuth, isAuthenticated } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +17,6 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
-  const [selectedEdition, setSelectedEdition] = useState<EditionMode>(editionMode);
 
   useEffect(() => {
     setMounted(true);
@@ -43,7 +41,6 @@ export function Login() {
         tenantId: 'default',
         status: 'active' as const,
       };
-      setEditionMode(selectedEdition);
       setAuth(user, response.token);
       navigate('/');
     } catch (err) {
@@ -116,42 +113,8 @@ export function Login() {
 
         {/* Form card — white island on dark */}
         <div className="bg-white rounded-2xl border border-white/10 shadow-2xl shadow-emerald-500/10 overflow-hidden">
-          {/* Edition toggle */}
-          <div className="px-7 pt-6 pb-1">
-            <span className="text-[10px] font-semibold text-gray-500 tracking-[0.18em] uppercase block mb-2.5">
-              {t('auth.edition')}
-            </span>
-            <div className="flex rounded-xl bg-gray-100/80 p-1 gap-1">
-              {([
-                { mode: 'standard' as EditionMode, img: '/edu-cloud.png', alt: 'Cloud' },
-                { mode: 'edge' as EditionMode, img: '/edu-edge.png', alt: 'Edge' },
-              ]).map(({ mode, img, alt }) => {
-                const isSelected = selectedEdition === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setSelectedEdition(mode)}
-                    className={`flex-1 flex items-center justify-center py-2.5 rounded-lg transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-white shadow-sm'
-                        : 'opacity-40 hover:opacity-70'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={alt}
-                      className="h-5 w-auto select-none"
-                      draggable={false}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Form */}
-          <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
+          <form onSubmit={handleSubmit} className="px-7 py-7 space-y-5">
             {/* Error */}
             {error && (
               <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">

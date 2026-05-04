@@ -5,7 +5,6 @@ import {
   CircuitBoard,
   Network,
   Radio,
-  Radar,
   Users,
   Cable,
   Factory,
@@ -15,7 +14,6 @@ import {
   Key,
   type LucideIcon,
 } from 'lucide-react';
-import { editionPages, type EditionMode } from '../../config/edition';
 
 export interface NavItem {
   path: string;
@@ -47,12 +45,10 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
-      { path: '/modbus',       labelKey: 'sidebar.modbus',      icon: Cpu },
-      { path: '/ethip',        labelKey: 'sidebar.ethip',       icon: CircuitBoard },
-      { path: '/opcua',        labelKey: 'sidebar.opcua',       icon: Network },
-      // Neo4j is Cloud-only; the edition filter hides it on Edge automatically
-      { path: '/neo4j',        labelKey: 'sidebar.neo4j',       icon: Factory },
+      { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
+      { path: '/ethip',  labelKey: 'sidebar.ethip',  icon: CircuitBoard },
+      { path: '/opcua',  labelKey: 'sidebar.opcua',  icon: Network },
+      { path: '/neo4j',  labelKey: 'sidebar.neo4j',  icon: Factory },
     ],
   },
   {
@@ -88,12 +84,6 @@ export const navGroups: NavGroup[] = [
   },
 ];
 
-export function getNavGroups(mode: EditionMode): NavGroup[] {
-  const allowed = new Set(editionPages[mode]);
-  return navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => allowed.has(item.path)),
-    }))
-    .filter((group) => group.items.length > 0);
+export function getNavGroups(): NavGroup[] {
+  return navGroups;
 }

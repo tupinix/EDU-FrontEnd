@@ -2,11 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, NetworkScan, Landing } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
-import { editionPages } from './config/edition';
 
 // Lazy-loaded heavy pages
 const PlantModel = lazy(() => import('./pages/PlantModel').then(m => ({ default: m.PlantModel })));
@@ -32,16 +31,6 @@ function RootRoute() {
   if (isAuthenticated) return <Layout />;
   if (location.pathname === '/') return <Landing />;
   return <Navigate to="/" replace />;
-}
-
-// Edition Route wrapper - redirects if page not allowed in current edition
-function EditionRoute({ path, children }: { path: string; children: ReactNode }) {
-  const { editionMode } = useAuthStore();
-  const allowed = new Set(editionPages[editionMode]);
-  if (!allowed.has(path)) {
-    return <Navigate to="/" replace />;
-  }
-  return <>{children}</>;
 }
 
 // Admin Route wrapper
@@ -72,13 +61,12 @@ function App() {
           {/* Root — Landing for guests, app shell for authed users */}
           <Route path="/" element={<RootRoute />}>
             <Route index element={<Dashboard />} />
-            <Route path="neo4j" element={<EditionRoute path="/neo4j"><Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense></EditionRoute>} />
+            <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
-            <Route path="network-scan" element={<EditionRoute path="/network-scan"><NetworkScan /></EditionRoute>} />
             <Route path="explorer" element={<Explorer />} />
-            <Route path="modbus" element={<EditionRoute path="/modbus"><ModbusPage /></EditionRoute>} />
-            <Route path="opcua" element={<EditionRoute path="/opcua"><OpcUaPage /></EditionRoute>} />
-            <Route path="ethip" element={<EditionRoute path="/ethip"><EthernetIpPage /></EditionRoute>} />
+            <Route path="modbus" element={<ModbusPage />} />
+            <Route path="opcua" element={<OpcUaPage />} />
+            <Route path="ethip" element={<EthernetIpPage />} />
 
             <Route path="data-models" element={<DataModelsPage />} />
             <Route path="alerts" element={<AlertsPage />} />

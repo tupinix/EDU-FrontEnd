@@ -56,7 +56,6 @@
     "loginError": "Erro ao fazer login",
     "defaultCredentials": "Credenciais de acesso padrão",
     "invalidCredentials": "Credenciais inválidas",
-    "edition": "Edição",
     "backToSite": "Voltar para o site"
   },
   "sidebar": {
@@ -69,7 +68,6 @@
     "modbus": "Modbus TCP",
     "opcua": "OPC-UA",
     "ethip": "EtherNet/IP",
-    "networkScan": "Network Scan",
     "connections": "Conexões",
     "mcpServer": "MCP Server",
     "neo4j": "Neo4J",
