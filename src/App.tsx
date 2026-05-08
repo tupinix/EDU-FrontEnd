@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ModbusPage, OpcUaPage, EthernetIpPage, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
@@ -64,9 +64,6 @@ function App() {
             <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
-            <Route path="modbus" element={<ModbusPage />} />
-            <Route path="opcua" element={<OpcUaPage />} />
-            <Route path="ethip" element={<EthernetIpPage />} />
 
             <Route path="data-models" element={<DataModelsPage />} />
             <Route path="alerts" element={<AlertsPage />} />

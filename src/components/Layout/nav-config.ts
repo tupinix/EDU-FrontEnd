@@ -1,9 +1,6 @@
 import {
   LayoutDashboard,
   Search,
-  Cpu,
-  CircuitBoard,
-  Network,
   Radio,
   Users,
   Cable,
@@ -45,10 +42,7 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/modbus', labelKey: 'sidebar.modbus', icon: Cpu },
-      { path: '/ethip',  labelKey: 'sidebar.ethip',  icon: CircuitBoard },
-      { path: '/opcua',  labelKey: 'sidebar.opcua',  icon: Network },
-      { path: '/neo4j',  labelKey: 'sidebar.neo4j',  icon: Factory },
+      { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
     ],
   },
   {
