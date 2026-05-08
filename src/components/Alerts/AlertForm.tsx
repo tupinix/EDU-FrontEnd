@@ -301,6 +301,8 @@ export function AlertForm({ alert, onClose }: Props) {
   const [notifyOnBad, setNotifyOnBad] = useState(alert?.notifyOnBad ?? true);
   const [cooldownSeconds, setCooldownSeconds] = useState(alert?.cooldownSeconds ?? 60);
   const [notifyDiscord, setNotifyDiscord] = useState(alert?.notifyDiscord !== false);
+  const [notifyTeams, setNotifyTeams] = useState(alert?.notifyTeams ?? false);
+  const [teamsWebhookUrl, setTeamsWebhookUrl] = useState(alert?.teamsWebhookUrl ?? '');
   const [notifyWhatsapp, setNotifyWhatsapp] = useState(alert?.notifyWhatsapp ?? false);
   const [whatsappTo, setWhatsappTo] = useState(alert?.whatsappTo ?? '');
 
@@ -394,6 +396,8 @@ export function AlertForm({ alert, onClose }: Props) {
       notifyOnBad,
       cooldownSeconds,
       notifyDiscord,
+      notifyTeams,
+      teamsWebhookUrl: teamsWebhookUrl.trim() || null,
       notifyWhatsapp,
       whatsappTo: whatsappTo.trim() || null,
     };
@@ -625,6 +629,15 @@ export function AlertForm({ alert, onClose }: Props) {
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div
+                    onClick={() => setNotifyTeams(!notifyTeams)}
+                    className={cn('w-9 h-5 rounded-full transition-colors relative cursor-pointer', notifyTeams ? 'bg-[#4B53BD]' : 'bg-gray-200')}
+                  >
+                    <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform', notifyTeams ? 'translate-x-4' : 'translate-x-0.5')} />
+                  </div>
+                  <span className="text-[11px] text-gray-600">Teams</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
                     onClick={() => setNotifyWhatsapp(!notifyWhatsapp)}
                     className={cn('w-9 h-5 rounded-full transition-colors relative cursor-pointer', notifyWhatsapp ? 'bg-[#25D366]' : 'bg-gray-200')}
                   >
@@ -640,6 +653,16 @@ export function AlertForm({ alert, onClose }: Props) {
                   <label className="text-[10px] text-gray-400 mb-1 block">Discord Webhook URL</label>
                   <input type="text" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)}
                     placeholder="Uses default from env"
+                    className="input-clean text-[12px] font-mono" />
+                </div>
+              )}
+
+              {/* Teams webhook URL */}
+              {notifyTeams && (
+                <div className="mb-3">
+                  <label className="text-[10px] text-gray-400 mb-1 block">Teams Webhook URL</label>
+                  <input type="text" value={teamsWebhookUrl} onChange={e => setTeamsWebhookUrl(e.target.value)}
+                    placeholder="https://....webhook.office.com/webhookb2/.../IncomingWebhook/..."
                     className="input-clean text-[12px] font-mono" />
                 </div>
               )}

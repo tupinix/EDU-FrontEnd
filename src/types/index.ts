@@ -412,6 +412,8 @@ export interface AlertRule {
   warnMax?: number | string;
   webhookUrl?: string;
   notifyDiscord: boolean;
+  notifyTeams: boolean;
+  teamsWebhookUrl?: string;
   notifyWhatsapp: boolean;
   whatsappTo?: string;
   notifyOnGood: boolean;
