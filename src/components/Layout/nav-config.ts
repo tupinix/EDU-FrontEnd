@@ -11,6 +11,7 @@ import {
   Key,
   Globe,
   Zap,
+  Building2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -76,8 +77,9 @@ export const navGroups: NavGroup[] = [
     key: 'system',
     labelKey: 'sidebar.groups.system',
     items: [
-      { path: '/users',    labelKey: 'sidebar.users',    icon: Users, adminOnly: true },
-      { path: '/licenses', labelKey: 'sidebar.licenses', icon: Key,   adminOnly: true },
+      { path: '/users',         labelKey: 'sidebar.users',     icon: Users,     adminOnly: true },
+      { path: '/organizations', labelKey: 'Organizations',     icon: Building2, adminOnly: true },
+      { path: '/licenses',      labelKey: 'sidebar.licenses',  icon: Key,       adminOnly: true },
     ],
   },
 ];

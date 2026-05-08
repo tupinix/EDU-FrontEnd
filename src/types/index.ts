@@ -398,6 +398,29 @@ export interface McpTokenCreated extends McpToken {
 }
 
 // Alert Rule Types
+// ===========================================
+// Organizations (multi-tenant)
+// ===========================================
+
+export type OrgPlan = 'trial' | 'starter' | 'professional' | 'enterprise';
+export type OrgStatus = 'active' | 'suspended' | 'deleted';
+
+export interface Organization {
+  id: string;
+  name: string;
+  subdomain: string;
+  mqttPrefix: string;
+  status: OrgStatus;
+  plan: OrgPlan;
+  contactEmail?: string;
+  logoUrl?: string;
+  maxUsers: number;
+  maxConnections: number;
+  createdAt: string;
+  updatedAt?: string;
+  userCount?: number;
+}
+
 export interface AlertRule {
   id: string;
   name: string;

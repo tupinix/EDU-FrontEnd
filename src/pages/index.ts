@@ -7,6 +7,7 @@ export { Users } from './Users';
 export { ConnectionsPage } from './ConnectionsPage';
 export { ApiRestPage } from './ApiRestPage';
 export { I3xPage } from './I3xPage';
+export { OrganizationsPage } from './OrganizationsPage';
 export { PlantModel } from './PlantModel';
 export { DataModelsPage } from './DataModelsPage';
 export { AlertsPage } from './AlertsPage';

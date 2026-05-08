@@ -951,3 +951,61 @@ export const waitlistApi = {
     return data.data;
   },
 };
+
+// ===========================================
+// Organizations API (multi-tenant, admin only)
+// ===========================================
+
+import type { Organization } from '../types';
+
+export interface OrganizationCreatePayload {
+  name: string;
+  subdomain: string;
+  plan?: 'trial' | 'starter' | 'professional' | 'enterprise';
+  contactEmail?: string;
+  maxUsers?: number;
+  maxConnections?: number;
+}
+
+export interface OrganizationUpdatePayload {
+  name?: string;
+  subdomain?: string;
+  plan?: 'trial' | 'starter' | 'professional' | 'enterprise';
+  status?: 'active' | 'suspended' | 'deleted';
+  contactEmail?: string | null;
+  maxUsers?: number;
+  maxConnections?: number;
+}
+
+export const organizationsApi = {
+  list: async (includeDeleted = false): Promise<Organization[]> => {
+    const { data } = await apiClient.get<ApiResponse<Organization[]>>(
+      `/organizations${includeDeleted ? '?includeDeleted=true' : ''}`,
+    );
+    return data.data ?? [];
+  },
+  getById: async (id: string): Promise<Organization> => {
+    const { data } = await apiClient.get<ApiResponse<Organization>>(`/organizations/${id}`);
+    if (!data.data) throw new Error(data.error || 'Organization not found');
+    return data.data;
+  },
+  create: async (payload: OrganizationCreatePayload): Promise<Organization> => {
+    const { data } = await apiClient.post<ApiResponse<Organization>>('/organizations', payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create organization');
+    return data.data;
+  },
+  update: async (id: string, payload: OrganizationUpdatePayload): Promise<Organization> => {
+    const { data } = await apiClient.put<ApiResponse<Organization>>(`/organizations/${id}`, payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update organization');
+    return data.data;
+  },
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete<ApiResponse>(`/organizations/${id}`);
+  },
+  listUsers: async (id: string): Promise<{ id: string; email: string; name: string; role: string }[]> => {
+    const { data } = await apiClient.get<ApiResponse<{ id: string; email: string; name: string; role: string }[]>>(
+      `/organizations/${id}/users`,
+    );
+    return data.data ?? [];
+  },
+};
