@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
@@ -64,6 +64,8 @@ function App() {
             <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />
+            <Route path="api-rest" element={<ApiRestPage />} />
+            <Route path="i3x" element={<I3xPage />} />
 
             <Route path="data-models" element={<DataModelsPage />} />
             <Route path="alerts" element={<AlertsPage />} />

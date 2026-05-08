@@ -9,6 +9,8 @@ import {
   Bell,
   LayoutGrid,
   Key,
+  Globe,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -42,7 +44,9 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
+      { path: '/neo4j',    labelKey: 'sidebar.neo4j', icon: Factory },
+      { path: '/api-rest', labelKey: 'API REST',      icon: Globe },
+      { path: '/i3x',      labelKey: 'i3X',           icon: Zap },
     ],
   },
   {
