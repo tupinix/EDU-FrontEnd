@@ -1,7 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle, Download, Monitor, Terminal } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { useTenant } from '../hooks/useTenant';
 import { authApi } from '../services/api';
@@ -281,44 +281,48 @@ export function Login() {
 function EdgeDownloadPanel() {
   const { t } = useTranslation();
 
+  // Pitch points shown at the top of the Edge tab. Two short lines that
+  // sell what makes Edge different from Cloud: it's a real desktop app
+  // (or browser-accessible from any machine on the local network),
+  // and it processes data locally before forwarding to Cloud.
+  const pitch: string[] = [
+    t('auth.edge.pitchNative'),
+    t('auth.edge.pitchLocalFirst'),
+  ];
+
+  // Distribution is invite-only for now (the binary is gated behind a
+  // license server). We funnel interested users to the waitlist on the
+  // marketing page (Landing has an id="demo" section with the form).
   const requirements: Array<{ label: string; min: string; rec: string }> = [
-    { label: t('auth.edge.reqOs'),   min: t('auth.edge.reqOsMin'),   rec: t('auth.edge.reqOsRec') },
-    { label: t('auth.edge.reqCpu'),  min: t('auth.edge.reqCpuMin'),  rec: t('auth.edge.reqCpuRec') },
-    { label: t('auth.edge.reqRam'),  min: t('auth.edge.reqRamMin'),  rec: t('auth.edge.reqRamRec') },
-    { label: t('auth.edge.reqDisk'), min: t('auth.edge.reqDiskMin'), rec: t('auth.edge.reqDiskRec') },
-    { label: t('auth.edge.reqGpu'),  min: t('auth.edge.reqGpuMin'),  rec: t('auth.edge.reqGpuRec') },
+    { label: t('auth.edge.reqCpu'), min: t('auth.edge.reqCpuMin'), rec: t('auth.edge.reqCpuRec') },
+    { label: t('auth.edge.reqRam'), min: t('auth.edge.reqRamMin'), rec: t('auth.edge.reqRamRec') },
+    { label: t('auth.edge.reqGpu'), min: t('auth.edge.reqGpuMin'), rec: t('auth.edge.reqGpuRec') },
   ];
 
   return (
     <div className="px-7 py-6 space-y-5">
-      {/* Download buttons */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <DownloadButton
-          icon={<Monitor className="w-6 h-6" strokeWidth={1.5} />}
-          label={t('auth.edge.downloadWindows')}
-          href={EDGE_RELEASES_URL}
-          badge={t('auth.edge.beta')}
-        />
-        <DownloadButton
-          icon={<Terminal className="w-6 h-6" strokeWidth={1.5} />}
-          label={t('auth.edge.downloadLinux')}
-          href={EDGE_RELEASES_URL}
-          badge={t('auth.edge.beta')}
-        />
-      </div>
+      {/* Pitch — what is Edge? */}
+      <ul className="space-y-2 text-[13px] text-gray-600 leading-relaxed">
+        {pitch.map((line) => (
+          <li key={line} className="flex gap-2.5">
+            <span className="text-emerald-500 shrink-0" aria-hidden>·</span>
+            <span>{line}</span>
+          </li>
+        ))}
+      </ul>
 
-      {/* Releases / changelog hint */}
+      {/* CTA — contact for installation (Landing #demo anchor hosts the
+          waitlist form; invite-only launch means we don't expose a
+          direct download). */}
       <a
-        href={EDGE_RELEASES_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group w-full flex items-center justify-center gap-2 py-3 text-[12.5px] font-medium text-gray-500 hover:text-gray-900 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
+        href="/#demo"
+        className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5"
       >
-        {t('auth.edge.viewAllReleases')}
-        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        {t('auth.edge.contactCta')}
+        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
       </a>
 
-      {/* Requirements table */}
+      {/* Requirements table — CPU / RAM / GPU only */}
       <div className="pt-2">
         <div className="flex items-baseline justify-between mb-2.5">
           <span className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
@@ -345,39 +349,7 @@ function EdgeDownloadPanel() {
           ))}
         </div>
       </div>
-
-      {/* Already installed hint */}
-      <p className="text-[11.5px] text-gray-400 text-center pt-1 leading-relaxed">
-        {t('auth.edge.alreadyInstalled')}
-      </p>
     </div>
-  );
-}
-
-const EDGE_RELEASES_URL = 'https://github.com/tupinix/EDU-Edge/releases/latest';
-
-function DownloadButton({
-  icon, label, href, badge,
-}: { icon: React.ReactNode; label: string; href: string; badge?: string }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40 hover:shadow-sm transition-all"
-      aria-label={label}
-    >
-      {badge && (
-        <span className="absolute top-1.5 right-1.5 text-[9px] font-semibold tracking-[0.14em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-          {badge}
-        </span>
-      )}
-      <span className="w-7 h-7 flex items-center justify-center text-gray-600 group-hover:text-emerald-600 transition-colors">{icon}</span>
-      <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
-        <Download className="w-3.5 h-3.5" />
-        {label}
-      </span>
-    </a>
   );
 }
 
