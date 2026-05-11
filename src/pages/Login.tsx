@@ -44,6 +44,19 @@ export function Login() {
     setMounted(true);
   }, []);
 
+  // Reaching /login means "give me a fresh session, ignore whatever
+  // cookie is sitting in this browser." Otherwise the cross-subdomain
+  // edu_token cookie outlives a logout (HttpOnly, can't be touched
+  // from JS) and the next navigate('/') silently rehydrates the user
+  // via useCookieSessionRehydration — clicking the EDU logo or the
+  // Edge "Contact for installation" link to /#demo felt like an
+  // instant login because RootRoute re-ran /auth/me successfully.
+  useEffect(() => {
+    authApi.logout().catch(() => { /* fine if no session existed */ });
+    localStorage.removeItem('edu_token');
+    localStorage.removeItem('edu_refresh_token');
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
