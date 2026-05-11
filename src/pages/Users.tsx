@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Edit2, X, Check, Eye, EyeOff, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
-import apiClient from '../services/api';
+import apiClient, { organizationsApi } from '../services/api';
+import type { Organization } from '../types';
 import { cn } from '@/lib/utils';
 
 interface UserData {
@@ -11,6 +12,8 @@ interface UserData {
   email: string;
   name: string;
   role: 'admin' | 'engineer';
+  tenant_id?: string | null;
+  tenant_name?: string | null;
   created_at: string;
 }
 
@@ -19,6 +22,8 @@ interface UserFormData {
   name: string;
   password: string;
   role: 'admin' | 'engineer';
+  // null = no tenant (only valid for admin role / platform-admin)
+  tenantId: string | null;
 }
 
 export function Users() {
@@ -31,13 +36,24 @@ export function Users() {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
-  const [formData, setFormData] = useState<UserFormData>({ email: '', name: '', password: '', role: 'engineer' });
+  const [formData, setFormData] = useState<UserFormData>({ email: '', name: '', password: '', role: 'engineer', tenantId: null });
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Platform-admin (no tenantId) can pick which org the new user
+  // belongs to. Tenant-admins create users in their own tenant
+  // implicitly — we hide the dropdown for them.
+  const isPlatformAdmin = user?.role === 'admin' && !user.tenantId;
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+
   useEffect(() => { if (user && user.role !== 'admin') navigate('/'); }, [user, navigate]);
+
+  useEffect(() => {
+    if (!isPlatformAdmin) return;
+    organizationsApi.list().then(setOrganizations).catch(() => { /* non-fatal */ });
+  }, [isPlatformAdmin]);
 
   const fetchUsers = async () => {
     setIsLoading(true); setError('');
@@ -51,23 +67,41 @@ export function Users() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const handleNew = () => { setEditingUser(null); setFormData({ email: '', name: '', password: '', role: 'engineer' }); setFormError(''); setShowModal(true); };
+  const handleNew = () => {
+    setEditingUser(null);
+    setFormData({ email: '', name: '', password: '', role: 'engineer', tenantId: null });
+    setFormError(''); setShowModal(true);
+  };
 
   const handleEdit = (u: UserData) => {
-    setEditingUser(u); setFormData({ email: u.email, name: u.name, password: '', role: u.role }); setFormError(''); setShowModal(true);
+    setEditingUser(u);
+    setFormData({ email: u.email, name: u.name, password: '', role: u.role, tenantId: u.tenant_id ?? null });
+    setFormError(''); setShowModal(true);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault(); setFormError(''); setIsSaving(true);
     try {
       if (editingUser) {
-        const body: Partial<UserFormData> = { email: formData.email, name: formData.name, role: formData.role };
+        // PUT does not change tenant binding (intentional — moving a user
+        // between orgs is a separate operation we haven't designed yet).
+        const body: Partial<Omit<UserFormData, 'tenantId'>> = { email: formData.email, name: formData.name, role: formData.role };
         if (formData.password) body.password = formData.password;
         const { data } = await apiClient.put(`/auth/users/${editingUser.id}`, body);
         if (data.success) { setShowModal(false); fetchUsers(); } else setFormError(data.error || 'Error');
       } else {
         if (!formData.password) { setFormError('Password is required'); setIsSaving(false); return; }
-        const { data } = await apiClient.post('/auth/users', formData);
+        if (formData.role !== 'admin' && !formData.tenantId && isPlatformAdmin) {
+          setFormError('Selecione uma organização para usuários engineer');
+          setIsSaving(false); return;
+        }
+        // Only platform-admins send tenantId; tenant-admins let the
+        // server infer their own tenant.
+        const payload: Record<string, unknown> = {
+          email: formData.email, name: formData.name, password: formData.password, role: formData.role,
+        };
+        if (isPlatformAdmin) payload.tenantId = formData.tenantId;
+        const { data } = await apiClient.post('/auth/users', payload);
         if (data.success) { setShowModal(false); fetchUsers(); } else setFormError(data.error || 'Error');
       }
     } catch (err) { setFormError(err instanceof Error ? err.message : 'Error'); }
@@ -146,8 +180,15 @@ export function Users() {
                   <span className="text-[14px] font-medium text-gray-900 dark:text-gray-100 truncate">{u.name}</span>
                 </div>
 
-                {/* Email */}
-                <span className="text-[13px] text-gray-500 truncate pl-11 sm:pl-0">{u.email}</span>
+                {/* Email + tenant badge (platform-admin sees the org each user belongs to) */}
+                <div className="flex flex-col gap-0.5 pl-11 sm:pl-0 min-w-0">
+                  <span className="text-[13px] text-gray-500 truncate">{u.email}</span>
+                  {isPlatformAdmin && (
+                    <span className="text-[10px] text-gray-400 truncate">
+                      {u.tenant_name ?? <span className="italic text-gray-300">no org</span>}
+                    </span>
+                  )}
+                </div>
 
                 {/* Role */}
                 <span className={cn(
@@ -252,6 +293,32 @@ export function Users() {
                   ))}
                 </div>
               </FormField>
+
+              {/* Organization picker — only platform-admins see this,
+                  and only on create (PUT doesn't change tenant). For
+                  role=admin the picker is optional (null = platform-admin
+                  on apex); for engineer it's required. */}
+              {isPlatformAdmin && !editingUser && (
+                <FormField label={`Organização${formData.role === 'admin' ? ' (opcional)' : ''}`}>
+                  <select
+                    value={formData.tenantId ?? ''}
+                    onChange={(e) => setFormData({ ...formData, tenantId: e.target.value || null })}
+                    required={formData.role !== 'admin'}
+                    className="w-full px-3.5 py-2.5 text-[14px] input-clean bg-white dark:bg-gray-900"
+                  >
+                    <option value="">
+                      {formData.role === 'admin' ? '— Platform admin (sem org) —' : '— Selecione uma organização —'}
+                    </option>
+                    {organizations
+                      .filter((o) => o.status !== 'deleted')
+                      .map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.name} ({o.subdomain})
+                        </option>
+                      ))}
+                  </select>
+                </FormField>
+              )}
 
               <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" onClick={() => setShowModal(false)} disabled={isSaving}

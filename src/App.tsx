@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
+import { useTenant } from './hooks/useTenant';
 import { SocketProvider } from './providers/SocketProvider';
 import { authApi } from './services/api';
 
@@ -29,6 +30,7 @@ function RootRoute() {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
   const hydrating = useCookieSessionRehydration();
+  const { isTenantSubdomain } = useTenant();
 
   // Wait for the cross-subdomain cookie probe before deciding what to
   // render — otherwise users arriving on tupinix.* / highbyte.* with a
@@ -42,6 +44,14 @@ function RootRoute() {
   }
 
   if (isAuthenticated) return <Layout />;
+
+  // The marketing Landing only makes sense on the apex domain — it's
+  // there to convert new visitors. A guest on a tenant subdomain
+  // (highbyte.espaco…) probably came from a bookmark or shared link
+  // and is just trying to sign in; send them to /login. The intended
+  // onboarding path is apex → login → redirect to the user's tenant.
+  if (isTenantSubdomain) return <Navigate to="/login" replace />;
+
   if (location.pathname === '/') return <Landing />;
   return <Navigate to="/" replace />;
 }
