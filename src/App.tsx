@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode, lazy, Suspense } from 'react';
+import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { SocketProvider } from './providers/SocketProvider';
+import { authApi } from './services/api';
 
 // Lazy-loaded heavy pages
 const PlantModel = lazy(() => import('./pages/PlantModel').then(m => ({ default: m.PlantModel })));
@@ -27,10 +28,69 @@ const queryClient = new QueryClient({
 function RootRoute() {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
+  const hydrating = useCookieSessionRehydration();
+
+  // Wait for the cross-subdomain cookie probe before deciding what to
+  // render — otherwise users arriving on tupinix.* / highbyte.* with a
+  // valid cookie would briefly see Landing/login and then jump to the app.
+  if (hydrating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0E14]">
+        <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (isAuthenticated) return <Layout />;
   if (location.pathname === '/') return <Landing />;
   return <Navigate to="/" replace />;
+}
+
+/**
+ * Sprint 2 — on first mount, if we have no in-memory auth state but the
+ * cross-subdomain cookie is present (Domain=.espacodedadosunificado.com.br),
+ * call /auth/me to rehydrate. This is how a user landing on
+ * tupinix.espacodedadosunificado.com.br after a redirect from the apex
+ * login goes straight into the app without re-entering credentials.
+ */
+function useCookieSessionRehydration(): boolean {
+  const { isAuthenticated, setAuth } = useAuthStore();
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    if (isAuthenticated) {
+      setDone(true);
+      return;
+    }
+    (async () => {
+      try {
+        const me = await authApi.getMe();
+        if (cancelled) return;
+        setAuth(
+          {
+            id: me.id,
+            email: me.email,
+            name: me.name,
+            role: me.role as 'admin' | 'engineer' | 'viewer',
+            tenantId: me.tenant?.id ?? 'default',
+            status: 'active',
+            tenant: me.tenant ?? null,
+          },
+          // The server reads the cookie on every call, so the localStorage
+          // token isn't load-bearing for API auth — use a sentinel value so
+          // isAuthenticated flips true and the apiClient interceptor knows
+          // to skip the Authorization header.
+          'cookie',
+        );
+      } catch {
+        // No cookie or expired — stay a guest, route guards take over.
+      } finally {
+        if (!cancelled) setDone(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, setAuth]);
+  return !done;
 }
 
 // Admin Route wrapper

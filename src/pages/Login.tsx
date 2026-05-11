@@ -8,6 +8,23 @@ import { LanguageSelector } from '../components/LanguageSelector';
 
 type ProductView = 'cloud' | 'edge';
 
+const ROOT_DOMAIN = 'espacodedadosunificado.com.br';
+
+/**
+ * Decide whether the post-login flow should redirect to the tenant's
+ * subdomain. We only redirect when:
+ *   - We're on production-style hosts ending in espacodedadosunificado.com.br
+ *   - The current hostname is NOT already the tenant subdomain
+ * Local/preview/dev hosts (localhost, IPs, *.vercel.app preview URLs)
+ * stay where they are — keeps developer flow simple.
+ */
+function shouldRedirectToTenantHost(tenantSubdomain: string): boolean {
+  const host = window.location.hostname.toLowerCase();
+  if (!host.endsWith(ROOT_DOMAIN)) return false;
+  const target = `${tenantSubdomain}.${ROOT_DOMAIN}`;
+  return host !== target;
+}
+
 export function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -36,15 +53,29 @@ export function Login() {
 
     try {
       const response = await authApi.login(email, password);
+      const tenant = response.user.tenant ?? null;
       const user = {
         id: response.user.id,
         email: response.user.email,
         name: response.user.name,
         role: response.user.role as 'admin' | 'engineer' | 'viewer',
-        tenantId: 'default',
+        tenantId: tenant?.id ?? 'default',
         status: 'active' as const,
+        tenant,
       };
       setAuth(user, response.token);
+
+      // Sprint 2 — subdomain routing. If the user belongs to a tenant
+      // and is currently on a different host than their tenant subdomain,
+      // redirect there. The cross-subdomain HttpOnly cookie set by
+      // /auth/login (Domain=.espaco…) travels automatically; the new
+      // host calls /auth/me on load and rehydrates from it.
+      if (tenant?.subdomain && shouldRedirectToTenantHost(tenant.subdomain)) {
+        const target = `${window.location.protocol}//${tenant.subdomain}.espacodedadosunificado.com.br/`;
+        window.location.replace(target);
+        return;
+      }
+
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.loginError'));

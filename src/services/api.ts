@@ -20,20 +20,35 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Create axios instance
+// Create axios instance.
+//
+// `withCredentials: true` is required so the cross-subdomain session cookie
+// `edu_token` (set by /auth/login with Domain=.espacodedadosunificado.com.br)
+// is sent on every request. The backend's CORS config already echoes the
+// Origin and `Access-Control-Allow-Credentials: true`.
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor for auth token
+// Request interceptor for auth token.
+//
+// Two transport modes:
+//   - Bearer: localStorage has a real JWT (existing flow). Send Authorization
+//     header so the backend's Bearer path works.
+//   - Cookie: localStorage has the sentinel string 'cookie' (set after
+//     cross-subdomain rehydration via /auth/me). Skip the header entirely
+//     and rely on the cross-subdomain HttpOnly cookie that travels via
+//     withCredentials. Sending an empty/invalid Bearer would force the
+//     backend down the header path and fail jwt.verify.
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('edu_token');
-    if (token) {
+    if (token && token !== 'cookie') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -215,18 +230,30 @@ export const hierarchyApi = {
 // Auth API
 // ===========================================
 
-interface AuthUser {
+export interface AuthTenant {
+  id: string;
+  name: string;
+  subdomain: string;
+  plan?: string;
+  status?: string;
+}
+
+export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'engineer';
+  role: 'admin' | 'engineer' | 'viewer';
+  /** Populated when the user belongs to a tenant. Admin global users
+   *  (tenantId null) get `tenant: null`. */
+  tenant?: AuthTenant | null;
 }
 
 export const authApi = {
   login: async (email: string, password: string): Promise<{ token: string; user: AuthUser }> => {
     const { data } = await apiClient.post<ApiResponse<{ token: string; user: AuthUser }>>(
       '/auth/login',
-      { email, password }
+      { email, password },
+      { withCredentials: true },
     );
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Login failed');
@@ -235,7 +262,7 @@ export const authApi = {
   },
 
   getMe: async (): Promise<AuthUser> => {
-    const { data } = await apiClient.get<ApiResponse<AuthUser>>('/auth/me');
+    const { data } = await apiClient.get<ApiResponse<AuthUser>>('/auth/me', { withCredentials: true });
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to get user');
     }
@@ -243,6 +270,9 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/auth/logout', {}, { withCredentials: true });
+    } catch { /* server might be down — still clear local state */ }
     localStorage.removeItem('edu_token');
   },
 };

@@ -105,8 +105,12 @@ export function Sidebar() {
               draggable={false}
             />
             {!sidebarCollapsed && (
-              <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold">
-                Cloud
+              <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 font-semibold truncate">
+                {/* Sprint 2: when the JWT carries a tenant, show its name —
+                    helps users on tupinix.* / highbyte.* etc. know which
+                    org they're inside. Falls back to "Cloud" for the
+                    admin-on-apex case. */}
+                {user?.tenant?.name ?? 'Cloud'}
               </span>
             )}
           </div>

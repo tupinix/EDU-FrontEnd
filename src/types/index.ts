@@ -155,6 +155,14 @@ export interface User {
   role: 'admin' | 'engineer' | 'viewer';
   status: 'active' | 'suspended' | 'pending';
   lastLoginAt?: string;
+  /** Tenant info, populated by /auth/login and /auth/me responses */
+  tenant?: {
+    id: string;
+    name: string;
+    subdomain: string;
+    plan?: string;
+    status?: string;
+  } | null;
 }
 
 export interface AuthState {
