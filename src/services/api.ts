@@ -79,6 +79,13 @@ apiClient.interceptors.response.use(
         } catch { /* ignore */ }
       }
     }
+    // Promote the server's error string onto error.message so UI catch
+    // blocks reading `err.message` show "Credenciais invalidas" instead of
+    // axios' useless "Request failed with status code 401".
+    const serverError = error.response?.data?.error;
+    if (serverError) {
+      error.message = serverError;
+    }
     return Promise.reject(error);
   }
 );
