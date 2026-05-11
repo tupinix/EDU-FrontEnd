@@ -90,7 +90,7 @@
     "ethip": "EtherNet/IP",
     "connections": "Conexões",
     "mcpServer": "MCP Server",
-    "neo4j": "Neo4J",
+    "neo4j": "Knowledge Graph",
     "dataModels": "Data Models",
     "alerts": "Alertas",
     "process": "Dashboards",
@@ -183,7 +183,7 @@
         "items": [
           "Pronta em segundos",
           "Atualizações automáticas",
-          "ISA-95 + Neo4j inclusos",
+          "ISA-95 + Knowledge Graph inclusos",
           "MQTT na nuvem (HiveMQ, AWS IoT, etc.)"
         ]
       },
