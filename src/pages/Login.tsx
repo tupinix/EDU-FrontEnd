@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle, Download, Monitor, Terminal } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
+import { useTenant } from '../hooks/useTenant';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
 
@@ -29,6 +30,7 @@ export function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { setAuth, isAuthenticated } = useAuthStore();
+  const { isTenantSubdomain } = useTenant();
 
   const [view, setView] = useState<ProductView>('cloud');
   const [email, setEmail] = useState('');
@@ -102,19 +104,28 @@ export function Login() {
       <div className="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-[140px] pointer-events-none" />
 
-      {/* Top bar — back to site + language */}
-      <div className="absolute top-5 left-6 z-20">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-          {t('auth.backToSite')}
-        </Link>
-      </div>
-      <div className="absolute top-5 right-6 z-20">
-        <LanguageSelector variant="minimal" />
-      </div>
+      {/* Top bar — back to site + language.
+          Only shown on the apex domain. On tenant subdomains
+          (highbyte.espaco…), "back to site" links to /, which would
+          land the user on /login again (RootRoute redirects guests
+          there), and the marketing language picker is decoration
+          that doesn't fit the in-org login context. */}
+      {!isTenantSubdomain && (
+        <>
+          <div className="absolute top-5 left-6 z-20">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+              {t('auth.backToSite')}
+            </Link>
+          </div>
+          <div className="absolute top-5 right-6 z-20">
+            <LanguageSelector variant="minimal" />
+          </div>
+        </>
+      )}
 
       {/* Card */}
       <div

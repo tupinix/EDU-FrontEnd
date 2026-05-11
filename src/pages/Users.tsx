@@ -42,10 +42,11 @@ export function Users() {
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Platform-admin (no tenantId) can pick which org the new user
-  // belongs to. Tenant-admins create users in their own tenant
-  // implicitly — we hide the dropdown for them.
-  const isPlatformAdmin = user?.role === 'admin' && !user.tenantId;
+  // The data model doesn't distinguish tenant-admins from
+  // platform-admins yet — any admin can pick which org the new user
+  // goes to. (When/if a "tenant-admin" concept lands the check
+  // should narrow back down.)
+  const isPlatformAdmin = user?.role === 'admin';
   const [organizations, setOrganizations] = useState<Organization[]>([]);
 
   useEffect(() => { if (user && user.role !== 'admin') navigate('/'); }, [user, navigate]);
