@@ -137,6 +137,29 @@ export interface HierarchyMapping {
   description?: string;
 }
 
+// Knowledge Graph editor — arbitrary nodes & relationships
+export type GraphPropertyValue = string | number | boolean | null;
+export type GraphProperties = Record<string, GraphPropertyValue>;
+
+export interface GraphNode {
+  id: string;
+  labels: string[];
+  properties: GraphProperties;
+}
+
+export interface GraphRelationship {
+  id: string;
+  type: string;
+  sourceId: string;
+  targetId: string;
+  properties: GraphProperties;
+}
+
+export interface RawGraph {
+  nodes: GraphNode[];
+  relationships: GraphRelationship[];
+}
+
 // Cypher Query Result
 export interface CypherResult {
   columns: string[];

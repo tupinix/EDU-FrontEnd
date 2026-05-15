@@ -16,6 +16,10 @@ import {
   McpToken,
   McpTokenCreated,
   CypherResult,
+  GraphNode,
+  GraphProperties,
+  GraphRelationship,
+  RawGraph,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -230,6 +234,79 @@ export const hierarchyApi = {
       throw new Error(data.error || 'Cypher query failed');
     }
     return data.data;
+  },
+
+  // Knowledge Graph editor — raw nodes + relationships
+  getGraph: async (): Promise<RawGraph> => {
+    const { data } = await apiClient.get<ApiResponse<RawGraph>>('/hierarchy/graph');
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch graph');
+    }
+    return data.data;
+  },
+
+  createNode: async (label: string, properties: GraphProperties): Promise<GraphNode> => {
+    const { data } = await apiClient.post<ApiResponse<GraphNode>>('/hierarchy/nodes', {
+      label,
+      properties,
+    });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to create node');
+    }
+    return data.data;
+  },
+
+  updateNode: async (id: string, properties: GraphProperties): Promise<GraphNode> => {
+    const { data } = await apiClient.patch<ApiResponse<GraphNode>>(`/hierarchy/nodes/${id}`, {
+      properties,
+    });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to update node');
+    }
+    return data.data;
+  },
+
+  deleteNode: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse<void>>(`/hierarchy/nodes/${id}`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete node');
+    }
+  },
+
+  createRelationship: async (
+    sourceId: string,
+    targetId: string,
+    type: string,
+    properties: GraphProperties = {},
+  ): Promise<GraphRelationship> => {
+    const { data } = await apiClient.post<ApiResponse<GraphRelationship>>('/hierarchy/relationships', {
+      sourceId,
+      targetId,
+      type,
+      properties,
+    });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to create relationship');
+    }
+    return data.data;
+  },
+
+  updateRelationship: async (id: string, properties: GraphProperties): Promise<GraphRelationship> => {
+    const { data } = await apiClient.patch<ApiResponse<GraphRelationship>>(
+      `/hierarchy/relationships/${id}`,
+      { properties },
+    );
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to update relationship');
+    }
+    return data.data;
+  },
+
+  deleteRelationship: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse<void>>(`/hierarchy/relationships/${id}`);
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete relationship');
+    }
   },
 };
 
