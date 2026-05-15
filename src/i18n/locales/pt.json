@@ -162,7 +162,7 @@
         "desc": "Transforme tags brutas em modelos limpos. Templates CESMII prontos, mapeamentos com referências dinâmicas {{topic.field}}."
       },
       "screens": {
-        "title": "Process Screens",
+        "title": "Dashboard",
         "desc": "Telas SCADA com canvas livre, 13 widgets, templates de Cooling Tower, Tank Farm e mais. Drag, drop, link de tags."
       },
       "alerts": {
@@ -170,32 +170,37 @@
         "desc": "Thresholds estáticos ou dinâmicos baseados em outros tags. Notificações em Discord e WhatsApp."
       },
       "ai": {
-        "title": "Plantscape AI",
+        "title": "Pronta para IA",
         "desc": "Agentes que conversam com sua planta. Servidor MCP integrado: pergunte ao Claude sobre processos e receba dados ao vivo, sem código."
       }
     },
     "editions": {
       "tag": "Deploy flexível",
       "title": "Cloud ou Edge. Você escolhe.",
-      "subtitle": "Camada Cloud centralizada com inteligência global; camada Edge distribuída com soberania local. Sua arquitetura, do jeito que faz sentido.",
+      "subtitle": "Mesma plataforma, deploy do jeito que faz sentido para você.",
       "cloud": {
         "tag": "Hospedado por nós",
         "items": [
-          "Pronta em segundos",
-          "Atualizações automáticas",
-          "ISA-95 + Knowledge Graph inclusos",
-          "MQTT na nuvem (HiveMQ, AWS IoT, etc.)"
+          "Multi-tenant com isolamento total entre ambientes",
+          "Dados protegidos e conformidade com LGPD",
+          "Knowledge Graph para IA",
+          "Acesso seguro de qualquer lugar, em qualquer dispositivo"
         ]
       },
       "edge": {
         "tag": "On-premises",
         "items": [
-          "Roda na sua planta",
-          "Acesso direto aos dispositivos",
-          "Licença offline JWT",
+          "Roda na sua planta com segurança — Zero Trust",
+          "LLM Local na sua planta, sem conexão com a internet",
+          "Modelagem e estruturação de dados",
           "Network Scan da rede industrial"
         ]
       }
+    },
+    "architecture": {
+      "tag": "Arquitetura",
+      "title": "Cloud e Edge, trabalhando juntos.",
+      "alt": "Diagrama da arquitetura EDU: camada Cloud centralizada conectada a múltiplas plantas Edge via TLS 1.2+ outbound-only."
     },
     "midCta": {
       "title": "Coloque sua planta online.",

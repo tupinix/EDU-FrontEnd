@@ -96,6 +96,9 @@ export function Landing() {
       {/* ── Editions ───────────────────────────────────────────────── */}
       <EditionsSection />
 
+      {/* ── Architecture (Cloud + Edge working together) ───────────── */}
+      <ArchitectureSection />
+
       {/* ── Support ────────────────────────────────────────────────── */}
       <SupportSection />
 
@@ -315,7 +318,7 @@ function ProductMock() {
           <span className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/60" />
-          <span className="ml-3 text-[11px] text-gray-400 font-mono">edu &middot; Plantscape AI &middot; Cooling Tower BR-Plant2</span>
+          <span className="ml-3 text-[11px] text-gray-400 font-mono">edu &middot; Pronta para IA &middot; Cooling Tower BR-Plant2</span>
           <div className="ml-auto flex items-center gap-2 text-[10px] text-emerald-400 font-mono">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
@@ -333,7 +336,7 @@ function ProductMock() {
               <span className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-400/30 to-emerald-600/20 border border-emerald-400/30 flex items-center justify-center">
                 <Sparkles className="w-3 h-3 text-emerald-300" />
               </span>
-              <span className="text-[11px] text-gray-300 font-medium tracking-wide">Plantscape AI</span>
+              <span className="text-[11px] text-gray-300 font-medium tracking-wide">Pronta para IA</span>
               <span className="ml-auto text-[9px] text-gray-500 font-mono uppercase tracking-[0.16em]">Local LLM</span>
             </div>
 
@@ -588,6 +591,55 @@ function EditionCard({
         ))}
       </ul>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Architecture — Cloud + Edge diagram
+// ─────────────────────────────────────────────────────────────────────
+function ArchitectureSection() {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { setVisible(true); io.disconnect(); } }),
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <section id="architecture" className="py-28 bg-gray-50/70 border-y border-gray-100">
+      <div
+        ref={ref}
+        className={`relative max-w-7xl mx-auto px-6 sm:px-8 transition-all duration-700 ease-out ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-white border border-gray-200 text-[11px] font-medium text-gray-600 tracking-wider uppercase shadow-sm">
+            {t('landing.architecture.tag')}
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-gray-900 leading-[1.08]">
+            {t('landing.architecture.title')}
+          </h2>
+        </div>
+
+        <div className="relative rounded-2xl border border-gray-200/70 bg-white shadow-xl shadow-gray-200/50 overflow-hidden p-4 sm:p-8 lg:p-10">
+          <img
+            src="/edu-architecture.png"
+            alt={t('landing.architecture.alt')}
+            className="w-full h-auto select-none"
+            draggable={false}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -162,7 +162,7 @@
         "desc": "Turn raw tags into clean models. CESMII templates ready to use, mappings with dynamic {{topic.field}} references."
       },
       "screens": {
-        "title": "Process Screens",
+        "title": "Dashboard",
         "desc": "SCADA-style canvas with 13 widgets, templates for Cooling Tower, Tank Farm and more. Drag, drop, bind tags."
       },
       "alerts": {
@@ -170,32 +170,37 @@
         "desc": "Static or dynamic thresholds based on other tags. Discord and WhatsApp notifications out of the box."
       },
       "ai": {
-        "title": "Plantscape AI",
+        "title": "AI-Ready",
         "desc": "Agents that talk to your plant. Built-in MCP server: ask Claude about processes and get live data, no code required."
       }
     },
     "editions": {
       "tag": "Flexible deploy",
       "title": "Cloud or Edge. You decide.",
-      "subtitle": "Centralized Cloud layer with global intelligence; distributed Edge layer with local sovereignty. Your architecture, the way it makes sense.",
+      "subtitle": "Same platform, deployed the way that makes sense for you.",
       "cloud": {
         "tag": "Hosted by us",
         "items": [
-          "Up in seconds",
-          "Automatic updates",
-          "ISA-95 + Neo4j included",
-          "Cloud MQTT (HiveMQ, AWS IoT, etc.)"
+          "Multi-tenant with full isolation between environments",
+          "Data protection and LGPD compliance",
+          "Knowledge Graph for AI",
+          "Secure access from anywhere, on any device"
         ]
       },
       "edge": {
         "tag": "On-premises",
         "items": [
-          "Runs in your plant",
-          "Direct device access",
-          "Offline JWT licensing",
-          "Industrial network scanner"
+          "Runs in your plant with Zero Trust security",
+          "Local LLM in your plant, no internet required",
+          "Data modeling and structuring",
+          "Industrial network scanning"
         ]
       }
+    },
+    "architecture": {
+      "tag": "Architecture",
+      "title": "Cloud and Edge, working together.",
+      "alt": "EDU architecture diagram: centralized Cloud layer connected to multiple Edge plants via outbound-only TLS 1.2+."
     },
     "midCta": {
       "title": "Get your plant online.",
