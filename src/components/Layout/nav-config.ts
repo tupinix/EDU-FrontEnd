@@ -45,9 +45,15 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/neo4j',    labelKey: 'sidebar.neo4j', icon: Factory },
-      { path: '/api-rest', labelKey: 'API REST',      icon: Globe },
-      { path: '/i3x',      labelKey: 'i3X',           icon: Zap },
+      { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
+    ],
+  },
+  {
+    key: 'integrations',
+    labelKey: 'sidebar.groups.integrations',
+    items: [
+      { path: '/api-rest', labelKey: 'API REST', icon: Globe },
+      { path: '/i3x',      labelKey: 'i3X',       icon: Zap },
     ],
   },
   {

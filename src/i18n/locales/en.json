@@ -99,6 +99,7 @@
     "expand": "Expand menu",
     "groups": {
       "connections": "Connections",
+      "integrations": "Integrations",
       "transformation": "Transformation",
       "analytics": "Analytics",
       "aiTools": "AI Tools",
