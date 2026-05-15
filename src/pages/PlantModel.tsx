@@ -91,41 +91,6 @@ function sizeForLabel(label: string): number {
 
 // ─── Transforms ──────────────────────────────────────────────────────
 
-function buildIsaGraph(data: HierarchyData, showTags: boolean): GData {
-  const nodes: GNode[] = [];
-  const links: GLink[] = [];
-  nodes.push({ id: 'root', name: 'ISA-95', type: 'root', val: 24, color: TYPE_COLORS.root.color });
-
-  for (const ent of data.enterprises) {
-    nodes.push({ id: `ent:${ent.id}`, name: ent.name, type: 'enterprise', val: 20, color: TYPE_COLORS.enterprise.color });
-    links.push({ source: 'root', target: `ent:${ent.id}`, label: 'OWNS' });
-    for (const site of ent.sites) {
-      nodes.push({ id: `site:${site.id}`, name: site.name, type: 'site', parentId: `ent:${ent.id}`, val: 16, color: TYPE_COLORS.site.color });
-      links.push({ source: `ent:${ent.id}`, target: `site:${site.id}`, label: 'HAS_SITE' });
-      for (const area of site.areas) {
-        nodes.push({ id: `area:${area.id}`, name: area.name, type: 'area', parentId: `site:${site.id}`, val: 14, color: TYPE_COLORS.area.color });
-        links.push({ source: `site:${site.id}`, target: `area:${area.id}`, label: 'HAS_AREA' });
-        for (const line of area.lines) {
-          nodes.push({ id: `line:${line.id}`, name: line.name, type: 'line', parentId: `area:${area.id}`, val: 12, color: TYPE_COLORS.line.color });
-          links.push({ source: `area:${area.id}`, target: `line:${line.id}`, label: 'HAS_LINE' });
-          for (const eq of line.equipment) {
-            nodes.push({ id: `eq:${eq.id}`, name: eq.name, type: 'equipment', parentId: `line:${line.id}`, metadata: { type: eq.type }, tagCount: eq.tags.length, val: 10, color: TYPE_COLORS.equipment.color });
-            links.push({ source: `line:${line.id}`, target: `eq:${eq.id}`, label: 'HAS_EQUIPMENT' });
-            if (showTags) {
-              for (const tag of eq.tags) {
-                const tagId = `tag:${eq.id}:${tag}`;
-                nodes.push({ id: tagId, name: tag.split('/').pop() || tag, type: 'tag', parentId: `eq:${eq.id}`, metadata: { topic: tag }, val: 6, color: TYPE_COLORS.tag.color });
-                links.push({ source: `eq:${eq.id}`, target: tagId, label: 'HAS_TAG' });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return { nodes, links };
-}
-
 function buildRawGraph(graph: RawGraph): GData {
   const nodes: GNode[] = graph.nodes.map((n) => {
     const primaryLabel = n.labels[0] ?? 'Node';
@@ -497,6 +462,39 @@ function RelationshipFormModal({ sourceName, targetName, existingTypes, onCancel
         </button>
       </ModalFooter>
     </ModalShell>
+  );
+}
+
+// ─── Node viewer (read-only panel for view mode) ────────────────────
+
+function NodeViewer({ node, onClose }: { node: GraphNode; onClose: () => void }) {
+  const labelColor = colorForLabel(node.labels[0] ?? 'Node');
+  const hidden = new Set(['name', 'id', 'tenant_id', 'created_at', 'updated_at']);
+  const extras = Object.entries(node.properties).filter(([k]) => !hidden.has(k));
+  const name = (node.properties.name as string) ?? node.id.slice(0, 8);
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-lg p-4 min-w-[240px] max-w-[400px]">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: labelColor }}>
+          {node.labels.join(', ') || 'Node'}
+        </span>
+        <button onClick={onClose} className="text-gray-300 hover:text-gray-500"><X className="w-3.5 h-3.5" /></button>
+      </div>
+      <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 mb-2">{name}</p>
+      {extras.length > 0 && (
+        <div className="space-y-1.5 text-[12px] pt-2 border-t border-gray-100 dark:border-gray-800">
+          {extras.map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-4">
+              <span className="text-gray-400 capitalize">{k}</span>
+              <span className="text-gray-700 dark:text-gray-300 font-mono truncate max-w-[200px]" title={String(v)}>
+                {v === null ? '—' : String(v)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -903,30 +901,6 @@ function CypherConsole() {
 
 // ─── Stats ──────────────────────────────────────────────────────────
 
-function StatsIsa({ data }: { data: HierarchyData }) {
-  let sites = 0, areas = 0, lines = 0, equip = 0, tags = 0;
-  for (const e of data.enterprises) { sites += e.sites.length; for (const s of e.sites) { areas += s.areas.length; for (const a of s.areas) { lines += a.lines.length; for (const l of a.lines) { equip += l.equipment.length; for (const eq of l.equipment) tags += eq.tags.length; } } } }
-  const items = [
-    { v: data.enterprises.length, c: TYPE_COLORS.enterprise },
-    { v: sites, c: TYPE_COLORS.site },
-    { v: areas, c: TYPE_COLORS.area },
-    { v: lines, c: TYPE_COLORS.line },
-    { v: equip, c: TYPE_COLORS.equipment },
-    { v: tags, c: TYPE_COLORS.tag },
-  ];
-  return (
-    <div className="flex items-center gap-3 flex-wrap text-[12px]">
-      {items.map((s, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.c.color }} />
-          <span className="text-gray-400">{s.c.label}</span>
-          <span className="text-gray-700 dark:text-gray-300 font-semibold">{s.v}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function StatsRaw({ graph }: { graph: RawGraph }) {
   const labelCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -982,30 +956,25 @@ export function PlantModel() {
   const [newNodeOpen, setNewNodeOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Queries — only one is enabled at a time
+  // Both queries run. The graph itself is always rendered from /graph so that
+  // custom nodes (Person, etc.) are visible regardless of edit mode. The ISA-95
+  // shaped query is kept only to drive the optional Tree panel.
   const isaQuery = useQuery({
     queryKey: ['plant-hierarchy'],
     queryFn: hierarchyApi.get,
     staleTime: 30000,
-    enabled: !editMode,
   });
   const rawQuery = useQuery({
     queryKey: ['plant-graph'],
     queryFn: hierarchyApi.getGraph,
     staleTime: 10000,
-    enabled: editMode,
   });
-  const isLoading = editMode ? rawQuery.isLoading : isaQuery.isLoading;
-  const refetch = () => editMode ? rawQuery.refetch() : isaQuery.refetch();
+  const isLoading = rawQuery.isLoading;
+  const refetch = () => { rawQuery.refetch(); isaQuery.refetch(); };
 
-  // Rebuild graph data when source changes
   useEffect(() => {
-    if (editMode) {
-      if (rawQuery.data) setGraphData(buildRawGraph(rawQuery.data));
-    } else {
-      if (isaQuery.data) setGraphData(buildIsaGraph(isaQuery.data, showTags));
-    }
-  }, [editMode, isaQuery.data, rawQuery.data, showTags]);
+    if (rawQuery.data) setGraphData(buildRawGraph(rawQuery.data));
+  }, [rawQuery.data]);
 
   // Reset selection on mode toggle
   useEffect(() => {
@@ -1180,8 +1149,8 @@ export function PlantModel() {
     await reloadRaw();
   };
 
-  const selectedRawNode = selectedNode && editMode ? rawNodeById.get(selectedNode.id) : undefined;
-  const selectedRawRel = selectedLink?.id && editMode ? rawRelById.get(selectedLink.id) : undefined;
+  const selectedRawNode = selectedNode ? rawNodeById.get(selectedNode.id) : undefined;
+  const selectedRawRel = selectedLink?.id ? rawRelById.get(selectedLink.id) : undefined;
   const pendingSourceName = pendingTarget ? (rawNodeById.get(pendingTarget.sourceId)?.properties.name as string) ?? pendingTarget.sourceId : '';
   const pendingTargetName = pendingTarget ? (rawNodeById.get(pendingTarget.targetId)?.properties.name as string) ?? pendingTarget.targetId : '';
 
@@ -1223,10 +1192,9 @@ export function PlantModel() {
       </div>
 
       {/* Stats */}
-      {tab === 'graph' && (
+      {tab === 'graph' && rawQuery.data && (
         <div className="mb-3 shrink-0">
-          {editMode ? (rawQuery.data && <StatsRaw graph={rawQuery.data} />)
-                    : (isaQuery.data && <StatsIsa data={isaQuery.data} />)}
+          <StatsRaw graph={rawQuery.data} />
         </div>
       )}
 
@@ -1238,7 +1206,7 @@ export function PlantModel() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
               </div>
-            ) : (editMode ? rawQuery.data && graphData.nodes.length > 0 : isaQuery.data && isaQuery.data.enterprises.length > 0) ? (
+            ) : rawQuery.data && graphData.nodes.length > 0 ? (
               <div ref={containerRef} className="absolute inset-0 rounded-2xl overflow-hidden bg-[#0f1117] border border-gray-200/60 dark:border-gray-800">
                 <ForceGraph2D
                   ref={graphRef} graphData={graphData} width={dims.width} height={dims.height}
@@ -1277,29 +1245,10 @@ export function PlantModel() {
                   <div className="absolute top-3 right-3 z-10"><Legend extra={[]} /></div>
                 )}
 
-                {/* Selection panel */}
-                {!editMode && selectedNode && selectedNode.id !== 'root' && (
+                {/* Read-only selection panel (view mode) */}
+                {!editMode && selectedRawNode && (
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-lg p-4 min-w-[240px]">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: TYPE_COLORS[selectedNode.type]?.color }}>
-                          {TYPE_COLORS[selectedNode.type]?.label}
-                        </span>
-                        <button onClick={() => setSelectedNode(null)} className="text-gray-300 hover:text-gray-500"><X className="w-3.5 h-3.5" /></button>
-                      </div>
-                      <p className="text-[15px] font-semibold text-gray-900 dark:text-gray-100 mb-2">{selectedNode.name}</p>
-                      <div className="space-y-1.5 text-[12px]">
-                        {selectedNode.metadata && Object.entries(selectedNode.metadata).map(([k, v]) => (
-                          <div key={k} className="flex justify-between gap-4">
-                            <span className="text-gray-400 capitalize">{k}</span>
-                            <span className="text-gray-700 dark:text-gray-300 font-mono truncate max-w-[160px]" title={v}>{v}</span>
-                          </div>
-                        ))}
-                        {(selectedNode.tagCount ?? 0) > 0 && (
-                          <div className="flex justify-between"><span className="text-gray-400">Tags</span><span className="text-gray-700 dark:text-gray-300">{selectedNode.tagCount}</span></div>
-                        )}
-                      </div>
-                    </div>
+                    <NodeViewer node={selectedRawNode} onClose={() => setSelectedNode(null)} />
                   </div>
                 )}
 
@@ -1332,7 +1281,7 @@ export function PlantModel() {
                 {editMode && connectFrom && (
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-amber-500 text-white text-[12px] font-medium rounded-full shadow-lg inline-flex items-center gap-2">
                     <Link2 className="w-3.5 h-3.5" />
-                    Click a target node to connect ({(rawNodeById.get(connectFrom)?.properties.name as string) ?? connectFrom})
+                    Clique no nó destino para conectar ({(rawNodeById.get(connectFrom)?.properties.name as string) ?? connectFrom})
                     <button onClick={() => setConnectFrom(null)} className="ml-2 hover:bg-amber-600 rounded-full p-0.5">
                       <X className="w-3 h-3" />
                     </button>
@@ -1354,10 +1303,10 @@ export function PlantModel() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <p className="text-[14px] text-gray-400 mb-1">
-                    {editMode ? 'Empty graph' : 'No hierarchy configured'}
+                    {editMode ? 'Grafo vazio' : 'Knowledge Graph vazio'}
                   </p>
                   <p className="text-[12px] text-gray-300">
-                    {editMode ? 'Click "+ Node" to start building your knowledge graph' : 'Configure the ISA-95 plant hierarchy to view the Knowledge Graph'}
+                    {editMode ? 'Clique em "+ Nó" para começar' : 'Entre no modo Edit para adicionar nós e relacionamentos'}
                   </p>
                   {editMode && (
                     <button
