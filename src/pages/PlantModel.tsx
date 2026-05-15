@@ -188,27 +188,32 @@ function PropertyEditor({ value, onChange, excludedKeys = [], disabled }: PropEd
 
   return (
     <div className="space-y-1.5">
+      {entries.length === 0 && (
+        <p className="text-[11px] text-gray-400 italic">
+          Adicione informações extras como email, telefone, unidade, etc.
+        </p>
+      )}
       {entries.map(([k, v], i) => (
         <div key={i} className="flex items-center gap-1.5">
           <input
             disabled={disabled}
             value={k}
             onChange={(e) => setKeyAt(i, e.target.value)}
-            placeholder="key"
+            placeholder="campo"
             className="w-32 px-2 py-1 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none focus:border-gray-300 disabled:opacity-50"
           />
           <input
             disabled={disabled}
             value={v === null ? '' : String(v)}
             onChange={(e) => setValAt(i, e.target.value)}
-            placeholder="value"
+            placeholder="valor"
             className="flex-1 px-2 py-1 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none focus:border-gray-300 disabled:opacity-50"
           />
           <button
             disabled={disabled}
             onClick={() => removeAt(i)}
             className="p-1 text-gray-300 hover:text-red-500 disabled:opacity-30"
-            title="Remove property"
+            title="Remover"
           >
             <X className="w-3 h-3" />
           </button>
@@ -219,7 +224,7 @@ function PropertyEditor({ value, onChange, excludedKeys = [], disabled }: PropEd
         onClick={addRow}
         className="text-[11px] text-gray-400 hover:text-gray-600 inline-flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30"
       >
-        <Plus className="w-3 h-3" /> add property
+        <Plus className="w-3 h-3" /> adicionar campo
       </button>
     </div>
   );
@@ -378,7 +383,7 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
           className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-1"
         >
           <ChevronRight className={cn('w-3 h-3 transition-transform', showDetails && 'rotate-90')} />
-          Detalhes (opcional)
+          Mais informações (opcional)
         </button>
         {showDetails && (
           <div className="mt-2">
@@ -475,7 +480,7 @@ function RelationshipFormModal({ sourceName, targetName, existingTypes, onCancel
           className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-1"
         >
           <ChevronRight className={cn('w-3 h-3 transition-transform', showDetails && 'rotate-90')} />
-          Detalhes (opcional)
+          Mais informações (opcional)
         </button>
         {showDetails && (
           <div className="mt-2">
