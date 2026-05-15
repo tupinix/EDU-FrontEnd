@@ -234,7 +234,73 @@ function inferValue(raw: string): GraphPropertyValue {
   return raw;
 }
 
-// ─── Node form modal ────────────────────────────────────────────────
+// ─── Presets for the simplified create flow ─────────────────────────
+
+const NODE_TYPE_PRESETS: Array<{ value: string; label: string }> = [
+  { value: 'Equipment',  label: 'Equipamento' },
+  { value: 'Person',     label: 'Pessoa' },
+  { value: 'Site',       label: 'Planta' },
+  { value: 'Area',       label: 'Área' },
+  { value: 'Line',       label: 'Linha' },
+  { value: 'Tag',        label: 'Tag' },
+];
+
+const REL_TYPE_PRESETS: Array<{ value: string; label: string }> = [
+  { value: 'HAS',          label: 'tem' },
+  { value: 'CONTAINS',     label: 'contém' },
+  { value: 'OPERATES',     label: 'opera' },
+  { value: 'BELONGS_TO',   label: 'pertence a' },
+  { value: 'CONNECTED_TO', label: 'conectado a' },
+  { value: 'RELATED_TO',   label: 'relacionado a' },
+];
+
+function ChipRow<T extends { value: string; label: string }>({
+  options, selected, onSelect, customLabel = 'Outro…', customActive, onCustom,
+}: {
+  options: T[];
+  selected: string;
+  onSelect: (value: string) => void;
+  customLabel?: string;
+  customActive: boolean;
+  onCustom: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((opt) => {
+        const active = !customActive && selected === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onSelect(opt.value)}
+            className={cn(
+              'px-3 py-1.5 text-[12px] rounded-full border transition-colors',
+              active
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                : 'bg-white dark:bg-gray-800/40 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        onClick={onCustom}
+        className={cn(
+          'px-3 py-1.5 text-[12px] rounded-full border transition-colors',
+          customActive
+            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+            : 'bg-white dark:bg-gray-800/40 text-gray-500 dark:text-gray-400 border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-400'
+        )}
+      >
+        {customLabel}
+      </button>
+    </div>
+  );
+}
+
+// ─── Node form modal (simplified) ───────────────────────────────────
 
 interface NodeFormProps {
   existingLabels: string[];
@@ -243,17 +309,21 @@ interface NodeFormProps {
 }
 
 function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
-  const [label, setLabel] = useState('Equipment');
   const [name, setName] = useState('');
+  const [type, setType] = useState('Equipment');
+  const [customType, setCustomType] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [extras, setExtras] = useState<GraphProperties>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
-    if (!name.trim()) { setError('Name é obrigatório'); return; }
+    if (!name.trim()) { setError('Dê um nome ao nó'); return; }
+    const label = (useCustom ? customType : type).trim();
     if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(label)) {
-      setError('Label inválida (use [A-Za-z][A-Za-z0-9_]{0,49})');
+      setError('Tipo inválido — use letras/números, começando com letra');
       return;
     }
     setBusy(true);
@@ -267,41 +337,72 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
   };
 
   return (
-    <ModalShell title="New node" onCancel={onCancel}>
-      <Field label="Label">
+    <ModalShell title="Novo nó" onCancel={onCancel}>
+      <Field label="Nome">
         <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          list="existing-labels"
-          className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) submit(); }}
+          placeholder="Ex.: Ricardo, Pump-01, Sala B"
+          className="w-full px-3 py-2.5 text-[14px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300 dark:focus:border-gray-600"
         />
+      </Field>
+
+      <Field label="Tipo">
+        <ChipRow
+          options={NODE_TYPE_PRESETS}
+          selected={type}
+          onSelect={(v) => { setType(v); setUseCustom(false); }}
+          customActive={useCustom}
+          onCustom={() => setUseCustom(true)}
+        />
+        {useCustom && (
+          <input
+            value={customType}
+            onChange={(e) => setCustomType(e.target.value)}
+            list="existing-labels"
+            placeholder="Digite um tipo (ex.: Sensor, Cliente, Sala)"
+            className="mt-2 w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+          />
+        )}
         <datalist id="existing-labels">
           {existingLabels.map((l) => <option key={l} value={l} />)}
         </datalist>
       </Field>
-      <Field label="Name">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoFocus
-          className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
-        />
-      </Field>
-      <Field label="Custom properties">
-        <PropertyEditor value={extras} onChange={setExtras} />
-      </Field>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-1"
+        >
+          <ChevronRight className={cn('w-3 h-3 transition-transform', showDetails && 'rotate-90')} />
+          Detalhes (opcional)
+        </button>
+        {showDetails && (
+          <div className="mt-2">
+            <PropertyEditor value={extras} onChange={setExtras} />
+          </div>
+        )}
+      </div>
+
       <ModalFooter error={error}>
-        <button onClick={onCancel} disabled={busy} className="px-3 py-2 text-[12px] text-gray-500 hover:text-gray-700 rounded-lg">Cancel</button>
-        <button onClick={submit} disabled={busy} className="px-4 py-2 text-[12px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-40 inline-flex items-center gap-1.5">
+        <button onClick={onCancel} disabled={busy} className="px-3 py-2 text-[12px] text-gray-500 hover:text-gray-700 rounded-lg">Cancelar</button>
+        <button
+          onClick={submit}
+          disabled={busy || !name.trim()}
+          className="px-4 py-2 text-[12px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-40 inline-flex items-center gap-1.5"
+        >
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-          Create
+          Criar
         </button>
       </ModalFooter>
     </ModalShell>
   );
 }
 
-// ─── Relationship form modal ────────────────────────────────────────
+// ─── Relationship form modal (simplified) ───────────────────────────
 
 interface RelFormProps {
   sourceName: string;
@@ -313,19 +414,23 @@ interface RelFormProps {
 
 function RelationshipFormModal({ sourceName, targetName, existingTypes, onCancel, onSave }: RelFormProps) {
   const [type, setType] = useState('RELATED_TO');
+  const [customType, setCustomType] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [props, setProps] = useState<GraphProperties>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
-    if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(type)) {
-      setError('Tipo inválido (use [A-Za-z][A-Za-z0-9_]{0,49})');
+    const t = (useCustom ? customType : type).trim();
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(t)) {
+      setError('Tipo inválido — use letras/números, começando com letra');
       return;
     }
     setBusy(true);
     try {
-      await onSave(type, props);
+      await onSave(t, props);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro');
     } finally {
@@ -334,32 +439,56 @@ function RelationshipFormModal({ sourceName, targetName, existingTypes, onCancel
   };
 
   return (
-    <ModalShell title="New relationship" onCancel={onCancel}>
-      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/30 rounded-lg text-[12px] text-gray-500 font-mono flex items-center gap-2">
-        <span className="text-gray-700 dark:text-gray-300">{sourceName}</span>
-        <ChevronRight className="w-3 h-3 text-gray-300" />
-        <span className="text-gray-700 dark:text-gray-300">{targetName}</span>
+    <ModalShell title="Conectar" onCancel={onCancel}>
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/30 rounded-lg text-[13px] flex items-center gap-2">
+        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{sourceName}</span>
+        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{targetName}</span>
       </div>
-      <Field label="Type">
-        <input
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          list="existing-rel-types"
-          autoFocus
-          className="w-full px-3 py-2 text-[13px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+
+      <Field label="Como esses nós se relacionam?">
+        <ChipRow
+          options={REL_TYPE_PRESETS}
+          selected={type}
+          onSelect={(v) => { setType(v); setUseCustom(false); }}
+          customActive={useCustom}
+          onCustom={() => setUseCustom(true)}
         />
+        {useCustom && (
+          <input
+            value={customType}
+            onChange={(e) => setCustomType(e.target.value)}
+            list="existing-rel-types"
+            placeholder="Ex.: PRODUCES, MONITORS, FEEDS"
+            className="mt-2 w-full px-3 py-2 text-[13px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+          />
+        )}
         <datalist id="existing-rel-types">
           {existingTypes.map((t) => <option key={t} value={t} />)}
         </datalist>
       </Field>
-      <Field label="Properties">
-        <PropertyEditor value={props} onChange={setProps} />
-      </Field>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 inline-flex items-center gap-1"
+        >
+          <ChevronRight className={cn('w-3 h-3 transition-transform', showDetails && 'rotate-90')} />
+          Detalhes (opcional)
+        </button>
+        {showDetails && (
+          <div className="mt-2">
+            <PropertyEditor value={props} onChange={setProps} />
+          </div>
+        )}
+      </div>
+
       <ModalFooter error={error}>
-        <button onClick={onCancel} disabled={busy} className="px-3 py-2 text-[12px] text-gray-500 hover:text-gray-700 rounded-lg">Cancel</button>
+        <button onClick={onCancel} disabled={busy} className="px-3 py-2 text-[12px] text-gray-500 hover:text-gray-700 rounded-lg">Cancelar</button>
         <button onClick={submit} disabled={busy} className="px-4 py-2 text-[12px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-40 inline-flex items-center gap-1.5">
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-          Create
+          Conectar
         </button>
       </ModalFooter>
     </ModalShell>
