@@ -3,6 +3,7 @@ import { Copy, Check, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || 'https://api.espacodedadosunificado.com.br/api';
 const I3X_BASE = API_BASE.replace(/\/api\/?$/, '/i3x/v1');
+const I3X_DOCS = API_BASE.replace(/\/api\/?$/, '/i3x/docs');
 
 export function I3xPage() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('edu_token') : null;
@@ -20,7 +21,7 @@ export function I3xPage() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-5 space-y-4">
         <UrlBlock label="Base URL" url={I3X_BASE} />
         <TokenBlock token={hasBearer ? token : null} />
-        <UrlBlock label="Especificação canônica CESMII" url="https://api.i3x.dev/v1/docs" external />
+        <UrlBlock label="Documentação OpenAPI / Swagger" url={I3X_DOCS} external />
       </div>
     </div>
   );
