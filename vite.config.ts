@@ -32,8 +32,13 @@ export default defineConfig(({ mode }) => ({
         target: 'http://localhost:3005',
         changeOrigin: true,
       },
-      // i3X surface lives at /i3x/v1/* + /i3x/docs on the same backend.
+      // i3X docs + spec
       '/i3x': {
+        target: 'http://localhost:3005',
+        changeOrigin: true,
+      },
+      // Path-based per-tenant i3X surface: /tupinix/i3x/v1/*, /highbyte/i3x/v1/*, etc.
+      '^/[a-z0-9-]+/i3x': {
         target: 'http://localhost:3005',
         changeOrigin: true,
       },
