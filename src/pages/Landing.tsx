@@ -912,6 +912,7 @@ function DemoSection() {
                       label={t('landing.demo.fields.name')}
                       value={name}
                       onChange={setName}
+                      required
                       disabled={status === 'loading'}
                       autoComplete="name"
                     />
@@ -919,6 +920,7 @@ function DemoSection() {
                       label={t('landing.demo.fields.company')}
                       value={company}
                       onChange={setCompany}
+                      required
                       disabled={status === 'loading'}
                       autoComplete="organization"
                     />
@@ -926,6 +928,7 @@ function DemoSection() {
                       label={t('landing.demo.fields.role')}
                       value={role}
                       onChange={setRole}
+                      required
                       disabled={status === 'loading'}
                       full
                     />
