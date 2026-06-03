@@ -14,3 +14,4 @@ export { AlertsPage } from './AlertsPage';
 export { ProcessDashboard } from './ProcessDashboard';
 export { LicensesPage } from './LicensesPage';
 export { Landing } from './Landing';
+export { ConfigTransferPage } from './ConfigTransferPage';

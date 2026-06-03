@@ -878,6 +878,37 @@ export const mcpApi = {
 };
 
 // ===========================================
+// Config Transfer API (export/import all configs)
+// ===========================================
+
+export interface ConfigImportSummary {
+  postgres: Record<string, number>;
+  neo4j: { nodes: number; relationships: number; skipped: number };
+}
+
+export const configTransferApi = {
+  exportAll: async (): Promise<void> => {
+    const res = await apiClient.get('/config/export', { responseType: 'blob' });
+    const blob = new Blob([res.data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edu-config-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  importAll: async (bundle: unknown): Promise<ConfigImportSummary> => {
+    const { data } = await apiClient.post<ApiResponse<ConfigImportSummary>>('/config/import', bundle);
+    if (!data.success || !data.data) throw new Error(data.error || 'Falha ao importar configurações');
+    return data.data;
+  },
+};
+
+// ===========================================
 // SM Profiles API
 // ===========================================
 

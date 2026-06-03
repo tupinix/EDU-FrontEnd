@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { useTenant } from './hooks/useTenant';
@@ -170,6 +170,14 @@ function App() {
               element={
                 <AdminRoute>
                   <LicensesPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="config-transfer"
+              element={
+                <AdminRoute>
+                  <ConfigTransferPage />
                 </AdminRoute>
               }
             />
