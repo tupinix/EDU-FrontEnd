@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
-import { useModbusLiveValues } from '../../hooks/useModbus';
+import { useModbusLiveValues, useModbusRegisters } from '../../hooks/useModbus';
 import { useSocketStatus } from '../../hooks/useSocket';
+import { useBrokerNameMap, fmtFrequency } from '../shared/publishInfo';
 import { ModbusConnection, ModbusLiveValue } from '../../types';
 import { cn } from '@/lib/utils';
 
+interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; }
 interface Props { connection: ModbusConnection; onBack: () => void; }
 
 function fmtVal(value: number | boolean): string {
@@ -16,6 +18,14 @@ export function ModbusMonitor({ connection, onBack }: Props) {
   const [search, setSearch] = useState('');
   const liveValues = useModbusLiveValues(connection.id);
   const { isConnected: ws } = useSocketStatus();
+  const { data: registers } = useModbusRegisters(connection.id);
+  const brokerName = useBrokerNameMap();
+
+  const cfgById = useMemo(() => {
+    const m = new Map<string, PubCfg>();
+    for (const r of registers ?? []) m.set(r.id, { topic: r.mqttTopic, brokerId: r.brokerId, intervalMs: r.samplingIntervalMs });
+    return m;
+  }, [registers]);
 
   const filtered = liveValues.filter(v => {
     if (!search) return true;
@@ -62,14 +72,17 @@ export function ModbusMonitor({ connection, onBack }: Props) {
                 <th className="text-left px-5 py-2.5">Value</th>
                 <th className="text-left px-5 py-2.5">Raw</th>
                 <th className="text-left px-5 py-2.5">Quality</th>
+                <th className="text-left px-5 py-2.5">Tópico</th>
+                <th className="text-left px-5 py-2.5">Broker</th>
+                <th className="text-left px-5 py-2.5">Freq</th>
                 <th className="text-left px-5 py-2.5">Time</th>
                 <th className="text-right px-5 py-2.5">#</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(v => <Row key={`${v.connectionId}::${v.registerId}`} v={v} />)}
+              {filtered.map(v => <Row key={`${v.connectionId}::${v.registerId}`} v={v} cfg={cfgById.get(v.registerId)} brokerName={brokerName} />)}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>
+                <tr><td colSpan={11} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>
               )}
             </tbody>
           </table>
@@ -80,7 +93,7 @@ export function ModbusMonitor({ connection, onBack }: Props) {
   );
 }
 
-function Row({ v }: { v: ModbusLiveValue }) {
+function Row({ v, cfg, brokerName }: { v: ModbusLiveValue; cfg?: PubCfg; brokerName: (id?: string | null) => string }) {
   const ts = v.timestamp ? (() => { const d = new Date(v.timestamp); return `${d.toLocaleTimeString('pt-BR', { hour12: false })}.${String(d.getMilliseconds()).padStart(3, '0')}`; })() : '—';
   const qColor = v.quality === 'good' ? 'text-emerald-500' : v.quality === 'uncertain' ? 'text-amber-500' : 'text-red-400';
   return (
@@ -91,6 +104,9 @@ function Row({ v }: { v: ModbusLiveValue }) {
       <td className="px-5 py-2 font-mono font-semibold text-gray-900 dark:text-gray-100">{fmtVal(v.value)}</td>
       <td className="px-5 py-2 font-mono text-gray-300">{v.rawValue}</td>
       <td className={cn('px-5 py-2 font-medium', qColor)}>{v.quality}</td>
+      <td className="px-5 py-2 font-mono text-gray-400 truncate max-w-[200px]" title={cfg?.topic}>{cfg?.topic || '—'}</td>
+      <td className="px-5 py-2 text-gray-500">{brokerName(cfg?.brokerId)}</td>
+      <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{fmtFrequency(cfg?.intervalMs)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{ts}</td>
       <td className="px-5 py-2 text-right text-gray-300 tabular-nums">{v.updateCount}</td>
     </tr>

@@ -365,6 +365,7 @@ export interface EthipTag {
   dataType?: string;
   mqttTopic: string;
   samplingIntervalMs: number;
+  brokerId?: string;
   enabled: boolean;
 }
 

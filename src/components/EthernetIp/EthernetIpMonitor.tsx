@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
-import { useEthipLiveValues } from '../../hooks/useEthernetIp';
+import { useEthipLiveValues, useEthipSubscribedTags } from '../../hooks/useEthernetIp';
 import { useSocketStatus } from '../../hooks/useSocket';
+import { useBrokerNameMap, fmtFrequency } from '../shared/publishInfo';
 import { EthipConnection, EthipLiveValue } from '../../types';
 import { cn } from '@/lib/utils';
 
+interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; }
 interface Props { connection: EthipConnection; onBack: () => void; }
 
 function fmtVal(value: unknown): string {
@@ -18,6 +20,15 @@ export function EthernetIpMonitor({ connection, onBack }: Props) {
   const [search, setSearch] = useState('');
   const liveValues = useEthipLiveValues(connection.id);
   const { isConnected: ws } = useSocketStatus();
+  const { data: tags } = useEthipSubscribedTags(connection.id);
+  const brokerName = useBrokerNameMap();
+
+  // Map live value (by tag name) → its publish config (topic / broker / freq).
+  const cfgByTag = useMemo(() => {
+    const m = new Map<string, PubCfg>();
+    for (const t of tags ?? []) m.set(t.tagName, { topic: t.mqttTopic, brokerId: t.brokerId, intervalMs: t.samplingIntervalMs });
+    return m;
+  }, [tags]);
 
   const filtered = liveValues.filter(v => {
     if (!search) return true;
@@ -62,14 +73,17 @@ export function EthernetIpMonitor({ connection, onBack }: Props) {
                 <th className="text-left px-5 py-2.5">Type</th>
                 <th className="text-left px-5 py-2.5">Value</th>
                 <th className="text-left px-5 py-2.5">Quality</th>
+                <th className="text-left px-5 py-2.5">Tópico</th>
+                <th className="text-left px-5 py-2.5">Broker</th>
+                <th className="text-left px-5 py-2.5">Freq</th>
                 <th className="text-left px-5 py-2.5">Time</th>
                 <th className="text-right px-5 py-2.5">#</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(v => <Row key={`${v.connectionId}::${v.tagName}`} v={v} />)}
+              {filtered.map(v => <Row key={`${v.connectionId}::${v.tagName}`} v={v} cfg={cfgByTag.get(v.tagName)} brokerName={brokerName} />)}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>
+                <tr><td colSpan={9} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>
               )}
             </tbody>
           </table>
@@ -80,7 +94,7 @@ export function EthernetIpMonitor({ connection, onBack }: Props) {
   );
 }
 
-function Row({ v }: { v: EthipLiveValue }) {
+function Row({ v, cfg, brokerName }: { v: EthipLiveValue; cfg?: PubCfg; brokerName: (id?: string | null) => string }) {
   const ts = v.timestamp ? (() => { const d = new Date(v.timestamp); return `${d.toLocaleTimeString('pt-BR', { hour12: false })}.${String(d.getMilliseconds()).padStart(3, '0')}`; })() : '-';
   const qColor = v.quality === 'good' ? 'text-emerald-500' : v.quality === 'uncertain' ? 'text-amber-500' : 'text-red-400';
   return (
@@ -89,6 +103,9 @@ function Row({ v }: { v: EthipLiveValue }) {
       <td className="px-5 py-2"><span className="text-[10px] font-mono text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-1.5 py-0.5 rounded">{v.dataType || '-'}</span></td>
       <td className="px-5 py-2 font-mono font-semibold text-gray-900 dark:text-gray-100">{fmtVal(v.value)}</td>
       <td className={cn('px-5 py-2 font-medium', qColor)}>{v.quality}</td>
+      <td className="px-5 py-2 font-mono text-gray-400 truncate max-w-[200px]" title={cfg?.topic}>{cfg?.topic || '—'}</td>
+      <td className="px-5 py-2 text-gray-500">{brokerName(cfg?.brokerId)}</td>
+      <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{fmtFrequency(cfg?.intervalMs)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{ts}</td>
       <td className="px-5 py-2 text-right text-gray-300 tabular-nums">{v.updateCount}</td>
     </tr>
