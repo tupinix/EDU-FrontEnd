@@ -58,7 +58,7 @@ export function ModbusForm({ onClose, initialValues, editId }: ModbusFormProps) 
           <div className="grid grid-cols-3 gap-4">
             <Field label="TCP Port *"><input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: parseInt(e.target.value) || 502 })} min={1} max={65535} className="input-clean" /></Field>
             <Field label="Unit ID"><input type="number" value={form.unitId} onChange={(e) => setForm({ ...form, unitId: parseInt(e.target.value) || 1 })} min={0} max={247} className="input-clean" /></Field>
-            <Field label="Timeout (ms)"><input type="number" value={form.timeoutMs} onChange={(e) => setForm({ ...form, timeoutMs: parseInt(e.target.value) || 5000 })} min={100} max={30000} step={500} className="input-clean" /></Field>
+            <Field label="Timeout (ms)"><input type="number" value={form.timeoutMs} onChange={(e) => setForm({ ...form, timeoutMs: parseInt(e.target.value) || 5000 })} min={100} max={30000} step={100} className="input-clean" /></Field>
           </div>
           {mutation.isError && <p className="text-[13px] text-red-500">{mutation.error instanceof Error ? mutation.error.message : 'Failed to save connection'}</p>}
           <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
