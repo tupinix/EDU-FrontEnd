@@ -9,6 +9,9 @@ export function useEthipConnections() {
     queryKey: ['ethip-connections'],
     queryFn: ethipApi.getConnections,
     staleTime: 10000,
+    // EtherNet/IP can drop and auto-reconnect in the background; poll so the
+    // status dot reflects a recovery (connecting → connected) without a click.
+    refetchInterval: 8000,
   });
 }
 
