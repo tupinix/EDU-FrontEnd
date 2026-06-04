@@ -125,11 +125,18 @@ function PropertyEditor({ value, onChange, excludedKeys = [], disabled }: PropEd
   const entries = Object.entries(value).filter(([k]) => !excludedKeys.includes(k));
 
   const setKeyAt = (i: number, newKey: string) => {
+    // Rebuild from the *full* value so excluded keys (name, id, …) are kept;
+    // only rename the i-th visible (non-excluded) entry. Rebuilding from the
+    // filtered `entries` alone would drop name/reserved props and wipe them.
     const next: GraphProperties = {};
     let idx = 0;
-    for (const [k, v] of entries) {
-      next[idx === i ? newKey : k] = v;
-      idx++;
+    for (const [k, v] of Object.entries(value)) {
+      if (excludedKeys.includes(k)) {
+        next[k] = v;
+      } else {
+        next[idx === i ? newKey : k] = v;
+        idx++;
+      }
     }
     onChange(next);
   };
