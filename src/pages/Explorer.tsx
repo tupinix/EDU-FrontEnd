@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, RefreshCw, Loader2, ChevronDown, ChevronUp, ArrowLeft, ArrowRight, BarChart3 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useTopicTree, useTopicDetails, useTopicHistory } from '../hooks/useTopics';
-import { useActiveBroker } from '../hooks/useMetrics';
+import { useActiveBroker, useBrokersStatus } from '../hooks/useMetrics';
 import { useUIStore, useExplorerStore } from '../hooks/useStore';
 import { TopicTree, TopicDetail, PayloadViewer } from '../components/Explorer';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,7 +13,11 @@ import { Link } from 'react-router-dom';
 export function Explorer() {
   const { t } = useTranslation();
   const { data: activeBroker } = useActiveBroker();
-  const { data: topics, isLoading: isLoadingTree, refetch: refetchTree } = useTopicTree();
+  const { data: brokersStatus } = useBrokersStatus();
+  // Which broker's tree to show. '' = active (default), 'all' = every connected.
+  const [brokerView, setBrokerView] = useState<string>('');
+  const connectedBrokers = (brokersStatus?.brokers ?? []).filter((b) => b.status === 'connected');
+  const { data: topics, isLoading: isLoadingTree, refetch: refetchTree } = useTopicTree(brokerView || undefined);
   const { selectedTopic } = useUIStore();
   const { searchQuery, setSearchQuery, collapseAll } = useExplorerStore();
   const queryClient = useQueryClient();
@@ -83,18 +87,34 @@ export function Explorer() {
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
             {t('explorer.subtitle')}
-            {activeBroker && (
-              <span className="text-gray-500"> &middot; {activeBroker.name}</span>
-            )}
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isLoadingTree}
-          className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors self-start sm:self-auto"
-        >
-          <RefreshCw className={cn('w-4 h-4', isLoadingTree && 'animate-spin')} />
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Broker scope selector — default = active ("principal") broker */}
+          <select
+            value={brokerView}
+            onChange={(e) => setBrokerView(e.target.value)}
+            className="text-[12px] bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-gray-200 outline-none focus:border-gray-300"
+            title="Broker exibido no Explorer"
+          >
+            <option value="">
+              {activeBroker ? `${activeBroker.name} (principal)` : 'Broker ativo'}
+            </option>
+            {connectedBrokers
+              .filter((b) => b.id !== brokersStatus?.activeBrokerId)
+              .map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            <option value="all">Todos os conectados</option>
+          </select>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoadingTree}
+            className="p-2 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <RefreshCw className={cn('w-4 h-4', isLoadingTree && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile panel switcher */}

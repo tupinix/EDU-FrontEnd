@@ -6,11 +6,11 @@ import { useSocketContext } from '../providers/SocketProvider';
 // When WebSocket is connected, reduce polling frequency (WS pushes invalidations)
 // When disconnected, fall back to normal polling intervals
 
-export function useTopicTree() {
+export function useTopicTree(brokerId?: string) {
   const { isConnected } = useSocketContext();
   return useQuery<TopicNode[], Error>({
-    queryKey: ['topics-tree'],
-    queryFn: topicsApi.getTree,
+    queryKey: ['topics-tree', brokerId ?? 'active'],
+    queryFn: () => topicsApi.getTree(brokerId),
     refetchInterval: isConnected ? 30000 : 6000, // 30s with WS, 6s without
     staleTime: isConnected ? 10000 : 3000,
     refetchOnWindowFocus: true,

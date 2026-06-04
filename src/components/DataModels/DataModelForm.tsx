@@ -101,9 +101,9 @@ export function DataModelForm({ model, profile, onClose }: Props) {
   // Kept for backwards compatibility with legacy models that persisted a source topic
   const [sourceTopic] = useState(model?.sourceTopic ?? '');
   const [targetTopic, setTargetTopic] = useState(model?.targetTopic ?? '');
-  // Source broker is implicit (it's the broker that delivers the source topic);
-  // we keep the value for backwards compatibility with already-saved models
-  const sourceBrokerId = model?.sourceBrokerId ?? '';
+  // Source broker — which broker to pull the source data from. The topic tree
+  // below is scoped to this broker so you browse/link only its tags.
+  const [sourceBrokerId, setSourceBrokerId] = useState(model?.sourceBrokerId ?? '');
   const [targetBrokerId, setTargetBrokerId] = useState(model?.targetBrokerId ?? '');
   const [treeSearch, setTreeSearch] = useState('');
 
@@ -153,7 +153,9 @@ export function DataModelForm({ model, profile, onClose }: Props) {
 
   // Data fetching
   const { data: topicTree = [] } = useQuery<TopicNode[]>({
-    queryKey: ['topics-tree'], queryFn: topicsApi.getTree, staleTime: 15000,
+    queryKey: ['topics-tree', sourceBrokerId || 'active'],
+    queryFn: () => topicsApi.getTree(sourceBrokerId || undefined),
+    staleTime: 15000,
   });
 
   const { data: topicList = [] } = useQuery<string[]>({
@@ -376,7 +378,19 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         <div className="w-56 lg:w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden md:flex">
           <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Topics</p>
-            <p className="text-[10px] text-gray-300 mb-2">Drag a tag onto an attribute to link it</p>
+            {/* Source broker — which broker to pull source data from */}
+            <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
+            <select
+              value={sourceBrokerId}
+              onChange={e => setSourceBrokerId(e.target.value)}
+              className="w-full mb-2 px-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-200 dark:focus:border-gray-700"
+            >
+              <option value="">Broker ativo (principal)</option>
+              {brokers.filter(b => b.status === 'connected').map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-gray-300 mb-2">Arraste uma tag para um atributo pra linká-la</p>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
               <input type="text" value={treeSearch} onChange={e => setTreeSearch(e.target.value)} placeholder="Search topics..."

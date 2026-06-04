@@ -137,8 +137,12 @@ export const metricsApi = {
 // ===========================================
 
 export const topicsApi = {
-  getTree: async (): Promise<TopicNode[]> => {
-    const { data } = await apiClient.get<ApiResponse<TopicNode[]>>('/topics');
+  // brokerId scopes the tree: undefined → active broker, '<id>' → that broker,
+  // 'all' → every connected broker aggregated.
+  getTree: async (brokerId?: string): Promise<TopicNode[]> => {
+    const { data } = await apiClient.get<ApiResponse<TopicNode[]>>('/topics', {
+      params: brokerId ? { brokerId } : undefined,
+    });
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to fetch topics');
     }

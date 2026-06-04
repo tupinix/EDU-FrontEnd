@@ -312,7 +312,7 @@ export function AlertForm({ alert, onClose }: Props) {
 
   // Data fetching
   const { data: topicTree = [] } = useQuery<TopicNode[]>({
-    queryKey: ['topics-tree'], queryFn: topicsApi.getTree, staleTime: 15000,
+    queryKey: ['topics-tree', 'active'], queryFn: () => topicsApi.getTree(), staleTime: 15000,
   });
 
   // Fetch payload when source topic changes
