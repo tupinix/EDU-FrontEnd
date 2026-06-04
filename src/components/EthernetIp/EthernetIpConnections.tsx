@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Plug, Unplug, Trash2, Loader2, Activity, Tags } from 'lucide-react';
+import { Plus, Plug, Unplug, Trash2, Loader2, Activity, Tags, Pencil } from 'lucide-react';
 import { useEthipConnections, useConnectEthip, useDisconnectEthip, useDeleteEthipConnection } from '../../hooks/useEthernetIp';
 import { EthernetIpForm, type EthernetIpFormInitial } from './EthernetIpForm';
 import { EthernetIpTagBrowser } from './EthernetIpTagBrowser';
@@ -28,6 +28,7 @@ export function EthernetIpConnections() {
   const deleteMutation = useDeleteEthipConnection();
   const [showForm, setShowForm] = useState(false);
   const [formInitial, setFormInitial] = useState<EthernetIpFormInitial | undefined>();
+  const [editConn, setEditConn] = useState<EthipConnection | null>(null);
   const [browsingConn, setBrowsingConn] = useState<EthipConnection | null>(null);
   const [monitoringConn, setMonitoringConn] = useState<EthipConnection | null>(null);
   const [prefillBanner, setPrefillBanner] = useState<string>('');
@@ -69,6 +70,13 @@ export function EthernetIpConnections() {
       )}
 
       {showForm && <EthernetIpForm onClose={() => { setShowForm(false); setFormInitial(undefined); }} initialValues={formInitial} />}
+      {editConn && (
+        <EthernetIpForm
+          editId={editConn.id}
+          initialValues={{ name: editConn.name, host: editConn.host, slot: editConn.slot, plcType: editConn.plcType }}
+          onClose={() => setEditConn(null)}
+        />
+      )}
 
       {(!connections || connections.length === 0) ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
@@ -89,6 +97,9 @@ export function EthernetIpConnections() {
                 </div>
               </div>
               <div className="flex items-center gap-1 ml-4 sm:ml-0 shrink-0">
+                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 {conn.status === 'connected' && (
                   <>
                     <button onClick={() => setBrowsingConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-1">

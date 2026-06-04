@@ -22,6 +22,17 @@ export function useCreateEthipConnection() {
   });
 }
 
+export function useUpdateEthipConnection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...updates }: { id: string } & Parameters<typeof ethipApi.updateConnection>[1]) =>
+      ethipApi.updateConnection(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ethip-connections'] });
+    },
+  });
+}
+
 export function useDeleteEthipConnection() {
   const queryClient = useQueryClient();
   return useMutation({

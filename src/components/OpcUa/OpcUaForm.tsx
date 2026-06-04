@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Loader2, Lock } from 'lucide-react';
-import { useCreateOpcUaConnection } from '../../hooks/useOpcUa';
+import { useCreateOpcUaConnection, useUpdateOpcUaConnection } from '../../hooks/useOpcUa';
 
 export interface OpcUaFormInitial {
   name?: string;
@@ -13,6 +13,8 @@ export interface OpcUaFormInitial {
 interface OpcUaFormProps {
   onClose: () => void;
   initialValues?: OpcUaFormInitial;
+  // When set, edits an existing connection (PUT) instead of creating one.
+  editId?: string;
 }
 
 const SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const;
@@ -23,8 +25,11 @@ function defaultName(endpoint: string | undefined): string {
   return m ? `OPC-UA ${m[1]}` : '';
 }
 
-export function OpcUaForm({ onClose, initialValues }: OpcUaFormProps) {
+export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
   const createMutation = useCreateOpcUaConnection();
+  const updateMutation = useUpdateOpcUaConnection();
+  const isEdit = !!editId;
+  const mutation = isEdit ? updateMutation : createMutation;
   const [form, setForm] = useState({
     name: initialValues?.name ?? defaultName(initialValues?.endpointUrl),
     endpointUrl: initialValues?.endpointUrl ?? 'opc.tcp://',
@@ -36,7 +41,9 @@ export function OpcUaForm({ onClose, initialValues }: OpcUaFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createMutation.mutateAsync({ ...form, username: form.username || undefined, password: form.password || undefined });
+      const payload = { ...form, username: form.username || undefined, password: form.password || undefined };
+      if (isEdit) await updateMutation.mutateAsync({ id: editId!, ...payload });
+      else await createMutation.mutateAsync(payload);
       onClose();
     } catch { /* handled */ }
   };
@@ -44,7 +51,7 @@ export function OpcUaForm({ onClose, initialValues }: OpcUaFormProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
       <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-        <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">New OPC-UA Connection</h3>
+        <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">{isEdit ? 'Edit OPC-UA Connection' : 'New OPC-UA Connection'}</h3>
         <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
       </div>
       <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 space-y-4">
@@ -66,11 +73,11 @@ export function OpcUaForm({ onClose, initialValues }: OpcUaFormProps) {
           <Field label="Username (optional)"><input type="text" placeholder="admin" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="input-clean" /></Field>
           <Field label="Password (optional)"><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
         </div>
-        {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Failed to create connection'}</p>}
+        {mutation.isError && <p className="text-[13px] text-red-500">{mutation.error instanceof Error ? mutation.error.message : 'Failed to save connection'}</p>}
         <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
           <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-          <button type="submit" disabled={createMutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
-            {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+          <button type="submit" disabled={mutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
+            {mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
           </button>
         </div>
       </form>

@@ -48,6 +48,17 @@ export function useCreateOpcUaConnection() {
   });
 }
 
+export function useUpdateOpcUaConnection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...updates }: { id: string } & Parameters<typeof opcuaApi.updateConnection>[1]) =>
+      opcuaApi.updateConnection(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opcua-connections'] });
+    },
+  });
+}
+
 export function useDeleteOpcUaConnection() {
   const queryClient = useQueryClient();
   return useMutation({

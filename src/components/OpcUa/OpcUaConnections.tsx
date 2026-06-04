@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Plug, Unplug, Trash2, Loader2, Activity } from 'lucide-react';
+import { Plus, Plug, Unplug, Trash2, Loader2, Activity, Pencil } from 'lucide-react';
 import { useOpcUaConnections, useConnectOpcUa, useDisconnectOpcUa, useDeleteOpcUaConnection } from '../../hooks/useOpcUa';
 import { OpcUaForm, type OpcUaFormInitial } from './OpcUaForm';
 import { OpcUaBrowser } from './OpcUaBrowser';
@@ -19,6 +19,7 @@ export function OpcUaConnections() {
   const deleteMutation = useDeleteOpcUaConnection();
   const [showForm, setShowForm] = useState(false);
   const [formInitial, setFormInitial] = useState<OpcUaFormInitial | undefined>();
+  const [editConn, setEditConn] = useState<OpcUaConnection | null>(null);
   const [browsingConn, setBrowsingConn] = useState<OpcUaConnection | null>(null);
   const [monitoringConn, setMonitoringConn] = useState<OpcUaConnection | null>(null);
   const [prefillBanner, setPrefillBanner] = useState<string>('');
@@ -60,6 +61,13 @@ export function OpcUaConnections() {
       )}
 
       {showForm && <OpcUaForm onClose={() => { setShowForm(false); setFormInitial(undefined); }} initialValues={formInitial} />}
+      {editConn && (
+        <OpcUaForm
+          editId={editConn.id}
+          initialValues={{ name: editConn.name, endpointUrl: editConn.endpointUrl, securityMode: editConn.securityMode, username: editConn.username }}
+          onClose={() => setEditConn(null)}
+        />
+      )}
 
       {(!connections || connections.length === 0) ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
@@ -79,6 +87,9 @@ export function OpcUaConnections() {
                 </div>
               </div>
               <div className="flex items-center gap-1 ml-4 sm:ml-0 shrink-0">
+                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 {conn.status === 'connected' && (
                   <>
                     <button onClick={() => setBrowsingConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Browse</button>

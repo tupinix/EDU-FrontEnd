@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Plug, Unplug, Trash2, Loader2, Activity, ListChecks } from 'lucide-react';
+import { Plus, Plug, Unplug, Trash2, Loader2, Activity, ListChecks, Pencil } from 'lucide-react';
 import { useModbusConnections, useConnectModbus, useDisconnectModbus, useDeleteModbusConnection } from '../../hooks/useModbus';
 import { ModbusForm, type ModbusFormInitial } from './ModbusForm';
 import { ModbusRegisterConfig } from './ModbusRegisterConfig';
@@ -22,6 +22,7 @@ export function ModbusConnections() {
   const deleteMutation = useDeleteModbusConnection();
   const [showForm, setShowForm] = useState(false);
   const [formInitial, setFormInitial] = useState<ModbusFormInitial | undefined>();
+  const [editConn, setEditConn] = useState<ModbusConnection | null>(null);
   const [configuringConn, setConfiguringConn] = useState<ModbusConnection | null>(null);
   const [monitoringConn, setMonitoringConn] = useState<ModbusConnection | null>(null);
   const [prefillBanner, setPrefillBanner] = useState<string>('');
@@ -65,6 +66,13 @@ export function ModbusConnections() {
       )}
 
       {showForm && <ModbusForm onClose={() => { setShowForm(false); setFormInitial(undefined); }} initialValues={formInitial} />}
+      {editConn && (
+        <ModbusForm
+          editId={editConn.id}
+          initialValues={{ name: editConn.name, host: editConn.host, port: editConn.port, unitId: editConn.unitId, timeoutMs: editConn.timeoutMs }}
+          onClose={() => setEditConn(null)}
+        />
+      )}
 
       {(!connections || connections.length === 0) ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
@@ -85,6 +93,9 @@ export function ModbusConnections() {
               <div className="flex items-center gap-1 ml-4 sm:ml-0 shrink-0">
                 <button onClick={() => setConfiguringConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1">
                   <ListChecks className="w-3 h-3" /> Registers
+                </button>
+                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
                 {conn.status === 'connected' && (
                   <>

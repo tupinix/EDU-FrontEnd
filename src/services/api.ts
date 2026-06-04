@@ -574,6 +574,18 @@ export const opcuaApi = {
     return data.data;
   },
 
+  updateConnection: async (id: string, updates: Partial<{
+    name: string;
+    endpointUrl: string;
+    securityMode: string;
+    username: string;
+    password: string;
+  }>): Promise<OpcUaConnection> => {
+    const { data } = await apiClient.put<ApiResponse<OpcUaConnection>>(`/opcua/connections/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update OPC-UA connection');
+    return data.data;
+  },
+
   deleteConnection: async (id: string): Promise<void> => {
     const { data } = await apiClient.delete<ApiResponse>(`/opcua/connections/${id}`);
     if (!data.success) {
@@ -794,6 +806,17 @@ export const ethipApi = {
   }): Promise<EthipConnection> => {
     const { data } = await apiClient.post<ApiResponse<EthipConnection>>('/ethip/connections', connection);
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to create EtherNet/IP connection');
+    return data.data;
+  },
+
+  updateConnection: async (id: string, updates: Partial<{
+    name: string;
+    host: string;
+    slot: number;
+    plcType: 'logix' | 'slc' | 'micro800';
+  }>): Promise<EthipConnection> => {
+    const { data } = await apiClient.put<ApiResponse<EthipConnection>>(`/ethip/connections/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update EtherNet/IP connection');
     return data.data;
   },
 
