@@ -94,9 +94,6 @@ export function ModbusConnections() {
                 <button onClick={() => setConfiguringConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1">
                   <ListChecks className="w-3 h-3" /> Registers
                 </button>
-                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
                 {conn.status === 'connected' && (
                   <>
                     <button onClick={() => setMonitoringConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1">
@@ -112,6 +109,9 @@ export function ModbusConnections() {
                     {connectMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plug className="w-3.5 h-3.5" />}
                   </button>
                 )}
+                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => { if (confirm('Delete this connection?')) deleteMutation.mutate(conn.id); }} disabled={deleteMutation.isPending} className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

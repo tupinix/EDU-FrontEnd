@@ -87,9 +87,6 @@ export function OpcUaConnections() {
                 </div>
               </div>
               <div className="flex items-center gap-1 ml-4 sm:ml-0 shrink-0">
-                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
                 {conn.status === 'connected' && (
                   <>
                     <button onClick={() => setBrowsingConn(conn)} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Browse</button>
@@ -106,6 +103,9 @@ export function OpcUaConnections() {
                     {connectMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plug className="w-3.5 h-3.5" />}
                   </button>
                 )}
+                <button onClick={() => setEditConn(conn)} title="Editar conexão" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => { if (confirm('Delete this connection?')) deleteMutation.mutate(conn.id); }} disabled={deleteMutation.isPending} className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
