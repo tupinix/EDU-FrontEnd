@@ -206,13 +206,16 @@ function inferValue(raw: string): GraphPropertyValue {
 
 // ─── Presets for the simplified create flow ─────────────────────────
 
+// All the basic ISA-95 hierarchy types (matching TYPE_COLORS), top-down,
+// plus Person as an extra basic type. Keep these in sync with TYPE_COLORS.
 const NODE_TYPE_PRESETS: Array<{ value: string; label: string }> = [
-  { value: 'Equipment',  label: 'Equipamento' },
-  { value: 'Person',     label: 'Pessoa' },
+  { value: 'Enterprise', label: 'Empresa' },
   { value: 'Site',       label: 'Planta' },
   { value: 'Area',       label: 'Área' },
   { value: 'Line',       label: 'Linha' },
+  { value: 'Equipment',  label: 'Equipamento' },
   { value: 'Tag',        label: 'Tag' },
+  { value: 'Person',     label: 'Pessoa' },
 ];
 
 const REL_TYPE_PRESETS: Array<{ value: string; label: string }> = [
