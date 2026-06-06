@@ -459,6 +459,8 @@ export interface AlertRule {
   description?: string;
   enabled: boolean;
   sourceTopic: string;
+  // Optional broker to pull the source data from; unset = any connected broker
+  sourceBrokerId?: string;
   valueField: string;
   // Thresholds support either a static number or a dynamic `{{topic.field}}` reference
   goodMin?: number | string;

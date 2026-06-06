@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2, ArrowLeft, ChevronRight, Search, Save, Link2, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreateAlert, useUpdateAlert } from '../../hooks/useAlerts';
-import { AlertRule, TopicNode } from '../../types';
+import { AlertRule, TopicNode, BrokerConfig } from '../../types';
 import { topicsApi } from '../../services/api';
 import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
@@ -284,6 +284,9 @@ export function AlertForm({ alert, onClose }: Props) {
   // Core state
   const [name, setName] = useState(alert?.name ?? '');
   const [sourceTopic, setSourceTopic] = useState(alert?.sourceTopic ?? '');
+  // Source broker — which broker to pull the alert's data from. The topic tree
+  // below is scoped to this broker; empty = active/principal broker.
+  const [sourceBrokerId, setSourceBrokerId] = useState(alert?.sourceBrokerId ?? '');
   const [valueField, setValueField] = useState(alert?.valueField ?? 'value');
   const [treeSearch, setTreeSearch] = useState('');
 
@@ -310,10 +313,20 @@ export function AlertForm({ alert, onClose }: Props) {
   const [sourcePayload, setSourcePayload] = useState<Record<string, unknown> | null>(null);
   const [payloadFields, setPayloadFields] = useState<string[]>([]);
 
-  // Data fetching
+  // Data fetching — topic tree scoped to the chosen source broker
   const { data: topicTree = [] } = useQuery<TopicNode[]>({
-    queryKey: ['topics-tree', 'active'], queryFn: () => topicsApi.getTree(), staleTime: 15000,
+    queryKey: ['topics-tree', sourceBrokerId || 'active'],
+    queryFn: () => topicsApi.getTree(sourceBrokerId || undefined),
+    staleTime: 15000,
   });
+
+  // Connected brokers for the "Broker de origem" selector
+  const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
+    queryKey: ['brokers-list-alert'],
+    queryFn: async () => { const { data } = await apiClient.get('/brokers'); return data; },
+    staleTime: 15000,
+  });
+  const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
 
   // Fetch payload when source topic changes
   useEffect(() => {
@@ -385,6 +398,7 @@ export function AlertForm({ alert, onClose }: Props) {
     const body: Record<string, unknown> = {
       name: name.trim(),
       sourceTopic: sourceTopic.trim(),
+      sourceBrokerId: sourceBrokerId || null,
       valueField: valueField.trim() || 'value',
       goodMin: serializeThreshold(goodMin),
       goodMax: serializeThreshold(goodMax),
@@ -449,6 +463,17 @@ export function AlertForm({ alert, onClose }: Props) {
         <div className="w-56 lg:w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden md:flex">
           <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Source Topic</p>
+            <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
+            <select
+              value={sourceBrokerId}
+              onChange={e => { setSourceBrokerId(e.target.value); setSourceTopic(''); }}
+              className="w-full mb-2 px-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-200 dark:focus:border-gray-700 transition-all"
+            >
+              <option value="">Broker ativo (principal)</option>
+              {brokers.filter(b => b.status === 'connected').map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
               <input type="text" value={treeSearch} onChange={e => setTreeSearch(e.target.value)} placeholder="Search topics..."
@@ -478,6 +503,17 @@ export function AlertForm({ alert, onClose }: Props) {
           {/* Source topic (mobile) */}
           <div className="md:hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-4 py-3">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Source Topic</p>
+            <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
+            <select
+              value={sourceBrokerId}
+              onChange={e => { setSourceBrokerId(e.target.value); setSourceTopic(''); }}
+              className="input-clean text-[12px] mb-2"
+            >
+              <option value="">Broker ativo (principal)</option>
+              {brokers.filter(b => b.status === 'connected').map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
             <input type="text" value={sourceTopic} onChange={e => setSourceTopic(e.target.value)} placeholder="Select from tree or type..."
               className="input-clean font-mono text-[12px]" />
           </div>
