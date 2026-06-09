@@ -66,45 +66,57 @@ const COOLDOWN_OPTIONS = [
   { label: '15min', value: 900 },
 ];
 
-// ── Status helpers ──────────────────────────────────────────────────
-
-function getStatusFromValue(
-  value: number | undefined,
-  goodMin?: number, goodMax?: number,
-  warnMin?: number, warnMax?: number,
-): string {
-  if (value == null) return 'unknown';
-  if (goodMin != null && goodMax != null && value >= goodMin && value <= goodMax) return 'good';
-  if (warnMin != null && warnMax != null && value >= warnMin && value <= warnMax) return 'warn';
-  return 'bad';
-}
-
-// ── Threshold (static number OR `{{topic.field}}` dynamic reference) ──
+// ── Threshold (static number OR `{{topic.field@brokerId}}` dynamic reference) ──
 
 const isDynamicRef = (s: string) => s.startsWith('{{') && s.endsWith('}}');
 
-function parseThreshold(s: string): number | undefined {
-  if (s === '' || isDynamicRef(s)) return undefined;
+// Serialize a threshold field for the API: '' → null, dynamic ref → string,
+// otherwise a parsed number.
+function serializeThreshold(s: string): number | string | null {
+  if (s === '') return null;
+  if (isDynamicRef(s)) return s;
   const n = parseFloat(s);
-  return isNaN(n) ? undefined : n;
+  return isNaN(n) ? null : n;
+}
+
+// Split a dynamic ref into its topic.field body and optional @brokerId.
+function parseRef(ref: string): { body: string; brokerId?: string } {
+  const inner = ref.slice(2, -2);
+  const at = inner.lastIndexOf('@');
+  if (at !== -1) return { body: inner.slice(0, at), brokerId: inner.slice(at + 1) };
+  return { body: inner };
 }
 
 function ThresholdInput({
-  value, onChange, color, topicTree, currentSourcePayload,
+  value, onChange, color, brokers, defaultBrokerId,
 }: {
   value: string;
   onChange: (v: string) => void;
   color: 'emerald' | 'amber';
-  topicTree: TopicNode[];
-  currentSourcePayload: Record<string, unknown> | null;
+  brokers: BrokerConfig[];
+  defaultBrokerId?: string;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Each threshold can pull from its OWN broker, independent of the rule's
+  // value-field broker. Defaults to the rule's source broker.
+  const [pickerBroker, setPickerBroker] = useState(defaultBrokerId ?? '');
   const [pickerTopic, setPickerTopic] = useState('');
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerFields, setPickerFields] = useState<string[]>([]);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const isDynamic = isDynamicRef(value);
+
+  // Keep the picker broker synced with the rule's source broker while closed.
+  useEffect(() => { if (!pickerOpen) setPickerBroker(defaultBrokerId ?? ''); }, [defaultBrokerId, pickerOpen]);
+
+  // Topic tree scoped to the threshold's chosen broker (fetched lazily).
+  const { data: tree = [] } = useQuery<TopicNode[]>({
+    queryKey: ['topics-tree', pickerBroker || 'active', 'threshold'],
+    queryFn: () => topicsApi.getTree(pickerBroker || undefined),
+    enabled: pickerOpen,
+    staleTime: 15000,
+  });
 
   // Close on outside click
   useEffect(() => {
@@ -116,11 +128,13 @@ function ThresholdInput({
     return () => document.removeEventListener('mousedown', handler);
   }, [pickerOpen]);
 
-  // Fetch payload fields when a topic is picked
+  // Fetch payload fields when a topic is picked, scoped to the picker broker
   useEffect(() => {
     if (!pickerTopic) { setPickerFields([]); return; }
     let cancelled = false;
-    apiClient.get(`/topics/${encodeURIComponent(pickerTopic)}/details`)
+    apiClient.get(`/topics/${encodeURIComponent(pickerTopic)}/details`, {
+      params: pickerBroker ? { brokerId: pickerBroker } : undefined,
+    })
       .then(({ data }) => {
         if (cancelled) return;
         const p = data.data?.payload;
@@ -129,10 +143,10 @@ function ThresholdInput({
       })
       .catch(() => { if (!cancelled) setPickerFields(['value']); });
     return () => { cancelled = true; };
-  }, [pickerTopic]);
+  }, [pickerTopic, pickerBroker]);
 
   const filteredTree = useMemo(() => {
-    if (!pickerSearch.trim()) return topicTree;
+    if (!pickerSearch.trim()) return tree;
     const q = pickerSearch.toLowerCase();
     const filter = (node: TopicNode): TopicNode | null => {
       if (node.fullPath.toLowerCase().includes(q)) return node;
@@ -141,11 +155,12 @@ function ThresholdInput({
       if (filtered.length > 0) return { ...node, children: filtered as unknown as TopicNode['children'] };
       return null;
     };
-    return topicTree.map(filter).filter(Boolean) as TopicNode[];
-  }, [topicTree, pickerSearch]);
+    return tree.map(filter).filter(Boolean) as TopicNode[];
+  }, [tree, pickerSearch]);
 
   const pickField = (field: string) => {
-    onChange(`{{${pickerTopic}.${field}}}`);
+    // Encode the chosen broker so this threshold always resolves against it.
+    onChange(pickerBroker ? `{{${pickerTopic}.${field}@${pickerBroker}}}` : `{{${pickerTopic}.${field}}}`);
     setPickerOpen(false);
     setPickerTopic('');
     setPickerFields([]);
@@ -156,12 +171,21 @@ function ThresholdInput({
   const accentBg = color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20';
   const accentText = color === 'emerald' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300';
 
+  // Parse the dynamic ref for display: show topic.field + the broker's name.
+  const parsed = isDynamic ? parseRef(value) : null;
+  const refBrokerName = parsed?.brokerId
+    ? (brokers.find(b => b.id === parsed.brokerId)?.name ?? 'broker')
+    : null;
+
   return (
     <div className="relative flex-1" ref={pickerRef}>
       {isDynamic ? (
         <div className={cn('flex items-center gap-1.5 px-2 py-2 rounded-xl border font-mono text-[11px]', accentBorder, accentBg, accentText)}>
           <Link2 className="w-3 h-3 shrink-0" />
-          <span className="truncate flex-1" title={value}>{value.slice(2, -2)}</span>
+          <span className="truncate flex-1" title={value}>{parsed?.body}</span>
+          {refBrokerName && (
+            <span className="shrink-0 text-[9px] not-italic px-1 py-0.5 rounded bg-black/5 dark:bg-white/10" title={`Broker: ${refBrokerName}`}>{refBrokerName}</span>
+          )}
           <button onClick={() => onChange('')} className="p-0.5 hover:bg-black/5 dark:hover:bg-white/10 rounded">
             <X className="w-3 h-3" />
           </button>
@@ -178,7 +202,7 @@ function ThresholdInput({
           <button
             type="button"
             onClick={() => setPickerOpen(!pickerOpen)}
-            title="Link to live tag value"
+            title="Link to live tag value (choose broker + tag)"
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 rounded"
           >
             <Link2 className="w-3 h-3" />
@@ -187,8 +211,19 @@ function ThresholdInput({
       )}
 
       {pickerOpen && (
-        <div className="absolute z-30 top-full left-0 mt-1 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          <div className="px-2 py-1.5 border-b border-gray-100 dark:border-gray-800">
+        <div className="absolute z-50 top-full left-0 mt-1 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+          <div className="px-2 py-1.5 border-b border-gray-100 dark:border-gray-800 space-y-1.5">
+            {/* Broker for this threshold */}
+            <select
+              value={pickerBroker}
+              onChange={(e) => { setPickerBroker(e.target.value); setPickerTopic(''); setPickerFields([]); }}
+              className="w-full px-2 py-1 text-[11px] bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-md outline-none"
+            >
+              <option value="">Broker ativo (principal)</option>
+              {brokers.filter(b => b.status === 'connected').map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
               <input
@@ -236,8 +271,6 @@ function ThresholdInput({
           </div>
         </div>
       )}
-      {/* Mark the unused prop to avoid TS warning (used in future extensions) */}
-      {currentSourcePayload === null && null}
     </div>
   );
 }
@@ -328,13 +361,16 @@ export function AlertForm({ alert, onClose }: Props) {
   });
   const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
 
-  // Fetch payload when source topic changes
+  // Fetch payload when source topic (or broker) changes — scoped to the chosen
+  // source broker so the Live Preview matches what the rule actually evaluates.
   useEffect(() => {
     if (!sourceTopic.trim()) { setSourcePayload(null); setPayloadFields([]); return; }
     let cancelled = false;
     const fetch = async () => {
       try {
-        const { data } = await apiClient.get(`/topics/${encodeURIComponent(sourceTopic)}/details`);
+        const { data } = await apiClient.get(`/topics/${encodeURIComponent(sourceTopic)}/details`, {
+          params: sourceBrokerId ? { brokerId: sourceBrokerId } : undefined,
+        });
         if (!cancelled && data.data?.payload != null) {
           const p = typeof data.data.payload === 'object' ? data.data.payload : { value: data.data.payload };
           setSourcePayload(p);
@@ -344,7 +380,7 @@ export function AlertForm({ alert, onClose }: Props) {
     };
     const timer = setTimeout(fetch, 300);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [sourceTopic]);
+  }, [sourceTopic, sourceBrokerId]);
 
   // Filter topic tree
   const filteredTree = useMemo(() => {
@@ -360,21 +396,41 @@ export function AlertForm({ alert, onClose }: Props) {
     return topicTree.map(filterNode).filter(Boolean) as TopicNode[];
   }, [topicTree, treeSearch]);
 
-  // Compute preview status
-  const currentValue = useMemo(() => {
-    if (!sourcePayload || !valueField) return undefined;
-    const v = sourcePayload[valueField];
-    return typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : undefined;
-  }, [sourcePayload, valueField]);
+  // Live Preview — evaluated server-side so dynamic, multi-broker thresholds
+  // each resolve against their own broker (and the value against the rule's
+  // source broker). Debounced so typing thresholds doesn't spam the API.
+  const [previewArgs, setPreviewArgs] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!sourceTopic.trim()) { setPreviewArgs(null); return; }
+    const t = setTimeout(() => setPreviewArgs({
+      sourceTopic: sourceTopic.trim(),
+      sourceBrokerId: sourceBrokerId || undefined,
+      valueField: valueField.trim() || 'value',
+      goodMin: serializeThreshold(goodMin),
+      goodMax: serializeThreshold(goodMax),
+      warnMin: serializeThreshold(warnMin),
+      warnMax: serializeThreshold(warnMax),
+    }), 350);
+    return () => clearTimeout(t);
+  }, [sourceTopic, sourceBrokerId, valueField, goodMin, goodMax, warnMin, warnMax]);
 
-  const previewStatus = useMemo(() => {
-    // Preview only works for static numbers; dynamic refs require runtime resolution
-    return getStatusFromValue(
-      currentValue,
-      parseThreshold(goodMin), parseThreshold(goodMax),
-      parseThreshold(warnMin), parseThreshold(warnMax),
-    );
-  }, [currentValue, goodMin, goodMax, warnMin, warnMax]);
+  const { data: preview } = useQuery<{
+    found: boolean;
+    value: number | null;
+    status: 'good' | 'warn' | 'bad' | 'unknown';
+  }>({
+    queryKey: ['alert-preview', previewArgs],
+    queryFn: async () => {
+      const { data } = await apiClient.post('/alerts/preview', previewArgs);
+      return data.data;
+    },
+    enabled: !!previewArgs,
+    staleTime: 2000,
+    refetchInterval: 5000, // keep the live value fresh while the form is open
+  });
+
+  const currentValue = preview?.value ?? undefined;
+  const previewStatus = preview?.status ?? 'unknown';
 
   const wouldNotify = useMemo(() => {
     if (previewStatus === 'good' && notifyOnGood) return true;
@@ -386,13 +442,6 @@ export function AlertForm({ alert, onClose }: Props) {
   const colors = statusColors[previewStatus] || statusColors.unknown;
 
   // Serialize threshold: dynamic ref -> string, static number -> number, empty -> null
-  const serializeThreshold = (s: string): number | string | null => {
-    if (s === '') return null;
-    if (isDynamicRef(s)) return s;
-    const n = parseFloat(s);
-    return isNaN(n) ? null : n;
-  };
-
   // Submit
   const handleSubmit = async () => {
     const body: Record<string, unknown> = {
@@ -466,7 +515,7 @@ export function AlertForm({ alert, onClose }: Props) {
             <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
             <select
               value={sourceBrokerId}
-              onChange={e => { setSourceBrokerId(e.target.value); setSourceTopic(''); }}
+              onChange={e => setSourceBrokerId(e.target.value)}
               className="w-full mb-2 px-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-200 dark:focus:border-gray-700 transition-all"
             >
               <option value="">Broker ativo (principal)</option>
@@ -506,7 +555,7 @@ export function AlertForm({ alert, onClose }: Props) {
             <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
             <select
               value={sourceBrokerId}
-              onChange={e => { setSourceBrokerId(e.target.value); setSourceTopic(''); }}
+              onChange={e => setSourceBrokerId(e.target.value)}
               className="input-clean text-[12px] mb-2"
             >
               <option value="">Broker ativo (principal)</option>
@@ -568,8 +617,9 @@ export function AlertForm({ alert, onClose }: Props) {
             </div>
           )}
 
-          {/* Threshold Configuration */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden shrink-0">
+          {/* Threshold Configuration (no overflow-hidden so the live-tag picker
+              dropdown can escape the card instead of being clipped) */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shrink-0">
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Threshold Configuration</p>
               <p className="text-[10px] text-gray-300 mt-0.5">Define value ranges for each status level</p>
@@ -585,12 +635,12 @@ export function AlertForm({ alert, onClose }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <label className="text-[10px] text-emerald-600/70 mb-1 block">Min</label>
-                    <ThresholdInput value={goodMin} onChange={setGoodMin} color="emerald" topicTree={topicTree} currentSourcePayload={sourcePayload} />
+                    <ThresholdInput value={goodMin} onChange={setGoodMin} color="emerald" brokers={brokers} defaultBrokerId={sourceBrokerId} />
                   </div>
                   <span className="text-gray-300 text-[12px] mt-4">to</span>
                   <div className="flex-1">
                     <label className="text-[10px] text-emerald-600/70 mb-1 block">Max</label>
-                    <ThresholdInput value={goodMax} onChange={setGoodMax} color="emerald" topicTree={topicTree} currentSourcePayload={sourcePayload} />
+                    <ThresholdInput value={goodMax} onChange={setGoodMax} color="emerald" brokers={brokers} defaultBrokerId={sourceBrokerId} />
                   </div>
                 </div>
               </div>
@@ -605,12 +655,12 @@ export function AlertForm({ alert, onClose }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <label className="text-[10px] text-amber-600/70 mb-1 block">Min</label>
-                    <ThresholdInput value={warnMin} onChange={setWarnMin} color="amber" topicTree={topicTree} currentSourcePayload={sourcePayload} />
+                    <ThresholdInput value={warnMin} onChange={setWarnMin} color="amber" brokers={brokers} defaultBrokerId={sourceBrokerId} />
                   </div>
                   <span className="text-gray-300 text-[12px] mt-4">to</span>
                   <div className="flex-1">
                     <label className="text-[10px] text-amber-600/70 mb-1 block">Max</label>
-                    <ThresholdInput value={warnMax} onChange={setWarnMax} color="amber" topicTree={topicTree} currentSourcePayload={sourcePayload} />
+                    <ThresholdInput value={warnMax} onChange={setWarnMax} color="amber" brokers={brokers} defaultBrokerId={sourceBrokerId} />
                   </div>
                 </div>
               </div>
