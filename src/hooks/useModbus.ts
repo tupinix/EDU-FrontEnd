@@ -112,13 +112,12 @@ export function useModbusLiveValues(connectionId: string | null) {
     staleTime: 0,
   });
 
+  // Replace (don't merge) on each seed so deleted/disconnected registers drop out.
   useEffect(() => {
     if (!seedData) return;
-    setLiveMap(prev => {
-      const next = new Map(prev);
-      for (const v of seedData) next.set(`${v.connectionId}::${v.registerId}`, v);
-      return next;
-    });
+    const next = new Map<string, ModbusLiveValue>();
+    for (const v of seedData) next.set(`${v.connectionId}::${v.registerId}`, v);
+    setLiveMap(next);
   }, [seedData]);
 
   const handleValueChange = useCallback((v: ModbusLiveValue) => {

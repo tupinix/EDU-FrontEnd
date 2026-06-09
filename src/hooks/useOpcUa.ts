@@ -121,13 +121,12 @@ export function useOpcUaLiveValues(connectionId: string | null) {
     staleTime: 0,
   });
 
+  // Replace (don't merge) on each seed so deleted/disconnected nodes drop out.
   useEffect(() => {
     if (!seedData) return;
-    setLiveMap(prev => {
-      const next = new Map(prev);
-      for (const v of seedData) next.set(`${v.connectionId}::${v.nodeId}`, v);
-      return next;
-    });
+    const next = new Map<string, NodeLiveValue>();
+    for (const v of seedData) next.set(`${v.connectionId}::${v.nodeId}`, v);
+    setLiveMap(next);
   }, [seedData]);
 
   // Real-time updates via WebSocket
