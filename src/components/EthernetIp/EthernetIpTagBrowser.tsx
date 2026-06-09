@@ -1,18 +1,86 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Loader2, Search, X, Rss, Plus, RefreshCw } from 'lucide-react';
 import { useEthipDiscoverTags, useEthipSubscribedTags, useCreateEthipTag, useDeleteEthipTag } from '../../hooks/useEthernetIp';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { EthipConnection, EthipDiscoveredTag, BrokerConfig } from '../../types';
-import apiClient from '../../services/api';
+import apiClient, { ethipApi } from '../../services/api';
 import { cn } from '@/lib/utils';
+
+// Helpers for struct member display
+const fmtMemberValue = (v: unknown): string =>
+  v === null || v === undefined ? '—' : typeof v === 'object' ? '{…}' : String(v);
+const inferMemberType = (v: unknown): string =>
+  typeof v === 'boolean' ? 'BOOL'
+    : typeof v === 'number' ? (Number.isInteger(v) ? 'DINT' : 'REAL')
+    : typeof v === 'string' ? 'STRING'
+    : v && typeof v === 'object' ? 'STRUCT' : '—';
+const sanitizeTopicSeg = (s: string): string => s.replace(/\./g, '/').replace(/\[/g, '/').replace(/\]/g, '');
+
+// Recursively flatten a decoded struct into atomic leaves with dotted paths.
+// Arrays and primitives are leaves; nested objects are walked so members like
+// "Limits.High" become selectable. (Buffers were already decoded by the backend.)
+function flattenLeaves(obj: Record<string, unknown>, prefix = ''): Array<{ path: string; value: unknown }> {
+  const out: Array<{ path: string; value: unknown }> = [];
+  for (const [k, v] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      out.push(...flattenLeaves(v as Record<string, unknown>, path));
+    } else {
+      out.push({ path, value: v });
+    }
+  }
+  return out;
+}
 
 // ── Subscribe Modal ──────────────────────────────────────────────────
 
 function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTag; connectionId: string; onClose: () => void }) {
   const createTag = useCreateEthipTag(connectionId);
-  const [topic, setTopic] = useState(() => `EthernetIP/${tag.tag_name.replace(/\./g, '/').replace(/\[/g, '/').replace(/\]/g, '')}`);
+  const baseTopic = `EthernetIP/${sanitizeTopicSeg(tag.tag_name)}`;
+  const [topic, setTopic] = useState(baseTopic);
   const [interval, setInterval] = useState(1000);
   const [brokerId, setBrokerId] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Read the tag's current value so we can offer struct members to publish.
+  const [structValue, setStructValue] = useState<Record<string, unknown> | null>(null);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [readError, setReadError] = useState<string | null>(null);
+  // Selection: whole struct + a set of member names to publish individually.
+  const [wholeStruct, setWholeStruct] = useState(true);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingMembers(true);
+    setReadError(null);
+    ethipApi.readTags(connectionId, [tag.tag_name])
+      .then((res) => {
+        if (cancelled) return;
+        const r = res as Record<string, unknown> & { values?: Record<string, unknown> };
+        const val = (r?.values ?? r)?.[tag.tag_name];
+        if (val && typeof val === 'object' && !Array.isArray(val) && !('error' in (val as object))) {
+          setStructValue(val as Record<string, unknown>);
+          setWholeStruct(false); // when it's a struct, default to picking members
+        } else {
+          setStructValue(null);
+        }
+      })
+      .catch((e) => { if (!cancelled) setReadError(e instanceof Error ? e.message : 'read failed'); })
+      .finally(() => { if (!cancelled) setLoadingMembers(false); });
+    return () => { cancelled = true; };
+  }, [connectionId, tag.tag_name]);
+
+  const members = useMemo(() => structValue ? flattenLeaves(structValue) : [], [structValue]);
+  const isStruct = members.length > 0;
+
+  const toggleMember = (name: string) => {
+    setSelectedMembers(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
 
   const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
     queryKey: ['brokers-list-modal'],
@@ -21,18 +89,35 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
   });
   const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
 
+  const nothingSelected = isStruct && !wholeStruct && selectedMembers.size === 0;
+
   const handleSave = async () => {
-    if (!topic.trim() || !brokerId) return;
+    if (!topic.trim() || !brokerId || nothingSelected) return;
+    setSaveError(null);
     try {
-      await createTag.mutateAsync({
-        tagName: tag.tag_name,
-        mqttTopic: topic.trim(),
-        samplingIntervalMs: interval,
-        displayName: tag.tag_name,
-        brokerId: brokerId || undefined,
-      });
+      // Whole struct / atomic tag → single subscription, no memberPath.
+      if (!isStruct || wholeStruct) {
+        await createTag.mutateAsync({
+          tagName: tag.tag_name,
+          mqttTopic: topic.trim(),
+          samplingIntervalMs: interval,
+          displayName: tag.tag_name,
+          brokerId: brokerId || undefined,
+        });
+      }
+      // One subscription per selected member, each to its own sub-topic.
+      for (const member of selectedMembers) {
+        await createTag.mutateAsync({
+          tagName: tag.tag_name,
+          memberPath: member,
+          mqttTopic: `${topic.trim()}/${sanitizeTopicSeg(member)}`,
+          samplingIntervalMs: interval,
+          displayName: `${tag.tag_name}.${member}`,
+          brokerId: brokerId || undefined,
+        });
+      }
       onClose();
-    } catch { /* handled */ }
+    } catch (e) { setSaveError(e instanceof Error ? e.message : 'Failed to publish'); }
   };
 
   return (
@@ -43,7 +128,7 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
           <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Publish to MQTT</h3>
           <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-auto">
           {/* Tag info */}
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3">
             <div className="flex items-center justify-between mb-1">
@@ -53,6 +138,33 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
             <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100 font-mono">{tag.tag_name}</p>
             {tag.dim > 0 && <p className="text-[11px] text-gray-400 mt-0.5">Array dimension: {tag.dim}</p>}
           </div>
+
+          {/* Struct members — choose which atomic data to publish */}
+          {loadingMembers && (
+            <div className="flex items-center gap-2 text-[12px] text-gray-400"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Lendo membros do tag…</div>
+          )}
+          {readError && !loadingMembers && (
+            <p className="text-[11px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">Não foi possível ler os membros ({readError}). Você ainda pode publicar o valor inteiro.</p>
+          )}
+          {isStruct && (
+            <Field label="O que publicar deste objeto">
+              <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                <input type="checkbox" checked={wholeStruct} onChange={(e) => setWholeStruct(e.target.checked)} className="accent-gray-900 dark:accent-white" />
+                <span className="text-[12px] text-gray-700 dark:text-gray-300">Objeto inteiro (struct)</span>
+              </label>
+              <div className="mt-1 max-h-44 overflow-auto rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
+                {members.map(({ path, value: val }) => (
+                  <label key={path} className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                    <input type="checkbox" checked={selectedMembers.has(path)} onChange={() => toggleMember(path)} className="accent-blue-600 shrink-0" />
+                    <span className="text-[12px] font-mono text-gray-700 dark:text-gray-300 truncate flex-1" title={path}>{path}</span>
+                    <span className="text-[10px] font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded shrink-0">{inferMemberType(val)}</span>
+                    <span className="text-[11px] text-gray-400 font-mono truncate max-w-[80px] text-right shrink-0" title={fmtMemberValue(val)}>{fmtMemberValue(val)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[11px] text-gray-300 mt-1">Cada membro marcado vira uma publicação no tópico <span className="font-mono">{topic.trim() || 'base'}/&lt;membro&gt;</span></p>
+            </Field>
+          )}
 
           {/* Broker selector */}
           <Field label="MQTT Broker *">
@@ -71,9 +183,9 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
           </Field>
 
           {/* Topic */}
-          <Field label="MQTT Topic *">
+          <Field label={isStruct ? 'MQTT Topic base *' : 'MQTT Topic *'}>
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} className="input-clean font-mono" placeholder="EthernetIP/tag_name" autoFocus />
-            <p className="text-[11px] text-gray-300 mt-1">Auto-suggested from tag name</p>
+            <p className="text-[11px] text-gray-300 mt-1">{isStruct ? 'Membros publicam em base/<membro>; struct inteiro publica na base' : 'Auto-suggested from tag name'}</p>
           </Field>
 
           {/* Interval */}
@@ -87,10 +199,12 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
               ))}
             </div>
           </Field>
+
+          {saveError && <p className="text-[12px] text-red-500">{saveError}</p>}
         </div>
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2.5">
           <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={!topic.trim() || !brokerId || createTag.isPending}
+          <button onClick={handleSave} disabled={!topic.trim() || !brokerId || nothingSelected || createTag.isPending}
             className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30">
             <Rss className="w-3.5 h-3.5" /> {createTag.isPending ? 'Publishing...' : 'Publish'}
           </button>
@@ -158,7 +272,7 @@ export function EthernetIpTagBrowser({ connection, onBack }: { connection: Ethip
               {subscribedTags.map(sub => (
                 <div key={sub.id} className="px-5 py-2.5 flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-mono text-gray-600 truncate">{sub.tagName}</p>
+                    <p className="text-[11px] font-mono text-gray-600 truncate">{sub.memberPath ? `${sub.tagName}.${sub.memberPath}` : sub.tagName}</p>
                     <p className="text-[11px] text-gray-400 truncate">→ {sub.mqttTopic}</p>
                   </div>
                   <span className="text-[10px] text-gray-300 shrink-0">{sub.samplingIntervalMs}ms</span>

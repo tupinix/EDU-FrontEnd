@@ -361,6 +361,8 @@ export interface EthipTag {
   id: string;
   connectionId: string;
   tagName: string;
+  // For STRUCT tags: dotted path to the atomic member to publish (e.g. "PV").
+  memberPath?: string;
   displayName?: string;
   dataType?: string;
   mqttTopic: string;

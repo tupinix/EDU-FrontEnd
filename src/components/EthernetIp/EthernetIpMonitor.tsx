@@ -23,10 +23,13 @@ export function EthernetIpMonitor({ connection, onBack }: Props) {
   const { data: tags } = useEthipSubscribedTags(connection.id);
   const brokerName = useBrokerNameMap();
 
-  // Map live value (by tag name) → its publish config (topic / broker / freq).
+  // Map live value (by composite tag[.member] name) → its publish config.
   const cfgByTag = useMemo(() => {
     const m = new Map<string, PubCfg>();
-    for (const t of tags ?? []) m.set(t.tagName, { topic: t.mqttTopic, brokerId: t.brokerId, intervalMs: t.samplingIntervalMs });
+    for (const t of tags ?? []) {
+      const key = t.memberPath ? `${t.tagName}.${t.memberPath}` : t.tagName;
+      m.set(key, { topic: t.mqttTopic, brokerId: t.brokerId, intervalMs: t.samplingIntervalMs });
+    }
     return m;
   }, [tags]);
 

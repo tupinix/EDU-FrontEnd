@@ -62,6 +62,8 @@ export function useDisconnectEthip() {
     mutationFn: ethipApi.disconnect,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ethip-connections'] });
+      // Re-seed live values so a disconnected connection's stale tags drop.
+      queryClient.invalidateQueries({ queryKey: ['ethip-live-values'] });
     },
   });
 }
@@ -87,7 +89,7 @@ export function useEthipSubscribedTags(connId: string | null) {
 export function useCreateEthipTag(connId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { tagName: string; mqttTopic: string; samplingIntervalMs?: number; displayName?: string; brokerId?: string }) =>
+    mutationFn: (body: { tagName: string; memberPath?: string; mqttTopic: string; samplingIntervalMs?: number; displayName?: string; brokerId?: string }) =>
       ethipApi.subscribeTag(connId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ethip-subscribed-tags', connId] });
@@ -102,6 +104,8 @@ export function useDeleteEthipTag() {
     mutationFn: ethipApi.deleteTag,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ethip-subscribed-tags'] });
+      // Re-seed live values so the deleted tag/member stops showing in the monitor.
+      queryClient.invalidateQueries({ queryKey: ['ethip-live-values'] });
     },
   });
 }
@@ -116,13 +120,13 @@ export function useEthipLiveValues(connectionId: string | null) {
     staleTime: 0,
   });
 
+  // Replace (don't merge) on each seed so values for tags that were deleted or
+  // whose connection disconnected drop out instead of lingering forever.
   useEffect(() => {
     if (!seedData) return;
-    setLiveMap(prev => {
-      const next = new Map(prev);
-      for (const v of seedData) next.set(`${v.connectionId}::${v.tagName}`, v);
-      return next;
-    });
+    const next = new Map<string, EthipLiveValue>();
+    for (const v of seedData) next.set(`${v.connectionId}::${v.tagName}`, v);
+    setLiveMap(next);
   }, [seedData]);
 
   const handleValueChange = useCallback((v: EthipLiveValue) => {

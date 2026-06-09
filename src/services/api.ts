@@ -849,9 +849,11 @@ export const ethipApi = {
 
   subscribeTag: async (connId: string, body: {
     tagName: string;
+    memberPath?: string;
     mqttTopic: string;
     samplingIntervalMs?: number;
     displayName?: string;
+    brokerId?: string;
   }): Promise<EthipTag> => {
     const { data } = await apiClient.post<ApiResponse<EthipTag>>(`/ethip/connections/${connId}/tags`, body);
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to subscribe tag');
