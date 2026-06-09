@@ -18,8 +18,9 @@ import {
   Check,
   Save,
 } from 'lucide-react';
-import { hierarchyApi } from '../services/api';
+import apiClient, { hierarchyApi, topicsApi } from '../services/api';
 import {
+  BrokerConfig,
   CypherResult,
   GraphNode,
   GraphProperties,
@@ -27,6 +28,7 @@ import {
   GraphRelationship,
   HierarchyData,
   RawGraph,
+  TopicNode,
 } from '../types';
 import { useAuthStore } from '../hooks/useStore';
 import { cn } from '@/lib/utils';
@@ -232,7 +234,16 @@ const REL_TYPE_PRESETS: Array<{ value: string; label: string }> = [
   { value: 'BELONGS_TO',   label: 'pertence a' },
   { value: 'CONNECTED_TO', label: 'conectado a' },
   { value: 'RELATED_TO',   label: 'relacionado a' },
+  // i3X non-hierarchical (Graph) relationship types — surface in i3X.
+  { value: 'SUPPLIES_TO',   label: 'abastece (suppliesTo)' },
+  { value: 'MONITORS',      label: 'monitora (monitors)' },
+  { value: 'CAN_FEED',      label: 'pode alimentar (canFeed)' },
+  { value: 'HAS_COMPONENT', label: 'tem componente (hasComponent)' },
 ];
+
+// Non-hierarchical (i3X Graph) relationship types — drawn with a distinct
+// dashed style and surfaced through the i3X relationships API.
+const GRAPH_REL_TYPES = new Set(['SUPPLIES_TO', 'MONITORS', 'CAN_FEED', 'HAS_COMPONENT']);
 
 function ChipRow<T extends { value: string; label: string }>({
   options, selected, onSelect, customLabel = 'Outro…', customActive, onCustom,
@@ -280,34 +291,134 @@ function ChipRow<T extends { value: string; label: string }>({
   );
 }
 
+// ─── Broker tag/namespace picker (for anchored nodes) ───────────────
+
+function topicChildren(n: TopicNode): TopicNode[] {
+  const c = (n as unknown as { children?: unknown }).children;
+  if (!c) return [];
+  if (Array.isArray(c)) return c as TopicNode[];
+  if (c instanceof Map) return Array.from(c.values()) as TopicNode[];
+  if (typeof c === 'object') return Object.values(c) as TopicNode[];
+  return [];
+}
+
+type TopicPick = { path: string; kind: 'tag' | 'namespace' };
+
+function flattenTopics(nodes: TopicNode[], out: TopicPick[] = []): TopicPick[] {
+  for (const n of nodes) {
+    out.push({ path: n.fullPath, kind: n.hasValue ? 'tag' : 'namespace' });
+    const children = topicChildren(n);
+    if (children.length) flattenTopics(children, out);
+  }
+  return out;
+}
+
+function TopicPicker({ selected, onPick }: { selected: string; onPick: (path: string, kind: 'tag' | 'namespace') => void }) {
+  const [search, setSearch] = useState('');
+  // Which broker to browse — empty = active/principal broker (same UX as Models).
+  const [brokerId, setBrokerId] = useState('');
+
+  const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
+    queryKey: ['brokers-list-kg'],
+    queryFn: async () => { const { data } = await apiClient.get('/brokers'); return data; },
+    staleTime: 15000,
+  });
+  const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
+
+  const { data: tree = [], isLoading } = useQuery<TopicNode[]>({
+    queryKey: ['topics-tree', 'kg-anchor', brokerId || 'active'],
+    queryFn: () => topicsApi.getTree(brokerId || undefined),
+    staleTime: 15000,
+  });
+  const items = useMemo(() => {
+    const all = flattenTopics(tree);
+    const q = search.toLowerCase().trim();
+    return (q ? all.filter((i) => i.path.toLowerCase().includes(q)) : all).slice(0, 300);
+  }, [tree, search]);
+  return (
+    <div className="space-y-2">
+      <select
+        value={brokerId}
+        onChange={(e) => setBrokerId(e.target.value)}
+        className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+      >
+        <option value="">Broker ativo (principal)</option>
+        {brokers.filter((b) => b.status === 'connected').map((b) => (
+          <option key={b.id} value={b.id}>{b.name}</option>
+        ))}
+      </select>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar tag/namespace do broker…"
+        className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+      />
+      <div className="max-h-56 overflow-auto rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
+        {isLoading ? (
+          <p className="text-center py-4 text-[12px] text-gray-300">Carregando…</p>
+        ) : items.length === 0 ? (
+          <p className="text-center py-4 text-[12px] text-gray-300">Nenhum tópico</p>
+        ) : (
+          items.map((i) => (
+            <button
+              key={i.path}
+              type="button"
+              onClick={() => onPick(i.path, i.kind)}
+              className={cn(
+                'w-full text-left px-3 py-1.5 flex items-center gap-2 transition-colors',
+                selected === i.path ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-gray-50 dark:hover:bg-gray-800',
+              )}
+            >
+              <span className={cn('text-[9px] px-1.5 py-0.5 rounded shrink-0', i.kind === 'tag' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400')}>
+                {i.kind === 'tag' ? 'tag' : 'ns'}
+              </span>
+              <span className="text-[12px] font-mono truncate">{i.path}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Node form modal (simplified) ───────────────────────────────────
 
 interface NodeFormProps {
   existingLabels: string[];
   onCancel: () => void;
   onSave: (label: string, properties: GraphProperties) => Promise<void>;
+  onAnchor: (topic: string, kind: 'tag' | 'namespace', name?: string) => Promise<void>;
 }
 
-function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
+function NodeFormModal({ existingLabels, onCancel, onSave, onAnchor }: NodeFormProps) {
+  const [mode, setMode] = useState<'free' | 'broker'>('free');
   const [name, setName] = useState('');
   const [type, setType] = useState('Equipment');
   const [customType, setCustomType] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [extras, setExtras] = useState<GraphProperties>({});
+  const [pickedTopic, setPickedTopic] = useState('');
+  const [pickedKind, setPickedKind] = useState<'tag' | 'namespace'>('tag');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
-    if (!name.trim()) { setError('Dê um nome ao nó'); return; }
-    const label = (useCustom ? customType : type).trim();
-    if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(label)) {
-      setError('Tipo inválido — use letras/números, começando com letra');
-      return;
-    }
     setBusy(true);
     try {
+      if (mode === 'broker') {
+        if (!pickedTopic) { setError('Escolha uma tag ou namespace do broker'); setBusy(false); return; }
+        await onAnchor(pickedTopic, pickedKind, name.trim() || undefined);
+        return;
+      }
+      if (!name.trim()) { setError('Dê um nome ao nó'); setBusy(false); return; }
+      const label = (useCustom ? customType : type).trim();
+      if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(label)) {
+        setError('Tipo inválido — use letras/números, começando com letra');
+        setBusy(false);
+        return;
+      }
       await onSave(label, { name: name.trim(), ...extras });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro');
@@ -318,6 +429,48 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
 
   return (
     <ModalShell title="Novo nó" onCancel={onCancel}>
+      {/* Mode: free-form node vs a node bound to a real broker tag/namespace */}
+      <div className="flex gap-1.5">
+        {([['free', 'Nó livre'], ['broker', 'Tag/Namespace do broker']] as const).map(([m, label]) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={cn(
+              'flex-1 py-1.5 text-[12px] font-medium rounded-lg border transition-colors',
+              mode === m
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                : 'bg-white dark:bg-gray-800/40 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'broker' && (
+        <>
+          <Field label="Tag / Namespace">
+            <TopicPicker selected={pickedTopic} onPick={(p, k) => { setPickedTopic(p); setPickedKind(k); }} />
+            {pickedTopic && (
+              <p className="text-[11px] text-gray-400 mt-1">
+                Selecionado: <span className="font-mono text-gray-600 dark:text-gray-300">{pickedTopic}</span> ({pickedKind === 'tag' ? 'tag' : 'namespace'})
+              </p>
+            )}
+          </Field>
+          <Field label="Nome (opcional)">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && pickedTopic) submit(); }}
+              placeholder="Padrão: último segmento do tópico"
+              className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300"
+            />
+          </Field>
+        </>
+      )}
+
+      {mode === 'free' && (
       <Field label="Nome">
         <input
           autoFocus
@@ -328,7 +481,9 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
           className="w-full px-3 py-2.5 text-[14px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-300 dark:focus:border-gray-600"
         />
       </Field>
+      )}
 
+      {mode === 'free' && (
       <Field label="Tipo">
         <ChipRow
           options={NODE_TYPE_PRESETS}
@@ -350,7 +505,9 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
           {existingLabels.map((l) => <option key={l} value={l} />)}
         </datalist>
       </Field>
+      )}
 
+      {mode === 'free' && (
       <div>
         <button
           type="button"
@@ -366,12 +523,13 @@ function NodeFormModal({ existingLabels, onCancel, onSave }: NodeFormProps) {
           </div>
         )}
       </div>
+      )}
 
       <ModalFooter error={error}>
         <button onClick={onCancel} disabled={busy} className="px-3 py-2 text-[12px] text-gray-500 hover:text-gray-700 rounded-lg">Cancelar</button>
         <button
           onClick={submit}
-          disabled={busy || !name.trim()}
+          disabled={busy || (mode === 'free' ? !name.trim() : !pickedTopic)}
           className="px-4 py-2 text-[12px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-40 inline-flex items-center gap-1.5"
         >
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
@@ -1109,6 +1267,17 @@ export function PlantModel() {
       ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.stroke();
       return;
     }
+    // Non-hierarchical (i3X Graph) edges are drawn dashed in a distinct teal so
+    // they stand out from the ISA-95 hierarchy.
+    const isGraph = GRAPH_REL_TYPES.has(link.label);
+    if (isGraph) {
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y);
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#14b8a6'; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.restore();
+      return;
+    }
     const g = ctx.createLinearGradient(s.x, s.y, e.x, e.y);
     g.addColorStop(0, s.color + '50'); g.addColorStop(1, e.color + '50');
     ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y); ctx.strokeStyle = g; ctx.lineWidth = 1.2; ctx.stroke();
@@ -1119,6 +1288,11 @@ export function PlantModel() {
 
   const handleCreateNode = async (label: string, props: GraphProperties) => {
     await hierarchyApi.createNode(label, props);
+    setNewNodeOpen(false);
+    await reloadRaw();
+  };
+  const handleAnchorNode = async (topic: string, kind: 'tag' | 'namespace', name?: string) => {
+    await hierarchyApi.anchorNode(topic, kind, name);
     setNewNodeOpen(false);
     await reloadRaw();
   };
@@ -1341,6 +1515,7 @@ export function PlantModel() {
           existingLabels={labelsInUse}
           onCancel={() => setNewNodeOpen(false)}
           onSave={handleCreateNode}
+          onAnchor={handleAnchorNode}
         />
       )}
       {pendingTarget && (

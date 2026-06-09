@@ -270,6 +270,18 @@ export const hierarchyApi = {
     return data.data;
   },
 
+  // Create (or reuse) a node bound to a real broker tag/namespace (UNS topic).
+  // The topic becomes the node's i3X elementId so relationships surface in i3X.
+  anchorNode: async (topic: string, kind: 'tag' | 'namespace', name?: string): Promise<GraphNode> => {
+    const { data } = await apiClient.post<ApiResponse<GraphNode>>('/hierarchy/anchor', {
+      topic, kind, name,
+    });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to anchor node');
+    }
+    return data.data;
+  },
+
   deleteNode: async (id: string): Promise<void> => {
     const { data } = await apiClient.delete<ApiResponse<void>>(`/hierarchy/nodes/${id}`);
     if (!data.success) {
