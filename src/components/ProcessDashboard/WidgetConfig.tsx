@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Trash2, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { DashboardWidget } from '../../types';
-import { topicsApi } from '../../services/api';
+import { DashboardWidget, BrokerConfig, TopicNode } from '../../types';
+import { topicsApi, brokersApi } from '../../services/api';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -64,71 +64,123 @@ function ConfigSelect({ label, value, onChange, options }: {
   );
 }
 
-// Tag binding autocomplete
-function TagBindingInput({ value, onChange }: { value: string; onChange: (val: string) => void }) {
-  const [search, setSearch] = useState(value || '');
-  const [open, setOpen] = useState(false);
+// Flatten a topic tree to its leaf TAGS (nodes that carry a value) — that's
+// what a widget binds to.
+function flattenTags(nodes: TopicNode[], out: string[] = []): string[] {
+  for (const n of nodes) {
+    if (n.hasValue) out.push(n.fullPath);
+    if (n.children?.length) flattenTags(n.children, out);
+  }
+  return out;
+}
 
-  const { data: topics = [] } = useQuery<string[]>({
-    queryKey: ['topics-list'],
-    queryFn: topicsApi.getList,
+// Tag binding = choose a BROKER, then a tag from that broker, then which payload
+// field to read — same pattern as the Models / Alerts / KG screens.
+function TagBindingPicker({ widget, onConfigChange }: {
+  widget: DashboardWidget;
+  onConfigChange: (u: Record<string, unknown>) => void;
+}) {
+  const c = widget.config;
+  const topic = String(c.tagBinding ?? '');
+  const brokerId = String(c.tagBrokerId ?? '');
+  const field = String(c.tagField ?? 'value');
+  const [search, setSearch] = useState('');
+
+  const { data: brokers = [] } = useQuery<BrokerConfig[]>({
+    queryKey: ['brokers-list-dash'],
+    queryFn: brokersApi.getAll,
     staleTime: 15000,
   });
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return topics.slice(0, 30);
-    const q = search.toLowerCase();
-    return topics.filter((t) => t.toLowerCase().includes(q)).slice(0, 30);
-  }, [topics, search]);
+  // Tree scoped to the chosen broker (undefined → active/principal broker).
+  const { data: tree = [], isLoading } = useQuery<TopicNode[]>({
+    queryKey: ['topics-tree-dash', brokerId || 'active'],
+    queryFn: () => topicsApi.getTree(brokerId || undefined),
+    staleTime: 15000,
+  });
+  const tags = useMemo(() => {
+    const all = flattenTags(tree);
+    const q = search.toLowerCase().trim();
+    return (q ? all.filter((t) => t.toLowerCase().includes(q)) : all).slice(0, 200);
+  }, [tree, search]);
 
-  useEffect(() => {
-    setSearch(value || '');
-  }, [value]);
+  // Field options = keys of the selected tag's payload (so you pick which datum).
+  const { data: detail } = useQuery({
+    queryKey: ['topic-detail-dash', topic, brokerId || 'active'],
+    queryFn: () => topicsApi.getDetails(topic, brokerId || undefined),
+    enabled: !!topic,
+    staleTime: 15000,
+  });
+  const fieldOptions = useMemo(() => {
+    const p = detail?.payload;
+    const keys = p && typeof p === 'object' && !Array.isArray(p) ? Object.keys(p as Record<string, unknown>) : [];
+    return keys.length ? Array.from(new Set([...keys, 'value'])) : ['value'];
+  }, [detail]);
+
+  const selectCls = 'w-full px-3 py-1.5 text-[12px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none transition-all focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200';
 
   return (
-    <div className="relative">
-      <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1 block">Tag Binding</label>
+    <div className="space-y-2">
+      <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block">Tag Binding</label>
+
+      {/* Broker */}
+      <select value={brokerId} onChange={(e) => onConfigChange({ tagBrokerId: e.target.value || undefined })} className={selectCls}>
+        <option value="">Broker ativo (principal)</option>
+        {brokers.filter((b) => b.status === 'connected').map((b) => (
+          <option key={b.id} value={b.id}>{b.name}</option>
+        ))}
+      </select>
+
+      {/* Search + tag list */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-300" />
         <input
           type="text"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="Search topic..."
-          className="w-full pl-7 pr-3 py-1.5 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none
-                     transition-all placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200"
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar tag do broker…"
+          className="w-full pl-7 pr-3 py-1.5 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none transition-all placeholder:text-gray-300 focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200"
         />
       </div>
-      {open && filtered.length > 0 && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-          {filtered.map((t) => (
+      <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
+        {isLoading ? (
+          <p className="text-center py-3 text-[11px] text-gray-300">Carregando…</p>
+        ) : tags.length === 0 ? (
+          <p className="text-center py-3 text-[11px] text-gray-300">Nenhuma tag nesse broker</p>
+        ) : (
+          tags.map((t) => (
             <button
               key={t}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setSearch(t);
-                onChange(t);
-                setOpen(false);
-              }}
+              type="button"
+              onClick={() => onConfigChange({ tagBinding: t })}
               className={cn(
-                'w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors hover:bg-gray-50 dark:hover:bg-gray-800',
-                t === value ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-600 dark:text-gray-400',
+                'w-full text-left px-3 py-1.5 text-[11px] font-mono truncate transition-colors',
+                t === topic ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
               )}
             >
               {t}
             </button>
-          ))}
-        </div>
-      )}
-      {value && (
-        <button
-          onClick={() => { setSearch(''); onChange(''); }}
-          className="mt-1 text-[10px] text-red-400 hover:text-red-500 transition-colors"
-        >
-          Clear binding
-        </button>
+          ))
+        )}
+      </div>
+
+      {/* Selected tag + field picker */}
+      {topic && (
+        <>
+          <p className="text-[10px] text-gray-400">Tag: <span className="font-mono text-gray-600 dark:text-gray-300">{topic}</span></p>
+          <div>
+            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1 block">Campo</label>
+            <select value={field} onChange={(e) => onConfigChange({ tagField: e.target.value })} className={selectCls}>
+              {fieldOptions.map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+          <button
+            onClick={() => onConfigChange({ tagBinding: undefined })}
+            className="text-[10px] text-red-400 hover:text-red-500 transition-colors"
+          >
+            Clear binding
+          </button>
+        </>
       )}
     </div>
   );
@@ -321,20 +373,7 @@ export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Pro
 
       <div className="flex-1 overflow-auto px-4 py-3 space-y-4">
         {/* Tag Binding */}
-        {needsBinding && (
-          <>
-            <TagBindingInput
-              value={String(widget.config.tagBinding ?? '')}
-              onChange={(v) => onConfigChange({ tagBinding: v || undefined })}
-            />
-            <ConfigInput
-              label="Tag Field"
-              value={String(widget.config.tagField ?? 'value')}
-              onChange={(v) => onConfigChange({ tagField: v })}
-              placeholder="value"
-            />
-          </>
-        )}
+        {needsBinding && <TagBindingPicker widget={widget} onConfigChange={onConfigChange} />}
 
         {/* Separator */}
         {needsBinding && <div className="border-t border-gray-100 dark:border-gray-800" />}

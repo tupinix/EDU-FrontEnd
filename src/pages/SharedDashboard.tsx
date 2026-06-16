@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Maximize, Minimize } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../types';
-import apiClient from '../services/api';
+import apiClient, { topicsApi } from '../services/api';
 import { WidgetRenderer } from '../components/ProcessDashboard/WidgetRenderer';
+import { widgetToBinding, widgetBindingKey, extractValue } from '../hooks/useDashboardLiveValues';
 
 export function SharedDashboard() {
   const { token } = useParams<{ token: string }>();
@@ -23,32 +24,30 @@ export function SharedDashboard() {
       .catch(() => { setError('Dashboard not found'); setLoading(false); });
   }, [token]);
 
-  // Poll live values for all tag bindings
+  // Poll live values for all tag bindings (broker-scoped + field-aware, keyed
+  // by the same widgetBindingKey the editor uses).
   useEffect(() => {
     if (!dashboard) return;
     const bindings = dashboard.widgets
-      .filter((w: DashboardWidget) => w.config.tagBinding)
-      .map((w: DashboardWidget) => w.config.tagBinding as string);
-
+      .map(widgetToBinding)
+      .filter((b): b is NonNullable<typeof b> => b !== null);
     if (bindings.length === 0) return;
 
+    let cancelled = false;
     const poll = async () => {
       const newValues = new Map<string, unknown>();
-      for (const topic of bindings) {
+      await Promise.allSettled(bindings.map(async (b) => {
         try {
-          const { data } = await apiClient.get(`/topics/${encodeURIComponent(topic)}/details`);
-          if (data.data?.payload != null) {
-            const p = data.data.payload;
-            newValues.set(topic, typeof p === 'object' && p !== null ? (p as Record<string, unknown>).value ?? p : p);
-          }
+          const detail = await topicsApi.getDetails(b.topic, b.brokerId);
+          if (!cancelled) newValues.set(b.key, extractValue(detail.payload, b.field));
         } catch { /* skip */ }
-      }
-      setLiveValues(newValues);
+      }));
+      if (!cancelled) setLiveValues(newValues);
     };
 
     poll();
     const interval = setInterval(poll, 5000);
-    return () => clearInterval(interval);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [dashboard]);
 
   // Auto-scale canvas to fit viewport
@@ -144,7 +143,7 @@ export function SharedDashboard() {
           <WidgetRenderer
             key={widget.id}
             widget={widget}
-            liveValue={liveValues.get(widget.config.tagBinding as string)}
+            liveValue={liveValues.get(widgetBindingKey(widget))}
             isEditMode={false}
             isSelected={false}
             onSelect={() => {}}

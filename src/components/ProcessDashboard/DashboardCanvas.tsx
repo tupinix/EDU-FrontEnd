@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { ArrowLeft, Save, Eye, Pencil, Loader2, Grid3X3, Undo2, Redo2 } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../../types';
 import { useUpdateDashboard, useCreateDashboard } from '../../hooks/useDashboards';
-import { useDashboardLiveValues } from '../../hooks/useDashboardLiveValues';
+import { useDashboardLiveValues, widgetToBinding, widgetBindingKey } from '../../hooks/useDashboardLiveValues';
 import { WidgetPalette, getWidgetDefaults } from './WidgetPalette';
 import { WidgetConfig } from './WidgetConfig';
 import { WidgetRenderer } from './WidgetRenderer';
@@ -169,8 +169,8 @@ export function DashboardCanvas({ dashboard, onBack, isDraft, onCreated }: Props
     return Math.round(val / gridSize) * gridSize;
   }, [gridEnabled, gridSize]);
 
-  // Live values
-  const bindings = widgets.filter(w => w.config.tagBinding).map(w => w.config.tagBinding as string);
+  // Live values (broker-scoped + field-aware)
+  const bindings = widgets.map(widgetToBinding).filter((b): b is NonNullable<typeof b> => b !== null);
   const liveValues = useDashboardLiveValues(bindings);
 
   const selectedWidget = selectedIds.size === 1 ? widgets.find(w => selectedIds.has(w.id)) : null;
@@ -508,7 +508,7 @@ export function DashboardCanvas({ dashboard, onBack, isDraft, onCreated }: Props
                   <WidgetRenderer
                     key={widget.id}
                     widget={widget}
-                    liveValue={liveValues.get(widget.config.tagBinding as string)}
+                    liveValue={liveValues.get(widgetBindingKey(widget))}
                     isEditMode={isEditMode}
                     isSelected={selectedIds.has(widget.id)}
                     onSelect={(e) => handleWidgetSelect(widget.id, e)}

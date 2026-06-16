@@ -157,8 +157,11 @@ export const topicsApi = {
     return data.data;
   },
 
-  getDetails: async (topic: string): Promise<TopicDetail> => {
-    const { data } = await apiClient.get<ApiResponse<TopicDetail>>(`/topics/${encodeURIComponent(topic)}/details`);
+  // brokerId scopes which broker's value to read (undefined → active broker).
+  getDetails: async (topic: string, brokerId?: string): Promise<TopicDetail> => {
+    const { data } = await apiClient.get<ApiResponse<TopicDetail>>(`/topics/${encodeURIComponent(topic)}/details`, {
+      params: brokerId ? { brokerId } : undefined,
+    });
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to fetch topic details');
     }
