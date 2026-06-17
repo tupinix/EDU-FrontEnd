@@ -926,7 +926,8 @@ export const mcpApi = {
 // ===========================================
 
 export interface ConfigImportSummary {
-  postgres: Record<string, number>;
+  // Per table: rows newly inserted vs skipped because they already existed.
+  postgres: Record<string, { inserted: number; skipped: number }>;
   neo4j: { nodes: number; relationships: number; skipped: number };
 }
 

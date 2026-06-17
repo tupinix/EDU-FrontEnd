@@ -5,8 +5,11 @@ import { configTransferApi, ConfigImportSummary } from '../services/api';
 const ENTITY_LABELS: Record<string, string> = {
   mqtt_brokers: 'Brokers MQTT',
   modbus_connections: 'Conexões Modbus',
+  modbus_registers: 'Registradores Modbus',
   opcua_connections: 'Conexões OPC-UA',
+  opcua_subscriptions: 'Tags OPC-UA',
   ethip_connections: 'Conexões EtherNet/IP',
+  ethip_tags: 'Tags EtherNet/IP',
   hierarchy_mappings: 'Mapeamentos ISA-95',
   data_models: 'Data Models',
   alert_rules: 'Regras de Alerta',
@@ -46,7 +49,10 @@ export function ConfigTransferPage() {
   };
 
   const totalImported = summary
-    ? Object.values(summary.postgres).reduce((a, b) => a + b, 0) + summary.neo4j.nodes
+    ? Object.values(summary.postgres).reduce((a, b) => a + b.inserted, 0) + summary.neo4j.nodes
+    : 0;
+  const totalSkipped = summary
+    ? Object.values(summary.postgres).reduce((a, b) => a + b.skipped, 0) + summary.neo4j.skipped
     : 0;
 
   return (
@@ -87,7 +93,7 @@ export function ConfigTransferPage() {
           <div>
             <h2 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">Importar configurações</h2>
             <p className="text-[12px] text-gray-400 mt-0.5">
-              Modo <strong>merge</strong>: tudo entra como novo, nada existente é apagado.
+              Modo <strong>merge</strong>: itens que já existem são ignorados, apenas os novos são adicionados.
             </p>
           </div>
           <button
@@ -119,14 +125,24 @@ export function ConfigTransferPage() {
             <div className="flex items-center gap-2 text-[13px] font-medium text-emerald-700 dark:text-emerald-300 mb-2">
               <Check className="w-4 h-4" />
               {totalImported} item(s) importado(s)
+              {totalSkipped > 0 && (
+                <span className="text-amber-600 dark:text-amber-400 font-normal">
+                  &middot; {totalSkipped} já existia(m)
+                </span>
+              )}
             </div>
             <div className="space-y-1 text-[12px] text-gray-600 dark:text-gray-300">
               {Object.entries(summary.postgres)
-                .filter(([, n]) => n > 0)
+                .filter(([, n]) => n.inserted > 0 || n.skipped > 0)
                 .map(([table, n]) => (
                   <div key={table} className="flex justify-between">
                     <span className="text-gray-500">{ENTITY_LABELS[table] ?? table}</span>
-                    <span className="font-mono">{n}</span>
+                    <span className="font-mono">
+                      {n.inserted}
+                      {n.skipped > 0 && (
+                        <span className="text-amber-600 dark:text-amber-400"> (+{n.skipped} ign.)</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               {(summary.neo4j.nodes > 0 || summary.neo4j.skipped > 0) && (
