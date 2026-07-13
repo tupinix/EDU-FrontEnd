@@ -9,6 +9,9 @@ export function useOpcUaConnections() {
     queryKey: ['opcua-connections'],
     queryFn: opcuaApi.getConnections,
     staleTime: 10000,
+    // Status transitions (connecting -> connected) finish server-side after the
+    // mutation resolves; poll so the status dot updates without a remount.
+    refetchInterval: 5000,
   });
 }
 
@@ -73,7 +76,9 @@ export function useConnectOpcUa() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: opcuaApi.connect,
-    onSuccess: () => {
+    // onSettled (not onSuccess): if the request times out client-side while the
+    // server still connects, the list must resync anyway.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['opcua-connections'] });
     },
   });
@@ -83,7 +88,7 @@ export function useDisconnectOpcUa() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: opcuaApi.disconnect,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['opcua-connections'] });
     },
   });

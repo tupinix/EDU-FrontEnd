@@ -1,3 +1,5 @@
+import { evaluateThresholds } from '@/lib/widgetThresholds';
+
 interface Props {
   config: Record<string, unknown>;
   value: unknown;
@@ -22,7 +24,9 @@ export function BarWidget({ config, value, width, height }: Props) {
     return '#ef4444';
   };
 
-  const color = getColor(percentage);
+  // Threshold rules override the default gradient when present.
+  const threshold = evaluateThresholds(value, config.rules);
+  const color = threshold?.color ?? getColor(percentage);
   const displayValue = isNaN(numValue) ? '--' : numValue.toFixed(1);
   const isHorizontal = orientation === 'horizontal';
 
@@ -42,7 +46,7 @@ export function BarWidget({ config, value, width, height }: Props) {
         }}
       >
         <div
-          className="absolute rounded-md transition-all duration-500"
+          className={`absolute rounded-md transition-all duration-500 ${threshold?.blink ? 'animate-pulse' : ''}`}
           style={isHorizontal ? {
             left: 0, top: 0, bottom: 0,
             width: `${percentage}%`,

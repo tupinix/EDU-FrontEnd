@@ -12,6 +12,9 @@ import {
   Minus,
   TrendingUp,
   AlertTriangle,
+  Target,
+  PieChart,
+  Table as TableIcon,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DashboardWidget } from '../../types';
@@ -30,6 +33,7 @@ const WIDGET_GROUPS: { group: string; items: WidgetTypeInfo[] }[] = [
     items: [
       { type: 'label', label: 'Label', icon: Type, defaultWidth: 120, defaultHeight: 40 },
       { type: 'value', label: 'Value', icon: Hash, defaultWidth: 160, defaultHeight: 100 },
+      { type: 'kpi', label: 'KPI', icon: Target, defaultWidth: 200, defaultHeight: 110 },
       { type: 'text', label: 'Text', icon: AlignLeft, defaultWidth: 200, defaultHeight: 80 },
     ],
   },
@@ -37,6 +41,7 @@ const WIDGET_GROUPS: { group: string; items: WidgetTypeInfo[] }[] = [
     group: 'Indicators',
     items: [
       { type: 'gauge', label: 'Gauge', icon: Gauge, defaultWidth: 200, defaultHeight: 160 },
+      { type: 'radial', label: 'Radial', icon: PieChart, defaultWidth: 160, defaultHeight: 160 },
       { type: 'status', label: 'Status', icon: Circle, defaultWidth: 100, defaultHeight: 100 },
       { type: 'bar', label: 'Bar', icon: BarChart3, defaultWidth: 200, defaultHeight: 60 },
       { type: 'tank', label: 'Tank', icon: Droplets, defaultWidth: 100, defaultHeight: 180 },
@@ -48,6 +53,7 @@ const WIDGET_GROUPS: { group: string; items: WidgetTypeInfo[] }[] = [
     items: [
       { type: 'trend', label: 'Trend', icon: Activity, defaultWidth: 300, defaultHeight: 150 },
       { type: 'sparkline', label: 'Sparkline', icon: TrendingUp, defaultWidth: 200, defaultHeight: 80 },
+      { type: 'table', label: 'Tabela', icon: TableIcon, defaultWidth: 260, defaultHeight: 180 },
     ],
   },
   {

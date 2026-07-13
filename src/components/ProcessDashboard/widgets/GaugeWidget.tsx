@@ -1,3 +1,5 @@
+import { evaluateThresholds } from '@/lib/widgetThresholds';
+
 interface Props {
   config: Record<string, unknown>;
   value: unknown;
@@ -37,7 +39,10 @@ export function GaugeWidget({ config, value, width, height }: Props) {
   const bgPath = `M ${bgStart.x} ${bgStart.y} A ${radius} ${radius} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
 
   // Color segments
+  // Threshold rules override the default green/amber/red bands when present.
+  const threshold = evaluateThresholds(value, config.rules);
   const getColor = (pct: number) => {
+    if (threshold) return threshold.color;
     if (pct < 0.6) return '#10b981'; // green
     if (pct < 0.85) return '#f59e0b'; // yellow
     return '#ef4444'; // red

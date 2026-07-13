@@ -106,7 +106,9 @@
       "analytics": "Análises",
       "aiTools": "AI Tools",
       "system": "Sistema"
-    }
+    },
+    "kafka": "Kafka",
+    "southbound": "Southbound"
   },
   "landing": {
     "nav": {

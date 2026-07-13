@@ -321,6 +321,59 @@ export interface OpcUaConnection {
   status: 'connected' | 'disconnected' | 'connecting' | 'error';
   createdAt: string;
   updatedAt: string;
+  machineId?: string;
+  site?: string;
+  area?: string;
+  euromapEnabled?: boolean;
+  southboundArmed?: boolean;
+  statusNodeId?: string;
+}
+
+// Kafka connector (Columbus slice 5.1) — public-safe view (no secrets).
+export type KafkaSecurityProtocol = 'PLAINTEXT' | 'SASL_PLAINTEXT' | 'SASL_SSL' | 'SSL';
+export type KafkaSaslMechanism = 'plain' | 'scram-sha-256' | 'scram-sha-512';
+export type KafkaConnectorDirection = 'producer' | 'consumer' | 'both';
+
+export interface KafkaConnector {
+  id: string;
+  name: string;
+  bootstrapServers: string;
+  securityProtocol: KafkaSecurityProtocol;
+  saslMechanism?: KafkaSaslMechanism;
+  saslUsername?: string;
+  hasSaslPassword: boolean;
+  consumerGroupId?: string;
+  direction: KafkaConnectorDirection;
+  produceTopics: string[];
+  consumeTopics: string[];
+  enabled: boolean;
+  isActive: boolean;
+  status: 'connected' | 'connecting' | 'disconnected' | 'error';
+  messageCount: number;
+}
+
+export interface KafkaConnectorInput {
+  name: string;
+  bootstrapServers: string;
+  securityProtocol: KafkaSecurityProtocol;
+  saslMechanism?: KafkaSaslMechanism;
+  saslUsername?: string;
+  saslPassword?: string;
+  consumerGroupId?: string;
+  direction?: KafkaConnectorDirection;
+  produceTopics?: string[];
+  consumeTopics?: string[];
+}
+
+export interface SouthboundCommand {
+  id: string;
+  machine_id: string;
+  command_kind: string;
+  idempotency_key: string;
+  status: string;
+  error?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OpcUaSubscription {
@@ -489,7 +542,7 @@ export interface AlertRule {
 // Process Dashboard Types
 export interface DashboardWidget {
   id: string;
-  type: 'gauge' | 'trend' | 'value' | 'label' | 'status' | 'tank' | 'bar' | 'image' | 'rectangle' | 'text' | 'pipe' | 'sparkline' | 'alarm';
+  type: 'gauge' | 'trend' | 'value' | 'label' | 'status' | 'tank' | 'bar' | 'image' | 'rectangle' | 'text' | 'pipe' | 'sparkline' | 'alarm' | 'kpi' | 'radial' | 'table';
   x: number; y: number; width: number; height: number; zIndex: number;
   config: Record<string, unknown>;
 }
@@ -498,6 +551,65 @@ export interface ProcessDashboard {
   id: string; userId: string; name: string; description?: string;
   canvasWidth: number; canvasHeight: number; backgroundColor: string;
   widgets: DashboardWidget[]; isDefault: boolean; shareToken?: string; createdAt: string;
+}
+
+// ── Virtual Sensors (derived tags computed from other tags) ──
+export interface VirtualSensorInput {
+  var: string;       // variable name used in the expression (e.g. "a")
+  topic: string;     // source tag topic
+  brokerId?: string; // broker scope (empty = active)
+  field?: string;    // payload field (default: value)
+}
+
+export interface VirtualSensorStatus {
+  lastValue: number | null;
+  lastError: string | null;
+  lastRunAt: string | null;
+}
+
+export interface VirtualSensor {
+  id: string;
+  name: string;
+  outputTopic: string;
+  expression: string;
+  inputs: VirtualSensorInput[];
+  unit?: string;
+  intervalMs: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  status?: VirtualSensorStatus;
+}
+
+export interface VirtualSensorInputForm {
+  name: string;
+  outputTopic: string;
+  expression: string;
+  inputs: VirtualSensorInput[];
+  unit?: string;
+  intervalMs?: number;
+  enabled?: boolean;
+}
+
+// ── EUROMAP / OPC-UA events, history & alarms (Events monitor) ──
+export interface EuromapEvent {
+  eventId: string | null;
+  eventTypeName?: string;
+  eventTypeNodeId: string;
+  sourceTimestamp: string | null;
+  receiveTimestamp: string | null;
+  kind?: string;           // cycle | box-change | status | alarm | undefined
+  fields: Record<string, unknown>;
+  processValues?: Array<{ name?: string; value?: unknown; unit?: string }>;
+  sourceNode?: string;
+}
+
+export interface MachineAlarm {
+  id: string;
+  severity: number;
+  message: string;
+  classification?: number;
+  equipmentIdentifier?: string;
 }
 
 // SM Profile Types (CESMII)

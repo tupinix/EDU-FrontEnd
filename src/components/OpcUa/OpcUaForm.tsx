@@ -8,6 +8,11 @@ export interface OpcUaFormInitial {
   securityMode?: string;
   username?: string;
   password?: string;
+  machineId?: string;
+  site?: string;
+  area?: string;
+  euromapEnabled?: boolean;
+  statusNodeId?: string;
 }
 
 interface OpcUaFormProps {
@@ -36,12 +41,25 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
     securityMode: initialValues?.securityMode ?? 'None',
     username: initialValues?.username ?? '',
     password: initialValues?.password ?? '',
+    euromapEnabled: initialValues?.euromapEnabled ?? false,
+    machineId: initialValues?.machineId ?? '',
+    site: initialValues?.site ?? '',
+    area: initialValues?.area ?? '',
+    statusNodeId: initialValues?.statusNodeId ?? '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { ...form, username: form.username || undefined, password: form.password || undefined };
+      const payload = {
+        ...form,
+        username: form.username || undefined,
+        password: form.password || undefined,
+        machineId: form.machineId || undefined,
+        site: form.site || undefined,
+        area: form.area || undefined,
+        statusNodeId: form.statusNodeId || undefined,
+      };
       if (isEdit) await updateMutation.mutateAsync({ id: editId!, ...payload });
       else await createMutation.mutateAsync(payload);
       onClose();
@@ -73,6 +91,28 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
           <Field label="Username (optional)"><input type="text" placeholder="admin" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="input-clean" /></Field>
           <Field label="Password (optional)"><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
         </div>
+        {/* EUROMAP 77 (Columbus) */}
+        <div className="rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Máquina EUROMAP 77 (Netstal)</span>
+            <button type="button" onClick={() => setForm({ ...form, euromapEnabled: !form.euromapEnabled })}
+              className={`relative w-9 h-5 rounded-full transition-colors ${form.euromapEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${form.euromapEnabled ? 'translate-x-4' : ''}`} />
+            </button>
+          </label>
+          {form.euromapEnabled && (
+            <>
+              <p className="text-[11px] text-gray-400">Liga os engines de evento/tag/status no connect. machineId é o que vai no tópico/key Kafka.</p>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="machineId"><input type="text" placeholder="IMM-01" value={form.machineId} onChange={(e) => setForm({ ...form, machineId: e.target.value })} className="input-clean" /></Field>
+                <Field label="site"><input type="text" placeholder="LBT" value={form.site} onChange={(e) => setForm({ ...form, site: e.target.value })} className="input-clean" /></Field>
+                <Field label="area"><input type="text" placeholder="IMM" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className="input-clean" /></Field>
+              </div>
+              <Field label="ProductionStatus NodeId (status engine, opcional)"><input type="text" placeholder="ns=6;s=..." value={form.statusNodeId} onChange={(e) => setForm({ ...form, statusNodeId: e.target.value })} className="input-clean font-mono" /></Field>
+            </>
+          )}
+        </div>
+
         {mutation.isError && <p className="text-[13px] text-red-500">{mutation.error instanceof Error ? mutation.error.message : 'Failed to save connection'}</p>}
         <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
           <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>

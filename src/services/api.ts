@@ -20,6 +20,13 @@ import {
   GraphProperties,
   GraphRelationship,
   RawGraph,
+  KafkaConnector,
+  KafkaConnectorInput,
+  SouthboundCommand,
+  VirtualSensor,
+  VirtualSensorInputForm,
+  EuromapEvent,
+  MachineAlarm,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -168,10 +175,28 @@ export const topicsApi = {
     return data.data;
   },
 
-  getHistory: async (topic: string, limit = 100): Promise<TopicHistory[]> => {
+  // Batched latest-value lookup for dashboard polling: one request for many
+  // topics instead of one request per widget. Returns a map keyed by topic.
+  // Skips Neo4j metadata (values only) — this is the hot path.
+  getBatchDetails: async (
+    topics: string[],
+    brokerId?: string,
+  ): Promise<Record<string, { payload: unknown; qos: number; retain: boolean; updatedAt: string }>> => {
+    if (topics.length === 0) return {};
+    const { data } = await apiClient.post<
+      ApiResponse<Record<string, { payload: unknown; qos: number; retain: boolean; updatedAt: string }>>
+    >('/topics/batch-details', { topics, brokerId });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch batch topic details');
+    }
+    return data.data;
+  },
+
+  // `from` is an ISO timestamp lower bound (defaults server-side to 1h ago).
+  getHistory: async (topic: string, limit = 100, from?: string): Promise<TopicHistory[]> => {
     const { data } = await apiClient.get<ApiResponse<TopicHistory[]>>(
       `/topics/${encodeURIComponent(topic)}/history`,
-      { params: { limit } }
+      { params: from ? { limit, from } : { limit } }
     );
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to fetch topic history');
@@ -581,6 +606,11 @@ export const opcuaApi = {
     securityMode?: string;
     username?: string;
     password?: string;
+    machineId?: string;
+    site?: string;
+    area?: string;
+    euromapEnabled?: boolean;
+    statusNodeId?: string;
   }): Promise<OpcUaConnection> => {
     const { data } = await apiClient.post<ApiResponse<OpcUaConnection>>('/opcua/connections', connection);
     if (!data.success || !data.data) {
@@ -595,6 +625,11 @@ export const opcuaApi = {
     securityMode: string;
     username: string;
     password: string;
+    machineId: string;
+    site: string;
+    area: string;
+    euromapEnabled: boolean;
+    statusNodeId: string;
   }>): Promise<OpcUaConnection> => {
     const { data } = await apiClient.put<ApiResponse<OpcUaConnection>>(`/opcua/connections/${id}`, updates);
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to update OPC-UA connection');
@@ -691,6 +726,70 @@ export default apiClient;
 // ===========================================
 // Export API (returns download URLs)
 // ===========================================
+
+export const kafkaApi = {
+  getConnectors: async (): Promise<KafkaConnector[]> => {
+    const { data } = await apiClient.get<ApiResponse<KafkaConnector[]>>('/kafka');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch Kafka connectors');
+    return data.data;
+  },
+  create: async (input: KafkaConnectorInput): Promise<KafkaConnector> => {
+    const { data } = await apiClient.post<ApiResponse<KafkaConnector>>('/kafka', input);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create Kafka connector');
+    return data.data;
+  },
+  update: async (id: string, updates: Partial<KafkaConnectorInput>): Promise<KafkaConnector> => {
+    const { data } = await apiClient.put<ApiResponse<KafkaConnector>>(`/kafka/${id}`, updates);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update Kafka connector');
+    return data.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse>(`/kafka/${id}`);
+    if (!data.success) throw new Error(data.error || 'Failed to delete Kafka connector');
+  },
+  connect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/kafka/${id}/connect`);
+    if (!data.success) throw new Error(data.error || 'Failed to connect');
+  },
+  disconnect: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/kafka/${id}/disconnect`);
+    if (!data.success) throw new Error(data.error || 'Failed to disconnect');
+  },
+  activate: async (id: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/kafka/${id}/activate`);
+    if (!data.success) throw new Error(data.error || 'Failed to activate');
+  },
+  test: async (id: string): Promise<{ ok: boolean; latencyMs?: number; error?: string }> => {
+    const { data } = await apiClient.post<ApiResponse<{ ok: boolean; latencyMs?: number; error?: string }>>(`/kafka/${id}/test`);
+    if (!data.success || !data.data) throw new Error(data.error || 'Test failed');
+    return data.data;
+  },
+};
+
+export const southboundApi = {
+  getCommands: async (limit = 100): Promise<SouthboundCommand[]> => {
+    const { data } = await apiClient.get<ApiResponse<SouthboundCommand[]>>('/southbound/commands', { params: { limit } });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch commands');
+    return data.data;
+  },
+  getArmed: async (): Promise<{ armedConnections: Array<{ id: string; machine_id?: string; name: string }> }> => {
+    const { data } = await apiClient.get<ApiResponse<{ armedConnections: Array<{ id: string; machine_id?: string; name: string }> }>>('/southbound/health');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch armed connections');
+    return data.data;
+  },
+  arm: async (connectionId: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/southbound/connections/${connectionId}/arm`);
+    if (!data.success) throw new Error(data.error || 'Failed to arm');
+  },
+  disarm: async (connectionId: string): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>(`/southbound/connections/${connectionId}/disarm`);
+    if (!data.success) throw new Error(data.error || 'Failed to disarm');
+  },
+  dispatch: async (input: { machineId: string; commandKind: string; payload?: Record<string, unknown> }): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>('/southbound/commands', input);
+    if (!data.success) throw new Error(data.error || 'Failed to dispatch command');
+  },
+};
 
 export const exportApi = {
   topicCsvUrl: (topic: string, params?: { from?: string; to?: string; limit?: number }) => {
@@ -1199,3 +1298,102 @@ export const organizationsApi = {
     return data.data ?? [];
   },
 };
+
+// ── Virtual Sensors ──
+export const virtualSensorsApi = {
+  list: async (): Promise<VirtualSensor[]> => {
+    const { data } = await apiClient.get<ApiResponse<VirtualSensor[]>>('/virtual-sensors');
+    return data.data ?? [];
+  },
+  create: async (payload: VirtualSensorInputForm): Promise<VirtualSensor> => {
+    const { data } = await apiClient.post<ApiResponse<VirtualSensor>>('/virtual-sensors', payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to create virtual sensor');
+    return data.data;
+  },
+  update: async (id: string, payload: Partial<VirtualSensorInputForm>): Promise<VirtualSensor> => {
+    const { data } = await apiClient.put<ApiResponse<VirtualSensor>>(`/virtual-sensors/${id}`, payload);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to update virtual sensor');
+    return data.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiClient.delete<ApiResponse>(`/virtual-sensors/${id}`);
+  },
+  test: async (expression: string, scope: Record<string, number>): Promise<{ result: number; variables: string[] }> => {
+    const { data } = await apiClient.post<ApiResponse<{ result: number; variables: string[] }>>(
+      '/virtual-sensors/test',
+      { expression, scope },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Invalid expression');
+    return data.data;
+  },
+};
+
+// ── EUROMAP events / history / alarms (Events monitor) ──
+export const eventsApi = {
+  history: async (machineId: string, hours = 3, max = 200): Promise<EuromapEvent[]> => {
+    const { data } = await apiClient.get<ApiResponse<EuromapEvent[]>>('/columbus/events/history', {
+      params: { machineId, hours, max },
+    });
+    return data.data ?? [];
+  },
+  recent: async (machineId: string): Promise<EuromapEvent[]> => {
+    const { data } = await apiClient.get<ApiResponse<EuromapEvent[]>>('/columbus/events/recent', {
+      params: { machineId },
+    });
+    return data.data ?? [];
+  },
+  alarms: async (machineId: string): Promise<MachineAlarm[]> => {
+    const { data } = await apiClient.get<ApiResponse<MachineAlarm[]>>('/columbus/alarms', {
+      params: { machineId },
+    });
+    return data.data ?? [];
+  },
+  // DESTRUCTIVE: delete events from the machine's history buffer (needs ops:action).
+  deleteEvents: async (machineId: string, nodeId: string, eventIds: string[]): Promise<{ deleted: number; total: number }> => {
+    const { data } = await apiClient.post<ApiResponse<{ deleted: number; total: number }>>(
+      '/columbus/events/delete',
+      { machineId, nodeId, eventIds },
+    );
+    if (!data.success) throw new Error(data.error || 'Falha ao deletar eventos');
+    return data.data ?? { deleted: 0, total: eventIds.length };
+  },
+  // Navigate the EventType tree (subtypes to drill into + this type's fields).
+  browseEventTypes: async (machineId: string, nodeId?: string): Promise<EventTypeTree> => {
+    const { data } = await apiClient.get<ApiResponse<EventTypeTree>>('/columbus/event-types', {
+      params: { machineId, ...(nodeId ? { nodeId } : {}) },
+    });
+    if (!data.success) throw new Error(data.error || 'Falha ao navegar tipos de evento');
+    return data.data ?? { nodeId: nodeId ?? '', subtypes: [], fields: [] };
+  },
+  getEventSelection: async (machineId: string): Promise<{ eventTypes: EventTypeSelection[]; isDefault: boolean }> => {
+    const { data } = await apiClient.get<ApiResponse<{ eventTypes: EventTypeSelection[]; isDefault: boolean }>>(
+      '/columbus/event-selection',
+      { params: { machineId } },
+    );
+    return data.data ?? { eventTypes: [], isDefault: true };
+  },
+  saveEventSelection: async (machineId: string, eventTypes: EventTypeSelection[]): Promise<EventTypeSelection[]> => {
+    const { data } = await apiClient.put<ApiResponse<{ eventTypes: EventTypeSelection[] }>>(
+      '/columbus/event-selection',
+      { machineId, eventTypes },
+    );
+    if (!data.success) throw new Error(data.error || 'Falha ao salvar seleção de eventos');
+    return data.data?.eventTypes ?? eventTypes;
+  },
+};
+
+export interface EventTypeRef {
+  nodeId: string;
+  browseName: string;
+  displayName: string;
+  namespace?: number;
+}
+export interface EventTypeTree {
+  nodeId: string;
+  subtypes: EventTypeRef[];
+  fields: EventTypeRef[];
+}
+export interface EventTypeSelection {
+  nodeId: string;
+  name: string;
+}

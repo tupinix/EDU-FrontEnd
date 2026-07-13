@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Maximize, Minimize } from 'lucide-react';
 import { ProcessDashboard, DashboardWidget } from '../types';
-import apiClient, { topicsApi } from '../services/api';
+import apiClient from '../services/api';
 import { WidgetRenderer } from '../components/ProcessDashboard/WidgetRenderer';
-import { widgetToBinding, widgetBindingKey, extractValue } from '../hooks/useDashboardLiveValues';
+import { widgetToBinding, widgetBindingKey, useDashboardLiveValues, type LiveBinding } from '../hooks/useDashboardLiveValues';
 
 export function SharedDashboard() {
   const { token } = useParams<{ token: string }>();
@@ -13,7 +13,6 @@ export function SharedDashboard() {
   const [loading, setLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [liveValues, setLiveValues] = useState<Map<string, unknown>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch dashboard (using apiClient directly, no auth needed for shared)
@@ -24,31 +23,16 @@ export function SharedDashboard() {
       .catch(() => { setError('Dashboard not found'); setLoading(false); });
   }, [token]);
 
-  // Poll live values for all tag bindings (broker-scoped + field-aware, keyed
-  // by the same widgetBindingKey the editor uses).
-  useEffect(() => {
-    if (!dashboard) return;
-    const bindings = dashboard.widgets
-      .map(widgetToBinding)
-      .filter((b): b is NonNullable<typeof b> => b !== null);
-    if (bindings.length === 0) return;
-
-    let cancelled = false;
-    const poll = async () => {
-      const newValues = new Map<string, unknown>();
-      await Promise.allSettled(bindings.map(async (b) => {
-        try {
-          const detail = await topicsApi.getDetails(b.topic, b.brokerId);
-          if (!cancelled) newValues.set(b.key, extractValue(detail.payload, b.field));
-        } catch { /* skip */ }
-      }));
-      if (!cancelled) setLiveValues(newValues);
-    };
-
-    poll();
-    const interval = setInterval(poll, 5000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [dashboard]);
+  // Live values via the shared hook (one batched request per broker every 5s,
+  // keyed by the same widgetBindingKey the editor uses).
+  const bindings = useMemo<LiveBinding[]>(
+    () =>
+      (dashboard?.widgets ?? [])
+        .map(widgetToBinding)
+        .filter((b): b is LiveBinding => b !== null),
+    [dashboard],
+  );
+  const liveValues = useDashboardLiveValues(bindings);
 
   // Auto-scale canvas to fit viewport
   const computeScale = useCallback(() => {

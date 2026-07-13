@@ -13,6 +13,9 @@ import { RectangleWidget } from './widgets/RectangleWidget';
 import { PipeWidget } from './widgets/PipeWidget';
 import { SparklineWidget } from './widgets/SparklineWidget';
 import { AlarmIndicatorWidget } from './widgets/AlarmIndicatorWidget';
+import { KpiWidget } from './widgets/KpiWidget';
+import { RadialWidget } from './widgets/RadialWidget';
+import { TableWidget } from './widgets/TableWidget';
 
 interface Props {
   widget: DashboardWidget;
@@ -43,6 +46,9 @@ function renderWidgetContent(widget: DashboardWidget, value: unknown) {
     case 'pipe': return <PipeWidget {...props} />;
     case 'sparkline': return <SparklineWidget {...props} />;
     case 'alarm': return <AlarmIndicatorWidget {...props} />;
+    case 'kpi': return <KpiWidget {...props} />;
+    case 'radial': return <RadialWidget {...props} />;
+    case 'table': return <TableWidget {...props} />;
     default: return <div className="text-gray-500 dark:text-gray-400 text-xs p-2">Unknown widget: {widget.type}</div>;
   }
 }

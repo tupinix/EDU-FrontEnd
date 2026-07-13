@@ -64,7 +64,7 @@ export function OpcUaConnections() {
       {editConn && (
         <OpcUaForm
           editId={editConn.id}
-          initialValues={{ name: editConn.name, endpointUrl: editConn.endpointUrl, securityMode: editConn.securityMode, username: editConn.username }}
+          initialValues={{ name: editConn.name, endpointUrl: editConn.endpointUrl, securityMode: editConn.securityMode, username: editConn.username, euromapEnabled: editConn.euromapEnabled, machineId: editConn.machineId, site: editConn.site, area: editConn.area, statusNodeId: editConn.statusNodeId }}
           onClose={() => setEditConn(null)}
         />
       )}

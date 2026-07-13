@@ -106,7 +106,9 @@
       "analytics": "Analytics",
       "aiTools": "AI Tools",
       "system": "System"
-    }
+    },
+    "kafka": "Kafka",
+    "southbound": "Southbound"
   },
   "landing": {
     "nav": {
@@ -403,7 +405,6 @@
     "activateHint": "Set as active (connects automatically)",
     "remove": "Remove",
     "saveChanges": "Save Changes",
-    "addBroker": "Add Broker",
     "noBrokers": "No brokers configured",
     "noBrokersHint": "Add a broker to get started",
     "confirmDelete": "Are you sure you want to remove this broker?",

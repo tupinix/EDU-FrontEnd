@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, OpcUaPage, ModbusPage, EthernetIpPage, KafkaPage, SouthboundPage, VirtualSensorsPage, EventsPage, NetworkScan } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { useTenant } from './hooks/useTenant';
@@ -133,6 +133,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
+            <Route path="network-scan" element={<NetworkScan />} />
             <Route path="explorer" element={<Explorer />} />
             <Route path="api-rest" element={<ApiRestPage />} />
             <Route path="i3x" element={<I3xPage />} />
@@ -141,6 +142,13 @@ function App() {
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="process" element={<Suspense fallback={<div>Loading...</div>}><ProcessDashboard /></Suspense>} />
             <Route path="configuration" element={<Configuration />} />
+            <Route path="opcua" element={<OpcUaPage />} />
+            <Route path="modbus" element={<ModbusPage />} />
+            <Route path="ethernetip" element={<EthernetIpPage />} />
+            <Route path="kafka" element={<KafkaPage />} />
+            <Route path="southbound" element={<SouthboundPage />} />
+            <Route path="virtual-sensors" element={<VirtualSensorsPage />} />
+            <Route path="events" element={<EventsPage />} />
             <Route
               path="connections"
               element={

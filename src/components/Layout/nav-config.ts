@@ -13,6 +13,14 @@ import {
   Zap,
   Building2,
   DatabaseBackup,
+  Server,
+  Cpu,
+  Network,
+  Send,
+  Wrench,
+  Activity,
+  Sigma,
+  Radar,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -46,29 +54,37 @@ export const navGroups: NavGroup[] = [
     key: 'connections',
     labelKey: 'sidebar.groups.connections',
     items: [
-      { path: '/neo4j', labelKey: 'sidebar.neo4j', icon: Factory },
+      { path: '/network-scan', labelKey: 'sidebar.networkScan', icon: Radar },
+      { path: '/opcua',      labelKey: 'sidebar.opcua',  icon: Server },
+      { path: '/modbus',     labelKey: 'sidebar.modbus', icon: Cpu },
+      { path: '/ethernetip', labelKey: 'sidebar.ethip',  icon: Network },
+      { path: '/neo4j',      labelKey: 'sidebar.neo4j',  icon: Factory },
     ],
   },
   {
     key: 'integrations',
     labelKey: 'sidebar.groups.integrations',
     items: [
-      { path: '/api-rest', labelKey: 'API REST', icon: Globe },
-      { path: '/i3x',      labelKey: 'i3X',       icon: Zap },
+      { path: '/kafka',      labelKey: 'sidebar.kafka',      icon: Send },
+      { path: '/southbound', labelKey: 'sidebar.southbound', icon: Wrench },
+      { path: '/api-rest',   labelKey: 'API REST',           icon: Globe },
+      { path: '/i3x',      labelKey: 'i3X',           icon: Zap },
     ],
   },
   {
     key: 'transformation',
     labelKey: 'sidebar.groups.transformation',
     items: [
-      { path: '/configuration', labelKey: 'sidebar.mqtt',        icon: Radio },
-      { path: '/data-models',   labelKey: 'sidebar.dataModels', icon: Workflow },
+      { path: '/configuration',    labelKey: 'sidebar.mqtt',        icon: Radio },
+      { path: '/data-models',      labelKey: 'sidebar.dataModels',  icon: Workflow },
+      { path: '/virtual-sensors',  labelKey: 'Sensores Virtuais',   icon: Sigma },
     ],
   },
   {
     key: 'analytics',
     labelKey: 'sidebar.groups.analytics',
     items: [
+      { path: '/events',  labelKey: 'Eventos',        icon: Activity },
       { path: '/alerts',  labelKey: 'sidebar.alerts',  icon: Bell },
       { path: '/process', labelKey: 'sidebar.process', icon: LayoutGrid },
     ],
