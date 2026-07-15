@@ -32,6 +32,12 @@ export default defineConfig(({ mode }) => ({
         target: 'http://localhost:3005',
         changeOrigin: true,
       },
+      // socket.io (valores ao vivo) — ws:true para navegadores remotos
+      '/socket.io': {
+        target: 'http://localhost:3005',
+        changeOrigin: true,
+        ws: true,
+      },
       // i3X docs + spec
       '/i3x': {
         target: 'http://localhost:3005',
