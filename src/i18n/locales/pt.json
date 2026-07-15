@@ -108,7 +108,9 @@
       "system": "Sistema"
     },
     "kafka": "Kafka",
-    "southbound": "Southbound"
+    "southbound": "Southbound",
+    "events": "Eventos",
+    "virtualSensors": "Sensores Virtuais"
   },
   "landing": {
     "nav": {
@@ -450,6 +452,264 @@
     "admin": "Administrador",
     "engineer": "Engenheiro",
     "viewer": "Visualizador"
+  },
+  "events": {
+    "title": "Eventos",
+    "subtitle": "Eventos ao vivo, histórico e alarmes das máquinas EUROMAP. O Event View, dentro do EDU",
+    "tabs": {
+      "live": "Live",
+      "history": "Histórico",
+      "alarms": "Alarmes",
+      "types": "Tipos monitorados"
+    },
+    "pager": {
+      "range": "{{from}}-{{to}} de {{total}}",
+      "perPage": "{{n}} / pág",
+      "perPageTitle": "itens por página",
+      "prev": "página anterior",
+      "next": "próxima página"
+    },
+    "list": {
+      "empty": "Nenhum evento nessa janela.",
+      "selectAllDeletable": "selecionar todos os deletáveis",
+      "selectToDelete": "selecionar para excluir",
+      "notDeletable": "sem eventId (não deletável)"
+    },
+    "live": {
+      "status": "ao vivo · atualiza a cada 3s",
+      "clear": "Limpar",
+      "clearHint": "limpa a visualização; não apaga nada da máquina",
+      "empty": "Sem eventos ao vivo. Cicle a máquina (ciclos aparecem na hora que fecham).",
+      "cleared": "Feed limpo. Novos eventos aparecem aqui."
+    },
+    "history": {
+      "loading": "lendo histórico…",
+      "reload": "recarregar (últimas {{hours}}h)",
+      "confirmDelete": "Apagar {{count}} evento(s) do buffer de histórico da máquina?\n\nIsso é IRREVERSÍVEL (HistoryUpdate DeleteEvent no equipamento).",
+      "deleted": "{{deleted}}/{{total}} evento(s) apagado(s) da máquina.",
+      "deleteFailed": "Falha ao apagar",
+      "deleteSelected": "Excluir selecionados ({{count}})",
+      "deleteFromBuffer": "Excluir do buffer",
+      "deleteHintEmpty": "marque eventos na lista para apagar do buffer da máquina",
+      "deleteHint": "apaga os eventos marcados do buffer da máquina (irreversível)"
+    },
+    "types": {
+      "connectFirst": "Conecte a máquina {{machineId}} para configurar os tipos de evento monitorados.",
+      "title": "Tipos de evento monitorados",
+      "desc1": "Escolha quais tipos de evento entram no Live, no Histórico e no Kafka. Monitorar um tipo já inclui os subtipos dele (filtro OfType, aplicado no servidor).",
+      "desc2": "Os atributos de cada evento (Message, Severity, contadores) chegam automaticamente no payload; você escolhe só os tipos, não os campos.",
+      "usingDefault": "usando o padrão: os 3 tipos EUROMAP mapeados (ciclo, troca de caixa, alarme)",
+      "noneSelected": "Nenhum tipo selecionado.",
+      "remove": "remover",
+      "browse": "Procurar tipos",
+      "restoreDefault": "Restaurar padrão",
+      "discard": "Descartar",
+      "saving": "Salvando…",
+      "applyNote": "Vale no Histórico na hora. No Live, reconecte a máquina para reaplicar a subscrição."
+    },
+    "browser": {
+      "title": "Tipos de evento",
+      "desc": "Navegue a árvore e marque os tipos que o EDU deve monitorar. Ao entrar num tipo você vê os subtipos dele e os atributos que cada evento carrega.",
+      "monitorThis": "Monitorar este tipo",
+      "monitorTitle": "monitorar este tipo",
+      "rootHint": "BaseEventType é a raiz: monitorar ele captura todos os eventos do servidor. Prefira marcar tipos específicos abaixo.",
+      "subtypeHint": "Monitorar um tipo inclui automaticamente todos os subtipos abaixo dele.",
+      "subtypes": "Subtipos",
+      "subtypesDesc": "Classes de evento derivadas de {{name}}. Marque para monitorar, ou entre para explorar.",
+      "filter": "Filtrar",
+      "enter": "entrar",
+      "noFilterMatch": "Nenhum subtipo bate com o filtro.",
+      "noSubtypes": "{{name}} não tem subtipos. É um tipo concreto, o nível mais específico da árvore.",
+      "attributes": "Atributos do evento",
+      "informative": "informativo",
+      "attributesDesc": "Campos que chegam no payload de cada evento deste tipo. Vêm todos juntos, não é preciso escolher.",
+      "noOwnAttributes": "Este tipo não declara atributos próprios.",
+      "inheritedNote": "Além destes, todo evento também traz os atributos herdados dos tipos acima, como EventId, Time, Message e Severity.",
+      "selectedCount": "{{count}} tipo(s) marcado(s) para monitorar",
+      "loading": "carregando…",
+      "done": "Concluir"
+    },
+    "alarms": {
+      "empty": "Nenhum alarme ativo 🎉"
+    }
+  },
+  "kafka": {
+    "title": "Kafka",
+    "subtitle": "Conectores Kafka / Redpanda, publica o UNS northbound (acks=all) e consome comandos southbound",
+    "connections": {
+      "loadError": "Falha ao carregar conectores Kafka: {{message}}",
+      "newConnector": "Novo conector",
+      "empty": "Nenhum conector Kafka",
+      "emptyHint": "Adicione um cluster (Kafka ou Redpanda) para publicar o UNS",
+      "active": "ativo",
+      "test": "Test",
+      "testFailed": "falhou",
+      "testConnection": "Testar conexão",
+      "setActive": "Tornar ativo",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "confirmDelete": "Excluir este conector?"
+    },
+    "form": {
+      "editTitle": "Editar conector",
+      "createTitle": "Novo conector Kafka",
+      "bootstrapServers": "Bootstrap servers",
+      "securityProtocol": "Security protocol",
+      "direction": "Direção",
+      "saslMechanism": "SASL mechanism",
+      "saslUsername": "SASL username",
+      "saslPassword": "SASL password",
+      "keepPassword": "•••• (manter)",
+      "consumerGroup": "Consumer group",
+      "produceTopics": "Produce topics (csv)",
+      "consumeTopics": "Consume topics (csv)",
+      "create": "Criar"
+    }
+  },
+  "southbound": {
+    "title": "Southbound",
+    "subtitle": "Comandos IT → máquina (workorder, boxchange, receita) com arm/disarm e ACK/NACK",
+    "banner": "Comandos só executam em máquinas <strong>armadas</strong>. Desarmado ou sem binding configurado → <strong>NACK</strong>. Arme apenas o que você controla.",
+    "machines": {
+      "title": "Máquinas EUROMAP",
+      "empty": "Nenhuma conexão OPC-UA com EUROMAP habilitado",
+      "armed": "Armado",
+      "disarmed": "Desarmado",
+      "arm": "Armar",
+      "disarm": "Desarmar"
+    },
+    "log": {
+      "title": "Log de comandos",
+      "empty": "Nenhum comando ainda",
+      "machine": "máquina",
+      "command": "comando",
+      "status": "status",
+      "error": "erro",
+      "when": "quando",
+      "deleteSelected": "Excluir selecionados ({{count}})"
+    },
+    "methods": {
+      "title": "Métodos da máquina",
+      "subtitle": "Navegue e chame métodos OPC UA descobertos na máquina, estilo UaExpert",
+      "refresh": "Atualizar",
+      "loading": "Descobrindo métodos...",
+      "empty": "Nenhum método descoberto",
+      "noMatch": "Nenhum método corresponde ao filtro",
+      "searchPlaceholder": "Filtrar por nome",
+      "notArmed": "{{machineId}} está desarmada: chamadas de método receberão NACK até armar a conexão.",
+      "notExecutable": "Método não executável pelo usuário",
+      "argCount": "{{count}} arg(s)",
+      "modal": {
+        "object": "Objeto",
+        "method": "Método",
+        "inputArgs": "Argumentos de entrada",
+        "noArgs": "Este método não recebe argumentos de entrada",
+        "linesPlaceholder": "Um item por linha",
+        "invalidJson": "JSON inválido",
+        "invalidNumber": "Número inválido",
+        "invalidDate": "Data inválida",
+        "send": "Chamar método",
+        "waiting": "Aguardando resposta da máquina...",
+        "close": "Fechar",
+        "result": "Resultado",
+        "statusCode": "Código de status",
+        "outputs": "Saídas",
+        "timeout": "Sem resposta após 15s. Verifique o log de comandos.",
+        "arraySize": "Tamanho do array",
+        "emptyArray": "Array vazio. Aumente o tamanho para preencher os elementos."
+      }
+    }
+  },
+  "virtualSensors": {
+    "title": "Sensores Virtuais",
+    "subtitle": "Tags derivadas por fórmula sobre outras tags, publicadas no UNS como cidadãs de 1ª classe (historizam, alarmam, viram widget)",
+    "newSensor": "Novo sensor",
+    "loadError": "Falha ao carregar: {{message}}",
+    "empty": "Nenhum sensor virtual",
+    "emptyHint": "Crie uma tag derivada. Ex:",
+    "paused": "pausado",
+    "noInputs": "sem entradas",
+    "every": "a cada {{seconds}}s",
+    "lastValue": "valor",
+    "confirmDelete": "Excluir este sensor?",
+    "form": {
+      "editTitle": "Editar sensor",
+      "createTitle": "Novo sensor virtual",
+      "outputTopic": "Tópico de saída (UNS)",
+      "expression": "Fórmula",
+      "unit": "Unidade",
+      "inputs": "Entradas (variável → tag)",
+      "addInput": "entrada",
+      "interval": "Intervalo (ms)",
+      "testOk": "OK · com todas entradas = 1 → {{result}}",
+      "invalidExpression": "expressão inválida",
+      "test": "Testar fórmula",
+      "create": "Criar"
+    }
+  },
+  "industrial": {
+    "opcua": {
+      "title": "OPC-UA",
+      "subtitle": "Conecte a servidores OPC-UA, navegue pelo address space e monitore valores ao vivo"
+    },
+    "modbus": {
+      "title": "Modbus TCP",
+      "subtitle": "Conecte a dispositivos Modbus TCP, configure registradores e leia valores ao vivo"
+    },
+    "ethip": {
+      "title": "EtherNet/IP",
+      "subtitle": "Conecte a controladores Allen-Bradley / EtherNet/IP, navegue pelas tags e monitore valores ao vivo"
+    }
+  },
+  "networkScan": {
+    "title": "Network Scan",
+    "subtitle": "Encontre dispositivos industriais na rede local (Modbus / EtherNet-IP / OPC-UA / MQTT)",
+    "interface": "interface:",
+    "cidrLabel": "CIDR / Faixa de IP",
+    "scanNow": "Escanear agora",
+    "scanFailed": "Falha no escaneamento",
+    "hostsScanned": "{{scanned}} / {{total}} hosts escaneados",
+    "found": "Encontrados: {{count}}",
+    "discoveredDevices": "Dispositivos descobertos",
+    "noDevices": "Nenhum dispositivo industrial encontrado em {{cidr}}",
+    "noDevicesHint": "Tente outro CIDR ou verifique se seu gateway está na mesma sub-rede",
+    "ready": "Pronto para escanear",
+    "readyHint": "Clique em \"Escanear agora\" para encontrar dispositivos na sua rede",
+    "connect": "Conectar {{protocol}}",
+    "status": {
+      "running": "Executando",
+      "completed": "Concluído",
+      "cancelled": "Cancelado",
+      "error": "Erro"
+    }
+  },
+  "opcua": {
+    "form": {
+      "editTitle": "Editar conexão OPC-UA",
+      "createTitle": "Nova conexão OPC-UA",
+      "name": "Nome *",
+      "security": "Segurança",
+      "endpointUrl": "Endpoint URL *",
+      "username": "Usuário (opcional)",
+      "password": "Senha (opcional)",
+      "euromapMachine": "Máquina EUROMAP 77 (Netstal)",
+      "euromapHint": "Liga os engines de evento/tag/status no connect. machineId é o que vai no tópico/key Kafka.",
+      "statusNodeId": "ProductionStatus NodeId (status engine, opcional)",
+      "saveFailed": "Falha ao salvar conexão"
+    },
+    "connections": {
+      "alreadyExists": "Conexão para {{endpoint}} já existe",
+      "loadError": "Falha ao carregar conexões OPC-UA: {{message}}",
+      "newConnection": "Nova conexão",
+      "empty": "Nenhuma conexão OPC-UA",
+      "emptyHint": "Adicione um servidor OPC-UA para começar a coletar dados",
+      "security": "Segurança",
+      "authenticated": "Autenticado",
+      "browse": "Navegar",
+      "monitor": "Monitorar",
+      "editConnection": "Editar conexão",
+      "confirmDelete": "Excluir esta conexão?"
+    }
   },
   "language": {
     "select": "Idioma",

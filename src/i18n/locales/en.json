@@ -108,7 +108,9 @@
       "system": "System"
     },
     "kafka": "Kafka",
-    "southbound": "Southbound"
+    "southbound": "Southbound",
+    "events": "Events",
+    "virtualSensors": "Virtual Sensors"
   },
   "landing": {
     "nav": {
@@ -450,6 +452,264 @@
     "admin": "Administrator",
     "engineer": "Engineer",
     "viewer": "Viewer"
+  },
+  "events": {
+    "title": "Events",
+    "subtitle": "Live events, history and alarms from EUROMAP machines. The Event View, inside EDU",
+    "tabs": {
+      "live": "Live",
+      "history": "History",
+      "alarms": "Alarms",
+      "types": "Monitored types"
+    },
+    "pager": {
+      "range": "{{from}}-{{to}} of {{total}}",
+      "perPage": "{{n}} / page",
+      "perPageTitle": "items per page",
+      "prev": "previous page",
+      "next": "next page"
+    },
+    "list": {
+      "empty": "No events in this window.",
+      "selectAllDeletable": "select all deletable",
+      "selectToDelete": "select to delete",
+      "notDeletable": "no eventId (not deletable)"
+    },
+    "live": {
+      "status": "live · refreshes every 3s",
+      "clear": "Clear",
+      "clearHint": "clears the view; nothing is deleted from the machine",
+      "empty": "No live events. Cycle the machine (cycles show up as soon as they close).",
+      "cleared": "Feed cleared. New events will show up here."
+    },
+    "history": {
+      "loading": "reading history…",
+      "reload": "reload (last {{hours}}h)",
+      "confirmDelete": "Delete {{count}} event(s) from the machine's history buffer?\n\nThis is IRREVERSIBLE (HistoryUpdate DeleteEvent on the equipment).",
+      "deleted": "{{deleted}}/{{total}} event(s) deleted from the machine.",
+      "deleteFailed": "Failed to delete",
+      "deleteSelected": "Delete selected ({{count}})",
+      "deleteFromBuffer": "Delete from buffer",
+      "deleteHintEmpty": "check events in the list to delete them from the machine buffer",
+      "deleteHint": "deletes the checked events from the machine buffer (irreversible)"
+    },
+    "types": {
+      "connectFirst": "Connect machine {{machineId}} to configure the monitored event types.",
+      "title": "Monitored event types",
+      "desc1": "Choose which event types feed Live, History and Kafka. Monitoring a type already includes its subtypes (OfType filter, applied on the server).",
+      "desc2": "Each event's attributes (Message, Severity, counters) arrive automatically in the payload; you only pick the types, not the fields.",
+      "usingDefault": "using the default: the 3 mapped EUROMAP types (cycle, box change, alarm)",
+      "noneSelected": "No type selected.",
+      "remove": "remove",
+      "browse": "Browse types",
+      "restoreDefault": "Restore default",
+      "discard": "Discard",
+      "saving": "Saving…",
+      "applyNote": "Takes effect in History right away. For Live, reconnect the machine to reapply the subscription."
+    },
+    "browser": {
+      "title": "Event types",
+      "desc": "Browse the tree and check the types EDU should monitor. Entering a type shows its subtypes and the attributes each event carries.",
+      "monitorThis": "Monitor this type",
+      "monitorTitle": "monitor this type",
+      "rootHint": "BaseEventType is the root: monitoring it captures every event from the server. Prefer checking specific types below.",
+      "subtypeHint": "Monitoring a type automatically includes every subtype below it.",
+      "subtypes": "Subtypes",
+      "subtypesDesc": "Event classes derived from {{name}}. Check to monitor, or enter to explore.",
+      "filter": "Filter",
+      "enter": "enter",
+      "noFilterMatch": "No subtype matches the filter.",
+      "noSubtypes": "{{name}} has no subtypes. It is a concrete type, the most specific level of the tree.",
+      "attributes": "Event attributes",
+      "informative": "informative",
+      "attributesDesc": "Fields that arrive in the payload of every event of this type. They all come together, no need to choose.",
+      "noOwnAttributes": "This type declares no attributes of its own.",
+      "inheritedNote": "Besides these, every event also carries the attributes inherited from the types above, such as EventId, Time, Message and Severity.",
+      "selectedCount": "{{count}} type(s) checked for monitoring",
+      "loading": "loading…",
+      "done": "Done"
+    },
+    "alarms": {
+      "empty": "No active alarms 🎉"
+    }
+  },
+  "kafka": {
+    "title": "Kafka",
+    "subtitle": "Kafka / Redpanda connectors, publishes the northbound UNS (acks=all) and consumes southbound commands",
+    "connections": {
+      "loadError": "Failed to load Kafka connectors: {{message}}",
+      "newConnector": "New connector",
+      "empty": "No Kafka connectors",
+      "emptyHint": "Add a cluster (Kafka or Redpanda) to publish the UNS",
+      "active": "active",
+      "test": "Test",
+      "testFailed": "failed",
+      "testConnection": "Test connection",
+      "setActive": "Set as active",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "confirmDelete": "Delete this connector?"
+    },
+    "form": {
+      "editTitle": "Edit connector",
+      "createTitle": "New Kafka connector",
+      "bootstrapServers": "Bootstrap servers",
+      "securityProtocol": "Security protocol",
+      "direction": "Direction",
+      "saslMechanism": "SASL mechanism",
+      "saslUsername": "SASL username",
+      "saslPassword": "SASL password",
+      "keepPassword": "•••• (keep)",
+      "consumerGroup": "Consumer group",
+      "produceTopics": "Produce topics (csv)",
+      "consumeTopics": "Consume topics (csv)",
+      "create": "Create"
+    }
+  },
+  "southbound": {
+    "title": "Southbound",
+    "subtitle": "IT → machine commands (workorder, boxchange, recipe) with arm/disarm and ACK/NACK",
+    "banner": "Commands only execute on <strong>armed</strong> machines. Disarmed or no binding configured → <strong>NACK</strong>. Arm only what you control.",
+    "machines": {
+      "title": "EUROMAP machines",
+      "empty": "No OPC-UA connection with EUROMAP enabled",
+      "armed": "Armed",
+      "disarmed": "Disarmed",
+      "arm": "Arm",
+      "disarm": "Disarm"
+    },
+    "log": {
+      "title": "Command log",
+      "empty": "No commands yet",
+      "machine": "machine",
+      "command": "command",
+      "status": "status",
+      "error": "error",
+      "when": "when",
+      "deleteSelected": "Delete selected ({{count}})"
+    },
+    "methods": {
+      "title": "Machine methods",
+      "subtitle": "Browse and call OPC UA methods discovered on the machine, UaExpert style",
+      "refresh": "Refresh",
+      "loading": "Discovering methods...",
+      "empty": "No methods discovered",
+      "noMatch": "No method matches the filter",
+      "searchPlaceholder": "Filter by name",
+      "notArmed": "{{machineId}} is disarmed: method calls will be NACKed until the connection is armed.",
+      "notExecutable": "Method not user-executable",
+      "argCount": "{{count}} arg(s)",
+      "modal": {
+        "object": "Object",
+        "method": "Method",
+        "inputArgs": "Input arguments",
+        "noArgs": "This method takes no input arguments",
+        "linesPlaceholder": "One item per line",
+        "invalidJson": "Invalid JSON",
+        "invalidNumber": "Invalid number",
+        "invalidDate": "Invalid date",
+        "send": "Call method",
+        "waiting": "Waiting for machine response...",
+        "close": "Close",
+        "result": "Result",
+        "statusCode": "Status code",
+        "outputs": "Outputs",
+        "timeout": "No response after 15s. Check the command log.",
+        "arraySize": "Array size",
+        "emptyArray": "Empty array. Increase the size to fill in elements."
+      }
+    }
+  },
+  "virtualSensors": {
+    "title": "Virtual Sensors",
+    "subtitle": "Formula-derived tags built on top of other tags, published to the UNS as first-class citizens (they historize, alarm and become widgets)",
+    "newSensor": "New sensor",
+    "loadError": "Failed to load: {{message}}",
+    "empty": "No virtual sensors",
+    "emptyHint": "Create a derived tag. E.g.:",
+    "paused": "paused",
+    "noInputs": "no inputs",
+    "every": "every {{seconds}}s",
+    "lastValue": "value",
+    "confirmDelete": "Delete this sensor?",
+    "form": {
+      "editTitle": "Edit sensor",
+      "createTitle": "New virtual sensor",
+      "outputTopic": "Output topic (UNS)",
+      "expression": "Formula",
+      "unit": "Unit",
+      "inputs": "Inputs (variable → tag)",
+      "addInput": "input",
+      "interval": "Interval (ms)",
+      "testOk": "OK · with all inputs = 1 → {{result}}",
+      "invalidExpression": "invalid expression",
+      "test": "Test formula",
+      "create": "Create"
+    }
+  },
+  "industrial": {
+    "opcua": {
+      "title": "OPC-UA",
+      "subtitle": "Connect to OPC-UA servers, browse the address space, and monitor live values"
+    },
+    "modbus": {
+      "title": "Modbus TCP",
+      "subtitle": "Connect to Modbus TCP devices, configure registers, and poll live values"
+    },
+    "ethip": {
+      "title": "EtherNet/IP",
+      "subtitle": "Connect to Allen-Bradley / EtherNet/IP controllers, browse tags, and monitor live values"
+    }
+  },
+  "networkScan": {
+    "title": "Network Scan",
+    "subtitle": "Find industrial devices on the local network (Modbus / EtherNet-IP / OPC-UA / MQTT)",
+    "interface": "interface:",
+    "cidrLabel": "CIDR / IP Range",
+    "scanNow": "Scan Now",
+    "scanFailed": "Scan failed",
+    "hostsScanned": "{{scanned}} / {{total}} hosts scanned",
+    "found": "Found: {{count}}",
+    "discoveredDevices": "Discovered Devices",
+    "noDevices": "No industrial devices found on {{cidr}}",
+    "noDevicesHint": "Try a different CIDR or check if your gateway is on the same subnet",
+    "ready": "Ready to scan",
+    "readyHint": "Click \"Scan Now\" to find devices on your network",
+    "connect": "Connect {{protocol}}",
+    "status": {
+      "running": "Running",
+      "completed": "Complete",
+      "cancelled": "Cancelled",
+      "error": "Error"
+    }
+  },
+  "opcua": {
+    "form": {
+      "editTitle": "Edit OPC-UA Connection",
+      "createTitle": "New OPC-UA Connection",
+      "name": "Name *",
+      "security": "Security",
+      "endpointUrl": "Endpoint URL *",
+      "username": "Username (optional)",
+      "password": "Password (optional)",
+      "euromapMachine": "EUROMAP 77 machine (Netstal)",
+      "euromapHint": "Enables the event/tag/status engines on connect. machineId is what goes into the Kafka topic/key.",
+      "statusNodeId": "ProductionStatus NodeId (status engine, optional)",
+      "saveFailed": "Failed to save connection"
+    },
+    "connections": {
+      "alreadyExists": "Connection for {{endpoint}} already exists",
+      "loadError": "Failed to load OPC-UA connections: {{message}}",
+      "newConnection": "New Connection",
+      "empty": "No OPC-UA connections",
+      "emptyHint": "Add an OPC-UA server to start collecting data",
+      "security": "Security",
+      "authenticated": "Authenticated",
+      "browse": "Browse",
+      "monitor": "Monitor",
+      "editConnection": "Edit connection",
+      "confirmDelete": "Delete this connection?"
+    }
   },
   "language": {
     "select": "Language",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Radar, Loader2, AlertTriangle, Wifi, Cpu, CircuitBoard, Network, Radio,
   Cable, MonitorSmartphone,
@@ -27,6 +28,7 @@ const PROTOCOL_ROUTE: Record<string, string> = {
 };
 
 export function NetworkScan() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [cidr, setCidr] = useState('');
   const [suggestedIp, setSuggestedIp] = useState('');
@@ -79,7 +81,7 @@ export function NetworkScan() {
       // Surface backend's user-friendly message ("CIDR too large", etc.) instead of "Request failed with status code 400"
       // axios attaches it on err.response.data.error
       const axiosErr = err as { response?: { data?: { error?: string } }; message?: string };
-      const msg = axiosErr.response?.data?.error || axiosErr.message || 'Scan failed';
+      const msg = axiosErr.response?.data?.error || axiosErr.message || t('networkScan.scanFailed');
       setError(msg);
     }
   };
@@ -103,11 +105,11 @@ export function NetworkScan() {
         <div>
           <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-2">
             <Radar className="w-5 h-5 text-gray-400" />
-            Network Scan
+            {t('networkScan.title')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
-            Find industrial devices on the local network (Modbus / EtherNet-IP / OPC-UA / MQTT)
-            {suggestedIp && <span className="ml-2">— interface: <span className="font-mono text-gray-500">{suggestedIp}</span></span>}
+            {t('networkScan.subtitle')}
+            {suggestedIp && <span className="ml-2">{t('networkScan.interface')} <span className="font-mono text-gray-500">{suggestedIp}</span></span>}
           </p>
         </div>
       </div>
@@ -115,7 +117,7 @@ export function NetworkScan() {
       {/* Scan controls */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end gap-3">
         <div className="flex-1">
-          <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1.5">CIDR / IP Range</label>
+          <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('networkScan.cidrLabel')}</label>
           <input
             type="text" value={cidr} onChange={(e) => setCidr(e.target.value)}
             placeholder="192.168.1.0/24"
@@ -129,7 +131,7 @@ export function NetworkScan() {
             className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[13px] font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Cancel
+            {t('common.cancel')}
           </button>
         ) : (
           <button
@@ -138,7 +140,7 @@ export function NetworkScan() {
             className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40"
           >
             <Radar className="w-3.5 h-3.5" />
-            Scan Now
+            {t('networkScan.scanNow')}
           </button>
         )}
       </div>
@@ -157,11 +159,11 @@ export function NetworkScan() {
             <div className="flex-1">
               <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mb-1.5">
                 <span>
-                  {scan.hostsScanned} / {scan.hostsTotal} hosts scanned
+                  {t('networkScan.hostsScanned', { scanned: scan.hostsScanned, total: scan.hostsTotal })}
                   <span className="ml-2 text-gray-300">({scan.cidr})</span>
                 </span>
                 <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Found: {scan.devicesFound}
+                  {t('networkScan.found', { count: scan.devicesFound })}
                 </span>
               </div>
               <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -186,7 +188,7 @@ export function NetworkScan() {
       {scan && scan.devices.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">Discovered Devices</h3>
+            <h3 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">{t('networkScan.discoveredDevices')}</h3>
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {scan.devices
@@ -206,16 +208,16 @@ export function NetworkScan() {
       {scan && scan.status !== 'running' && scan.devices.length === 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
           <Wifi className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-[14px] text-gray-400">No industrial devices found on {scan.cidr}</p>
-          <p className="text-[12px] text-gray-300 mt-1">Try a different CIDR or check if your gateway is on the same subnet</p>
+          <p className="text-[14px] text-gray-400">{t('networkScan.noDevices', { cidr: scan.cidr })}</p>
+          <p className="text-[12px] text-gray-300 mt-1">{t('networkScan.noDevicesHint')}</p>
         </div>
       )}
 
       {!scan && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 px-6 py-12 text-center">
           <Radar className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-[14px] text-gray-400">Ready to scan</p>
-          <p className="text-[12px] text-gray-300 mt-1">Click "Scan Now" to find devices on your network</p>
+          <p className="text-[14px] text-gray-400">{t('networkScan.ready')}</p>
+          <p className="text-[12px] text-gray-300 mt-1">{t('networkScan.readyHint')}</p>
         </div>
       )}
     </div>
@@ -225,6 +227,7 @@ export function NetworkScan() {
 // ── Device row ──────────────────────────────────────────────────────
 
 function DeviceRow({ device, onConnect }: { device: DiscoveredDevice; onConnect: (hint: { protocol: string; fields: Record<string, unknown> }) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
@@ -245,7 +248,7 @@ function DeviceRow({ device, onConnect }: { device: DiscoveredDevice; onConnect:
               onClick={() => proto.connectHint && onConnect(proto.connectHint)}
               className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              Connect {PROTOCOL_META[proto.kind].label}
+              {t('networkScan.connect', { protocol: PROTOCOL_META[proto.kind].label })}
             </button>
           ))}
       </div>
@@ -269,11 +272,12 @@ function ProtocolChip({ proto }: { proto: DiscoveredProtocol }) {
 }
 
 function StatusBadge({ status }: { status: DiscoveryScan['status'] }) {
+  const { t } = useTranslation();
   const meta: Record<DiscoveryScan['status'], { label: string; className: string }> = {
-    running:   { label: 'Running',   className: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
-    completed: { label: 'Complete',  className: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' },
-    cancelled: { label: 'Cancelled', className: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
-    error:     { label: 'Error',     className: 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' },
+    running:   { label: t('networkScan.status.running'),   className: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
+    completed: { label: t('networkScan.status.completed'),  className: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' },
+    cancelled: { label: t('networkScan.status.cancelled'), className: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' },
+    error:     { label: t('networkScan.status.error'),     className: 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' },
   };
   const m = meta[status];
   return (

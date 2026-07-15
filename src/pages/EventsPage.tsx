@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, ChevronRight, ChevronLeft, Trash2, Search, X, FolderTree } from 'lucide-react';
 import { eventsApi, EventTypeRef, EventTypeSelection } from '../services/api';
 import { EuromapEvent, MachineAlarm } from '../types';
 import { cn } from '@/lib/utils';
 
 type Tab = 'live' | 'history' | 'alarms' | 'types';
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'live', label: 'Live' },
-  { key: 'history', label: 'Histórico' },
-  { key: 'alarms', label: 'Alarmes' },
-  { key: 'types', label: 'Tipos monitorados' },
+const TABS: { key: Tab; labelKey: string }[] = [
+  { key: 'live', labelKey: 'events.tabs.live' },
+  { key: 'history', labelKey: 'events.tabs.history' },
+  { key: 'alarms', labelKey: 'events.tabs.alarms' },
+  { key: 'types', labelKey: 'events.tabs.types' },
 ];
 
 function fmtTime(iso: string | null): string {
@@ -23,6 +24,7 @@ const cardCls = 'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60
 const inputCls = 'px-3 py-1.5 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 w-28';
 
 export function EventsPage() {
+  const { t } = useTranslation();
   const [machineId, setMachineId] = useState('IMM-01');
   const [tab, setTab] = useState<Tab>('live');
   const [hours, setHours] = useState(3);
@@ -30,18 +32,18 @@ export function EventsPage() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div>
-        <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Eventos</h1>
-        <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">Eventos ao vivo, histórico e alarmes das máquinas EUROMAP. O Event View, dentro do EDU</p>
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{t('events.title')}</h1>
+        <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">{t('events.subtitle')}</p>
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
-            {TABS.map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key)}
+            {TABS.map((tb) => (
+              <button key={tb.key} onClick={() => setTab(tb.key)}
                 className={cn('px-3 py-1.5 text-[12px] font-medium rounded-lg transition-colors',
-                  tab === t.key ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200')}>
-                {t.label}
+                  tab === tb.key ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200')}>
+                {t(tb.labelKey)}
               </button>
             ))}
           </div>
@@ -104,22 +106,23 @@ function usePager<T>(items: T[], initialSize: number = PAGE_SIZES[0]): { slice: 
 const pagerBtn = 'p-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/60 disabled:opacity-30 disabled:hover:bg-transparent transition-colors';
 
 function Pager({ p }: { p: PagerControls }) {
+  const { t } = useTranslation();
   if (p.total <= PAGE_SIZES[0]) return null;
   return (
     <div className="flex items-center justify-between gap-3 px-1 pt-1">
-      <span className="text-[11px] text-gray-400 tabular-nums">{p.from}-{p.to} de {p.total}</span>
+      <span className="text-[11px] text-gray-400 tabular-nums">{t('events.pager.range', { from: p.from, to: p.to, total: p.total })}</span>
       <div className="flex items-center gap-2">
         <select
           value={p.size}
           onChange={(e) => p.setSize(Number(e.target.value))}
           className="px-2 py-1 text-[11px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-          title="itens por página"
+          title={t('events.pager.perPageTitle')}
         >
-          {PAGE_SIZES.map((n) => <option key={n} value={n}>{n} / pág</option>)}
+          {PAGE_SIZES.map((n) => <option key={n} value={n}>{t('events.pager.perPage', { n })}</option>)}
         </select>
-        <button onClick={p.prev} disabled={p.page === 0} className={pagerBtn} title="página anterior"><ChevronLeft className="w-3.5 h-3.5" /></button>
+        <button onClick={p.prev} disabled={p.page === 0} className={pagerBtn} title={t('events.pager.prev')}><ChevronLeft className="w-3.5 h-3.5" /></button>
         <span className="text-[11px] text-gray-400 tabular-nums">{p.page + 1}/{p.pages}</span>
-        <button onClick={p.next} disabled={p.page >= p.pages - 1} className={pagerBtn} title="próxima página"><ChevronRight className="w-3.5 h-3.5" /></button>
+        <button onClick={p.next} disabled={p.page >= p.pages - 1} className={pagerBtn} title={t('events.pager.next')}><ChevronRight className="w-3.5 h-3.5" /></button>
       </div>
     </div>
   );
@@ -149,14 +152,15 @@ function eventKey(ev: EuromapEvent): string {
 }
 
 function EventList({ events, selection }: { events: EuromapEvent[]; selection?: Selection }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState<string | null>(null);
-  if (events.length === 0) return <EmptyState text="Nenhum evento nessa janela." />;
+  if (events.length === 0) return <EmptyState text={t('events.list.empty')} />;
   return (
     <div className={cardCls}>
       {selection && (
         <label className="px-5 sm:px-6 py-2 flex items-center gap-3 text-[11px] text-gray-400 cursor-pointer select-none">
           <input type="checkbox" checked={selection.allSelected} onChange={selection.toggleAll} className="accent-gray-900 dark:accent-white" />
-          selecionar todos os deletáveis
+          {t('events.list.selectAllDeletable')}
         </label>
       )}
       {events.map((ev) => {
@@ -172,7 +176,7 @@ function EventList({ events, selection }: { events: EuromapEvent[]; selection?: 
               {selection && (
                 <input type="checkbox" disabled={!canDelete} checked={checked}
                   onChange={() => ev.eventId && selection.toggle(ev.eventId)}
-                  className="accent-gray-900 dark:accent-white disabled:opacity-30 shrink-0" title={canDelete ? 'selecionar para excluir' : 'sem eventId (não deletável)'} />
+                  className="accent-gray-900 dark:accent-white disabled:opacity-30 shrink-0" title={canDelete ? t('events.list.selectToDelete') : t('events.list.notDeletable')} />
               )}
               <div onClick={() => setOpen(isOpen ? null : key)} className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer">
                 <span className="text-[12px] tabular-nums text-gray-400 w-20 shrink-0">{fmtTime(ev.sourceTimestamp)}</span>
@@ -199,6 +203,7 @@ function EventList({ events, selection }: { events: EuromapEvent[]; selection?: 
 }
 
 function LiveEvents({ machineId }: { machineId: string }) {
+  const { t } = useTranslation();
   const { data = [] } = useQuery<EuromapEvent[]>({
     queryKey: ['events-recent', machineId],
     queryFn: () => eventsApi.recent(machineId),
@@ -215,20 +220,20 @@ function LiveEvents({ machineId }: { machineId: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> ao vivo · atualiza a cada 3s</p>
+        <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {t('events.live.status')}</p>
         {data.length > 0 && (
           <button
             onClick={() => setHidden(new Set(data.map(eventKey)))}
             disabled={visible.length === 0}
             className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-40"
-            title="limpa a visualização; não apaga nada da máquina"
+            title={t('events.live.clearHint')}
           >
-            <Trash2 className="w-3.5 h-3.5" /> Limpar
+            <Trash2 className="w-3.5 h-3.5" /> {t('events.live.clear')}
           </button>
         )}
       </div>
-      {data.length === 0 ? <EmptyState text="Sem eventos ao vivo. Cicle a máquina (ciclos aparecem na hora que fecham)." /> :
-        visible.length === 0 ? <EmptyState text="Feed limpo. Novos eventos aparecem aqui." /> : (
+      {data.length === 0 ? <EmptyState text={t('events.live.empty')} /> :
+        visible.length === 0 ? <EmptyState text={t('events.live.cleared')} /> : (
         <>
           <EventList events={slice} />
           <Pager p={pager} />
@@ -239,6 +244,7 @@ function LiveEvents({ machineId }: { machineId: string }) {
 }
 
 function HistoryEvents({ machineId, hours }: { machineId: string; hours: number }) {
+  const { t } = useTranslation();
   const { data = [], isFetching, refetch, error } = useQuery<EuromapEvent[], Error>({
     queryKey: ['events-history', machineId, hours],
     queryFn: () => eventsApi.history(machineId, hours, 1000),
@@ -261,15 +267,15 @@ function HistoryEvents({ machineId, hours }: { machineId: string; hours: number 
   const del = async () => {
     const ids = [...selected];
     if (ids.length === 0) return;
-    if (!window.confirm(`Apagar ${ids.length} evento(s) do buffer de histórico da máquina?\n\nIsso é IRREVERSÍVEL (HistoryUpdate DeleteEvent no equipamento).`)) return;
+    if (!window.confirm(t('events.history.confirmDelete', { count: ids.length }))) return;
     setDeleting(true);
     try {
       const r = await eventsApi.deleteEvents(machineId, nodeId, ids);
       setSelected(new Set());
       await refetch();
-      window.alert(`${r.deleted}/${r.total} evento(s) apagado(s) da máquina.`);
+      window.alert(t('events.history.deleted', { deleted: r.deleted, total: r.total }));
     } catch (e) {
-      window.alert(e instanceof Error ? e.message : 'Falha ao apagar');
+      window.alert(e instanceof Error ? e.message : t('events.history.deleteFailed'));
     } finally {
       setDeleting(false);
     }
@@ -279,16 +285,16 @@ function HistoryEvents({ machineId, hours }: { machineId: string; hours: number 
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => refetch()} className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-          <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} /> {isFetching ? 'lendo histórico…' : `recarregar (últimas ${hours}h)`}
+          <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} /> {isFetching ? t('events.history.loading') : t('events.history.reload', { hours })}
         </button>
         {deletableIds.length > 0 && (
           <button
             onClick={del}
             disabled={deleting || selected.size === 0}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-[12px] font-medium rounded-lg hover:bg-red-600 disabled:opacity-40 disabled:hover:bg-red-500 transition-colors"
-            title={selected.size === 0 ? 'marque eventos na lista para apagar do buffer da máquina' : 'apaga os eventos marcados do buffer da máquina (irreversível)'}
+            title={selected.size === 0 ? t('events.history.deleteHintEmpty') : t('events.history.deleteHint')}
           >
-            <Trash2 className="w-3.5 h-3.5" /> {selected.size > 0 ? `Excluir selecionados (${selected.size})` : 'Excluir do buffer'}
+            <Trash2 className="w-3.5 h-3.5" /> {selected.size > 0 ? t('events.history.deleteSelected', { count: selected.size }) : t('events.history.deleteFromBuffer')}
           </button>
         )}
       </div>
@@ -309,6 +315,7 @@ const primaryBtn = 'px-3.5 py-1.5 text-[12px] font-medium rounded-lg bg-gray-900
 const ghostBtn = 'px-3 py-1.5 text-[12px] font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors';
 
 function MonitoredTypes({ machineId }: { machineId: string }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, error } = useQuery({
     queryKey: ['event-selection', machineId],
@@ -341,36 +348,36 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
   });
 
   if (error) {
-    return <EmptyState text={`Conecte a máquina ${machineId} para configurar os tipos de evento monitorados.`} />;
+    return <EmptyState text={t('events.types.connectFirst', { machineId })} />;
   }
 
   return (
     <div className="space-y-3">
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-5 sm:p-6 space-y-4">
         <div>
-          <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">Tipos de evento monitorados</p>
+          <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{t('events.types.title')}</p>
           <p className="text-[12px] text-gray-400 mt-0.5">
-            Escolha quais tipos de evento entram no Live, no Histórico e no Kafka. Monitorar um tipo já inclui os subtipos dele (filtro OfType, aplicado no servidor).
+            {t('events.types.desc1')}
           </p>
           <p className="text-[12px] text-gray-400 mt-1">
-            Os atributos de cada evento (Message, Severity, contadores) chegam automaticamente no payload; você escolhe só os tipos, não os campos.
+            {t('events.types.desc2')}
           </p>
         </div>
 
         {isDefault && (
           <div className="inline-flex items-center gap-2 text-[11px] text-gray-500 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-1.5">
-            usando o padrão: os 3 tipos EUROMAP mapeados (ciclo, troca de caixa, alarme)
+            {t('events.types.usingDefault')}
           </div>
         )}
 
         {selection.length === 0 ? (
-          <p className="text-[12px] text-gray-400">Nenhum tipo selecionado.</p>
+          <p className="text-[12px] text-gray-400">{t('events.types.noneSelected')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {selection.map((t) => (
-              <span key={t.nodeId} title={t.nodeId} className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[12px] text-gray-700 dark:text-gray-200">
-                {t.name}
-                <button onClick={() => remove(t.nodeId)} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-100" title="remover">
+            {selection.map((ty) => (
+              <span key={ty.nodeId} title={ty.nodeId} className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[12px] text-gray-700 dark:text-gray-200">
+                {ty.name}
+                <button onClick={() => remove(ty.nodeId)} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-100" title={t('events.types.remove')}>
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -380,25 +387,25 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
 
         <div className="flex items-center gap-2 pt-1">
           <button onClick={() => setBrowserOpen(true)} className={cn(ghostBtn, 'inline-flex items-center gap-1.5')}>
-            <FolderTree className="w-3.5 h-3.5" /> Procurar tipos
+            <FolderTree className="w-3.5 h-3.5" /> {t('events.types.browse')}
           </button>
           {!isDefault && (
-            <button onClick={() => save.mutate([])} disabled={save.isPending} className={ghostBtn}>Restaurar padrão</button>
+            <button onClick={() => save.mutate([])} disabled={save.isPending} className={ghostBtn}>{t('events.types.restoreDefault')}</button>
           )}
           <div className="flex-1" />
-          {dirty && <button onClick={() => setDraft(null)} className={ghostBtn}>Descartar</button>}
+          {dirty && <button onClick={() => setDraft(null)} className={ghostBtn}>{t('events.types.discard')}</button>}
           <button
             onClick={() => save.mutate(selection)}
             disabled={!dirty || save.isPending}
             className={primaryBtn}
           >
-            {save.isPending ? 'Salvando…' : 'Salvar'}
+            {save.isPending ? t('events.types.saving') : t('common.save')}
           </button>
         </div>
 
         {save.isError && <p className="text-[12px] text-red-500">{(save.error as Error)?.message}</p>}
         <p className="text-[11px] text-gray-400">
-          Vale no Histórico na hora. No Live, reconecte a máquina para reaplicar a subscrição.
+          {t('events.types.applyNote')}
         </p>
       </div>
 
@@ -422,6 +429,7 @@ function EventTypeBrowser({
   onToggle: (ref: EventTypeSelection) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [path, setPath] = useState<EventTypeSelection[]>([{ nodeId: 'i=2041', name: 'BaseEventType' }]);
   const [filter, setFilter] = useState('');
   const current = path[path.length - 1];
@@ -450,9 +458,9 @@ function EventTypeBrowser({
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">Tipos de evento</p>
+              <p className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">{t('events.browser.title')}</p>
               <p className="text-[12px] text-gray-400 mt-0.5">
-                Navegue a árvore e marque os tipos que o EDU deve monitorar. Ao entrar num tipo você vê os subtipos dele e os atributos que cada evento carrega.
+                {t('events.browser.desc')}
               </p>
             </div>
             <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"><X className="w-4 h-4" /></button>
@@ -481,26 +489,26 @@ function EventTypeBrowser({
                   </div>
                   <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700 cursor-pointer select-none shrink-0">
                     <input type="checkbox" checked={selectedIds.has(current.nodeId)} onChange={() => onToggle({ nodeId: current.nodeId, name: current.name })} className="accent-gray-900 dark:accent-white" />
-                    <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200">Monitorar este tipo</span>
+                    <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200">{t('events.browser.monitorThis')}</span>
                   </label>
                 </div>
                 <p className="text-[11px] text-gray-400 mt-2">
                   {atRoot
-                    ? 'BaseEventType é a raiz: monitorar ele captura todos os eventos do servidor. Prefira marcar tipos específicos abaixo.'
-                    : 'Monitorar um tipo inclui automaticamente todos os subtipos abaixo dele.'}
+                    ? t('events.browser.rootHint')
+                    : t('events.browser.subtypeHint')}
                 </p>
               </div>
 
               <div className="mt-5">
                 <div className="px-5 flex items-end justify-between gap-3">
                   <div className="min-w-0">
-                    <p className={sectionTitle}>Subtipos{loading ? '' : ` (${allSubtypes.length})`}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">Classes de evento derivadas de {current.name}. Marque para monitorar, ou entre para explorar.</p>
+                    <p className={sectionTitle}>{t('events.browser.subtypes')}{loading ? '' : ` (${allSubtypes.length})`}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{t('events.browser.subtypesDesc', { name: current.name })}</p>
                   </div>
                   {allSubtypes.length > 3 && (
                     <label className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
                       <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filtrar" className="w-28 bg-transparent text-[12px] text-gray-900 dark:text-gray-100 focus:outline-none" />
+                      <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('events.browser.filter')} className="w-28 bg-transparent text-[12px] text-gray-900 dark:text-gray-100 focus:outline-none" />
                     </label>
                   )}
                 </div>
@@ -513,19 +521,19 @@ function EventTypeBrowser({
                   <div className="mt-2 border-y border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
                     {subtypes.map((s) => (
                       <div key={s.nodeId} className="px-5 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/40 group">
-                        <input type="checkbox" checked={selectedIds.has(s.nodeId)} onChange={() => onToggle({ nodeId: s.nodeId, name: nameOf(s) })} className="accent-gray-900 dark:accent-white shrink-0" title="monitorar este tipo" />
+                        <input type="checkbox" checked={selectedIds.has(s.nodeId)} onChange={() => onToggle({ nodeId: s.nodeId, name: nameOf(s) })} className="accent-gray-900 dark:accent-white shrink-0" title={t('events.browser.monitorTitle')} />
                         <button onClick={() => drill(s)} className="flex-1 min-w-0 flex items-center gap-2 text-left">
                           <span className="text-[13px] text-gray-900 dark:text-gray-100 truncate">{nameOf(s)}</span>
                           {typeof s.namespace === 'number' && s.namespace > 0 && <span className={nsBadge}>ns={s.namespace}</span>}
                           <span className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            entrar <ChevronRight className="w-3.5 h-3.5" />
+                            {t('events.browser.enter')} <ChevronRight className="w-3.5 h-3.5" />
                           </span>
                         </button>
                       </div>
                     ))}
                     {subtypes.length === 0 && (
                       <div className="px-5 py-5 text-center text-[12px] text-gray-400">
-                        {q ? 'Nenhum subtipo bate com o filtro.' : `${current.name} não tem subtipos. É um tipo concreto, o nível mais específico da árvore.`}
+                        {q ? t('events.browser.noFilterMatch') : t('events.browser.noSubtypes', { name: current.name })}
                       </div>
                     )}
                   </div>
@@ -534,11 +542,11 @@ function EventTypeBrowser({
 
               <div className="mt-5 pb-5">
                 <div className="px-5 flex items-center gap-2">
-                  <p className={sectionTitle}>Atributos do evento{loading ? '' : ` (${fields.length})`}</p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400">informativo</span>
+                  <p className={sectionTitle}>{t('events.browser.attributes')}{loading ? '' : ` (${fields.length})`}</p>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400">{t('events.browser.informative')}</span>
                 </div>
                 <p className="px-5 text-[11px] text-gray-400 mt-0.5">
-                  Campos que chegam no payload de cada evento deste tipo. Vêm todos juntos, não é preciso escolher.
+                  {t('events.browser.attributesDesc')}
                 </p>
                 {loading ? (
                   <div className="px-5 mt-3"><div className="h-16 rounded-lg bg-gray-100 dark:bg-gray-800/60 animate-pulse" /></div>
@@ -549,11 +557,11 @@ function EventTypeBrowser({
                     ))}
                   </div>
                 ) : (
-                  <p className="px-5 mt-2.5 text-[12px] text-gray-400">Este tipo não declara atributos próprios.</p>
+                  <p className="px-5 mt-2.5 text-[12px] text-gray-400">{t('events.browser.noOwnAttributes')}</p>
                 )}
                 {!atRoot && (
                   <p className="px-5 mt-2 text-[11px] text-gray-400">
-                    Além destes, todo evento também traz os atributos herdados dos tipos acima, como EventId, Time, Message e Severity.
+                    {t('events.browser.inheritedNote')}
                   </p>
                 )}
               </div>
@@ -562,8 +570,8 @@ function EventTypeBrowser({
         </div>
 
         <div className="px-5 py-3 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
-          <span className="text-[12px] text-gray-400">{selectedIds.size} tipo(s) marcado(s) para monitorar{isFetching ? ' · carregando…' : ''}</span>
-          <button onClick={onClose} className={primaryBtn}>Concluir</button>
+          <span className="text-[12px] text-gray-400">{t('events.browser.selectedCount', { count: selectedIds.size })}{isFetching ? ` · ${t('events.browser.loading')}` : ''}</span>
+          <button onClick={onClose} className={primaryBtn}>{t('events.browser.done')}</button>
         </div>
       </div>
     </div>
@@ -571,6 +579,7 @@ function EventTypeBrowser({
 }
 
 function Alarms({ machineId }: { machineId: string }) {
+  const { t } = useTranslation();
   const { data = [], error } = useQuery<MachineAlarm[], Error>({
     queryKey: ['alarms', machineId],
     queryFn: () => eventsApi.alarms(machineId),
@@ -578,7 +587,7 @@ function Alarms({ machineId }: { machineId: string }) {
   });
   const { slice, pager } = usePager(data);
   if (error) return <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3 text-[13px] text-red-500">{error.message}</div>;
-  if (data.length === 0) return <EmptyState text="Nenhum alarme ativo 🎉" />;
+  if (data.length === 0) return <EmptyState text={t('events.alarms.empty')} />;
   return (
     <div className="space-y-2">
     <div className={cardCls}>

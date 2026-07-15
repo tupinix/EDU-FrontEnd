@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Loader2, Lock } from 'lucide-react';
 import { useCreateOpcUaConnection, useUpdateOpcUaConnection } from '../../hooks/useOpcUa';
 
@@ -31,6 +32,7 @@ function defaultName(endpoint: string | undefined): string {
 }
 
 export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
+  const { t } = useTranslation();
   const createMutation = useCreateOpcUaConnection();
   const updateMutation = useUpdateOpcUaConnection();
   const isEdit = !!editId;
@@ -69,13 +71,13 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
       <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-        <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">{isEdit ? 'Edit OPC-UA Connection' : 'New OPC-UA Connection'}</h3>
+        <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">{isEdit ? t('opcua.form.editTitle') : t('opcua.form.createTitle')}</h3>
         <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
       </div>
       <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Name *"><input type="text" required placeholder="PLC Server #1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
-          <Field label="Security">
+          <Field label={t('opcua.form.name')}><input type="text" required placeholder="PLC Server #1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
+          <Field label={t('opcua.form.security')}>
             <div className="flex gap-1.5">
               {SECURITY_MODES.map(m => (
                 <button key={m} type="button" onClick={() => setForm({ ...form, securityMode: m })}
@@ -86,15 +88,15 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
             </div>
           </Field>
         </div>
-        <Field label="Endpoint URL *"><input type="text" required placeholder="opc.tcp://192.168.1.100:4840" value={form.endpointUrl} onChange={(e) => setForm({ ...form, endpointUrl: e.target.value })} className="input-clean font-mono" /></Field>
+        <Field label={t('opcua.form.endpointUrl')}><input type="text" required placeholder="opc.tcp://192.168.1.100:4840" value={form.endpointUrl} onChange={(e) => setForm({ ...form, endpointUrl: e.target.value })} className="input-clean font-mono" /></Field>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Username (optional)"><input type="text" placeholder="admin" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="input-clean" /></Field>
-          <Field label="Password (optional)"><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
+          <Field label={t('opcua.form.username')}><input type="text" placeholder="admin" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="input-clean" /></Field>
+          <Field label={t('opcua.form.password')}><input type="password" placeholder="••••••" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input-clean" /></Field>
         </div>
         {/* EUROMAP 77 (Columbus) */}
         <div className="rounded-xl border border-gray-100 dark:border-gray-800 p-4 space-y-3">
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Máquina EUROMAP 77 (Netstal)</span>
+            <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">{t('opcua.form.euromapMachine')}</span>
             <button type="button" onClick={() => setForm({ ...form, euromapEnabled: !form.euromapEnabled })}
               className={`relative w-9 h-5 rounded-full transition-colors ${form.euromapEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${form.euromapEnabled ? 'translate-x-4' : ''}`} />
@@ -102,22 +104,22 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
           </label>
           {form.euromapEnabled && (
             <>
-              <p className="text-[11px] text-gray-400">Liga os engines de evento/tag/status no connect. machineId é o que vai no tópico/key Kafka.</p>
+              <p className="text-[11px] text-gray-400">{t('opcua.form.euromapHint')}</p>
               <div className="grid grid-cols-3 gap-3">
                 <Field label="machineId"><input type="text" placeholder="IMM-01" value={form.machineId} onChange={(e) => setForm({ ...form, machineId: e.target.value })} className="input-clean" /></Field>
                 <Field label="site"><input type="text" placeholder="LBT" value={form.site} onChange={(e) => setForm({ ...form, site: e.target.value })} className="input-clean" /></Field>
                 <Field label="area"><input type="text" placeholder="IMM" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className="input-clean" /></Field>
               </div>
-              <Field label="ProductionStatus NodeId (status engine, opcional)"><input type="text" placeholder="ns=6;s=..." value={form.statusNodeId} onChange={(e) => setForm({ ...form, statusNodeId: e.target.value })} className="input-clean font-mono" /></Field>
+              <Field label={t('opcua.form.statusNodeId')}><input type="text" placeholder="ns=6;s=..." value={form.statusNodeId} onChange={(e) => setForm({ ...form, statusNodeId: e.target.value })} className="input-clean font-mono" /></Field>
             </>
           )}
         </div>
 
-        {mutation.isError && <p className="text-[13px] text-red-500">{mutation.error instanceof Error ? mutation.error.message : 'Failed to save connection'}</p>}
+        {mutation.isError && <p className="text-[13px] text-red-500">{mutation.error instanceof Error ? mutation.error.message : t('opcua.form.saveFailed')}</p>}
         <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">{t('common.cancel')}</button>
           <button type="submit" disabled={mutation.isPending} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
-            {mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+            {mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t('common.save')}
           </button>
         </div>
       </form>

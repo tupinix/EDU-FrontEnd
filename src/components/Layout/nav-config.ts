@@ -77,14 +77,14 @@ export const navGroups: NavGroup[] = [
     items: [
       { path: '/configuration',    labelKey: 'sidebar.mqtt',        icon: Radio },
       { path: '/data-models',      labelKey: 'sidebar.dataModels',  icon: Workflow },
-      { path: '/virtual-sensors',  labelKey: 'Sensores Virtuais',   icon: Sigma },
+      { path: '/virtual-sensors',  labelKey: 'sidebar.virtualSensors',   icon: Sigma },
     ],
   },
   {
     key: 'analytics',
     labelKey: 'sidebar.groups.analytics',
     items: [
-      { path: '/events',  labelKey: 'Eventos',        icon: Activity },
+      { path: '/events',  labelKey: 'sidebar.events',        icon: Activity },
       { path: '/alerts',  labelKey: 'sidebar.alerts',  icon: Bell },
       { path: '/process', labelKey: 'sidebar.process', icon: LayoutGrid },
     ],
