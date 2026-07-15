@@ -767,10 +767,15 @@ export const kafkaApi = {
 };
 
 export const southboundApi = {
-  getCommands: async (limit = 100): Promise<SouthboundCommand[]> => {
-    const { data } = await apiClient.get<ApiResponse<SouthboundCommand[]>>('/southbound/commands', { params: { limit } });
+  getCommands: async (limit = 100, offset = 0): Promise<{ commands: SouthboundCommand[]; total: number }> => {
+    const { data } = await apiClient.get<ApiResponse<{ commands: SouthboundCommand[]; total: number }>>('/southbound/commands', { params: { limit, offset } });
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch commands');
     return data.data;
+  },
+  deleteCommands: async (ids: string[]): Promise<number> => {
+    const { data } = await apiClient.delete<ApiResponse<{ deleted: number }>>('/southbound/commands', { data: { ids } });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to delete commands');
+    return data.data.deleted;
   },
   getArmed: async (): Promise<{ armedConnections: Array<{ id: string; machine_id?: string; name: string }> }> => {
     const { data } = await apiClient.get<ApiResponse<{ armedConnections: Array<{ id: string; machine_id?: string; name: string }> }>>('/southbound/health');
@@ -789,7 +794,86 @@ export const southboundApi = {
     const { data } = await apiClient.post<ApiResponse>('/southbound/commands', input);
     if (!data.success) throw new Error(data.error || 'Failed to dispatch command');
   },
+  // SB-METHODS: UaExpert-style method browser support.
+  listMethods: async (machineId: string): Promise<MethodDiscovery> => {
+    const { data } = await apiClient.get<ApiResponse<MethodDiscovery>>(
+      `/southbound/machines/${encodeURIComponent(machineId)}/methods`,
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to discover methods');
+    return data.data;
+  },
+  dispatchMethodCall: async (machineId: string, payload: MethodCallPayload): Promise<void> => {
+    const { data } = await apiClient.post<ApiResponse>('/southbound/commands', {
+      machineId,
+      commandKind: 'method-call',
+      payload,
+    });
+    if (!data.success) throw new Error(data.error || 'Failed to dispatch method call');
+  },
+  getCommandByKey: async (idempotencyKey: string): Promise<SouthboundCommandRow> => {
+    const { data } = await apiClient.get<ApiResponse<SouthboundCommandRow>>(
+      `/southbound/commands/by-key/${encodeURIComponent(idempotencyKey)}`,
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Command not found');
+    return data.data;
+  },
 };
+
+// ── Southbound method browser (SB-METHODS) types ──
+export interface DiscoveredMethodArgument {
+  name: string;
+  dataTypeNodeId: string;
+  dataTypeName: string;
+  /** -1 scalar, >=1 array (OPC UA ValueRank). */
+  valueRank: number;
+  description?: string;
+  /** Fields of a custom structured type (from its DataTypeDefinition). */
+  structure?: DiscoveredMethodArgument[];
+  /** Options of a custom enumeration type. */
+  enumValues?: Array<{ name: string; value: number }>;
+}
+export interface DiscoveredMethod {
+  methodNodeId: string;
+  browseName: string;
+  displayName: string;
+  description?: string;
+  objectNodeId: string;
+  /** Browse path from the Objects folder, e.g. "DeviceSet/IMM_Netstal/Jobs". */
+  objectPath: string;
+  executable: boolean;
+  userExecutable: boolean;
+  inputArguments: DiscoveredMethodArgument[];
+  outputArguments: DiscoveredMethodArgument[];
+}
+export interface MethodDiscovery {
+  connectionId: string;
+  armed: boolean;
+  methods: DiscoveredMethod[];
+}
+export interface MethodCallArgument {
+  dataType: string;
+  value: unknown;
+}
+export interface MethodCallPayload {
+  machineId?: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  /** Browse name of the method, shown in the command log. */
+  methodName?: string;
+  objectNodeId: string;
+  methodNodeId: string;
+  arguments: MethodCallArgument[];
+}
+export interface MethodCallAck {
+  status: string;
+  statusCode?: string | number;
+  outputs?: unknown;
+  error?: string;
+  ts?: string;
+}
+export interface SouthboundCommandRow extends SouthboundCommand {
+  ack_payload?: MethodCallAck | null;
+}
 
 export const exportApi = {
   topicCsvUrl: (topic: string, params?: { from?: string; to?: string; limit?: number }) => {

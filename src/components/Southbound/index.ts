@@ -1,1 +1,2 @@
-export { SouthboundPanel } from './SouthboundPanel';
+export { SouthboundPanel, SouthboundCommandLog } from './SouthboundPanel';
+export { MethodBrowser } from './MethodBrowser';

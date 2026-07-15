@@ -369,6 +369,8 @@ export interface SouthboundCommand {
   id: string;
   machine_id: string;
   command_kind: string;
+  /** Browse name of the invoked method (method-call commands only). */
+  method_name?: string | null;
   idempotency_key: string;
   status: string;
   error?: string | null;
