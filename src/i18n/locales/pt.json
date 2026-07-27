@@ -478,9 +478,8 @@
     "live": {
       "status": "ao vivo · atualiza a cada 3s",
       "clear": "Limpar",
-      "clearHint": "limpa a visualização; não apaga nada da máquina",
-      "empty": "Sem eventos ao vivo. Cicle a máquina (ciclos aparecem na hora que fecham).",
-      "cleared": "Feed limpo. Novos eventos aparecem aqui."
+      "clearHint": "limpa o feed ao vivo (persiste ao trocar de página); não apaga nada da máquina",
+      "empty": "Sem eventos ao vivo. Cicle a máquina (ciclos aparecem na hora que fecham)."
     },
     "history": {
       "loading": "lendo histórico…",
@@ -497,15 +496,15 @@
       "connectFirst": "Conecte a máquina {{machineId}} para configurar os tipos de evento monitorados.",
       "title": "Tipos de evento monitorados",
       "desc1": "Escolha quais tipos de evento entram no Live, no Histórico e no Kafka. Monitorar um tipo já inclui os subtipos dele (filtro OfType, aplicado no servidor).",
-      "desc2": "Os atributos de cada evento (Message, Severity, contadores) chegam automaticamente no payload; você escolhe só os tipos, não os campos.",
+      "desc2": "Para cada tipo monitorado você define a publicação: quais campos saem no payload, o tópico Kafka, o conector de destino e os headers da mensagem.",
       "usingDefault": "usando o padrão: os 3 tipos EUROMAP mapeados (ciclo, troca de caixa, alarme)",
       "noneSelected": "Nenhum tipo selecionado.",
       "remove": "remover",
       "browse": "Procurar tipos",
       "restoreDefault": "Restaurar padrão",
-      "discard": "Descartar",
-      "saving": "Salvando…",
-      "applyNote": "Vale no Histórico na hora. No Live, reconecte a máquina para reaplicar a subscrição."
+      "applyNote": "Modelagem e destino valem na hora. Um tipo novo entra no Histórico na hora; no Live, reconecte a máquina.",
+      "configure": "Configurar publicação",
+      "removeLastConfirm": "Este é o último tipo monitorado. Removê-lo faz o EDU voltar a monitorar o conjunto EUROMAP padrão (ciclo, troca de caixa, alarme). Continuar?"
     },
     "browser": {
       "title": "Tipos de evento",
@@ -522,7 +521,7 @@
       "noSubtypes": "{{name}} não tem subtipos. É um tipo concreto, o nível mais específico da árvore.",
       "attributes": "Atributos do evento",
       "informative": "informativo",
-      "attributesDesc": "Campos que chegam no payload de cada evento deste tipo. Vêm todos juntos, não é preciso escolher.",
+      "attributesDesc": "Campos que chegam no payload de cada evento deste tipo. Ao marcar o tipo, você escolhe e renomeia os campos publicados na configuração de publicação.",
       "noOwnAttributes": "Este tipo não declara atributos próprios.",
       "inheritedNote": "Além destes, todo evento também traz os atributos herdados dos tipos acima, como EventId, Time, Message e Severity.",
       "selectedCount": "{{count}} tipo(s) marcado(s) para monitorar",
@@ -531,6 +530,36 @@
     },
     "alarms": {
       "empty": "Nenhum alarme ativo 🎉"
+    },
+    "publish": {
+      "full": "Payload completo",
+      "modeled": "{{count}} campos",
+      "headersCount": "{{count}} header(s)",
+      "activeConnector": "Conector ativo (padrão)",
+      "platformTitle": "Streams da plataforma",
+      "platformDesc": "Publicações que o EDU produz desta máquina fora dos tipos de evento: status da máquina e telemetria de tags. Configuráveis do mesmo jeito.",
+      "platform": {
+        "status": "Status da máquina",
+        "telemetry": "Telemetria (tags)"
+      },
+      "modal": {
+        "title": "Publicação:",
+        "hint": "Escolha os campos publicados, o tópico, o conector e os headers Kafka. Vale para eventos ao vivo e para o backfill do histórico.",
+        "payloadSection": "Payload",
+        "payloadHint": "Os campos de governança (schema, sequence, replay, idempotencyKey) são sempre incluídos.",
+        "field": "Campo",
+        "renameTo": "Publicar como",
+        "destinationSection": "Destino Kafka",
+        "topic": "Tópico",
+        "topicHint": "Vazio = tópico padrão ({{topic}})",
+        "connector": "Conector",
+        "headersSection": "Headers Kafka",
+        "headersHint": "Headers adicionados em cada mensagem publicada deste tipo.",
+        "headerKey": "chave",
+        "headerValue": "valor",
+        "addHeader": "Adicionar header",
+        "reset": "Restaurar padrão"
+      }
     }
   },
   "kafka": {
@@ -616,7 +645,10 @@
         "outputs": "Saídas",
         "timeout": "Sem resposta após 15s. Verifique o log de comandos.",
         "arraySize": "Tamanho do array",
-        "emptyArray": "Array vazio. Aumente o tamanho para preencher os elementos."
+        "emptyArray": "Array vazio. Aumente o tamanho para preencher os elementos.",
+        "required": "obrigatório",
+        "optional": "opcional",
+        "argResults": "Resultado por argumento"
       }
     }
   },

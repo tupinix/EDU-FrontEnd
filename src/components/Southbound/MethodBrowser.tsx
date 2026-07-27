@@ -66,6 +66,7 @@ interface FieldSpec {
   dataTypeNodeId: string;
   valueRank: number;
   description?: string;
+  isOptional?: boolean;
   structure?: FieldSpec[];
   enumValues?: Array<{ name: string; value: number }>;
 }
@@ -402,6 +403,9 @@ function MethodCallModal({ machineId, method, onClose }: { machineId: string; me
 
   const ack = result?.ack_payload ?? null;
   const ackError = result?.error || ack?.error || null;
+  // Per-argument OPC UA verdicts (index-aligned): point at the exact rejected argument.
+  const argVerdicts = ack?.inputArgumentResults ?? null;
+  const isRejected = (i: number): boolean => !!(argVerdicts && argVerdicts[i] && !argVerdicts[i].startsWith('Good'));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
@@ -430,26 +434,29 @@ function MethodCallModal({ machineId, method, onClose }: { machineId: string; me
           ) : (
             <div className="space-y-4">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('southbound.methods.modal.inputArgs')}</p>
-              {method.inputArguments.map((arg, i) =>
-                states[i].kind === 'struct' ? (
-                  <StructArg
-                    key={`${i}-${arg.name}`}
-                    arg={arg}
-                    state={states[i] as { kind: 'struct'; elements: ElementValues[] }}
-                    errors={fieldErrors}
-                    argIndex={i}
-                    onChange={(next) => setState(i, next)}
-                  />
-                ) : (
-                  <SimpleField
-                    key={`${i}-${arg.name}`}
-                    field={arg}
-                    value={(states[i] as { kind: 'simple'; raw: Raw }).raw}
-                    error={fieldErrors[`${i}:${arg.name}`]}
-                    onChange={(raw) => setState(i, { kind: 'simple', raw })}
-                  />
-                ),
-              )}
+              {method.inputArguments.map((arg, i) => (
+                <div
+                  key={`${i}-${arg.name}`}
+                  className={cn(isRejected(i) && 'rounded-xl ring-1 ring-red-300 dark:ring-red-800 p-2 -m-2')}
+                >
+                  {states[i].kind === 'struct' ? (
+                    <StructArg
+                      arg={arg}
+                      state={states[i] as { kind: 'struct'; elements: ElementValues[] }}
+                      errors={fieldErrors}
+                      argIndex={i}
+                      onChange={(next) => setState(i, next)}
+                    />
+                  ) : (
+                    <SimpleField
+                      field={arg}
+                      value={(states[i] as { kind: 'simple'; raw: Raw }).raw}
+                      error={fieldErrors[`${i}:${arg.name}`]}
+                      onChange={(raw) => setState(i, { kind: 'simple', raw })}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
@@ -474,6 +481,19 @@ function MethodCallModal({ machineId, method, onClose }: { machineId: string; me
                 )}
               </div>
               {ackError && <p className="text-[12px] text-red-500">{ackError}</p>}
+              {argVerdicts && (
+                <div>
+                  <p className="text-[11px] text-gray-400 mb-1">{t('southbound.methods.modal.argResults')}</p>
+                  <ul className="space-y-0.5">
+                    {argVerdicts.map((v, i) => (
+                      <li key={i} className="text-[11px] font-mono flex items-center gap-2">
+                        <span className="text-gray-500">{method.inputArguments[i]?.name ?? `arg[${i}]`}</span>
+                        <span className={v.startsWith('Good') ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>{v}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {ack?.outputs !== undefined && ack.outputs !== null && (
                 <div>
                   <p className="text-[11px] text-gray-400 mb-1">{t('southbound.methods.modal.outputs')}</p>
@@ -611,8 +631,16 @@ function SimpleField({
   return (
     <label className="block min-w-0">
       <span className="flex items-center gap-2 min-w-0">
-        <span className="text-[11px] font-medium text-gray-500 truncate">{field.name}</span>
+        <span className="text-[11px] font-medium text-gray-500 truncate">
+          {field.name}
+          {field.isOptional !== true && <span className="text-gray-400" title={t('southbound.methods.modal.required')}> *</span>}
+        </span>
         <span className={typeBadge}>{typeLabel}</span>
+        {field.isOptional === true && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 shrink-0">
+            {t('southbound.methods.modal.optional')}
+          </span>
+        )}
       </span>
       {field.description && <span className="block text-[11px] text-gray-400 mt-0.5 truncate" title={field.description}>{field.description}</span>}
 

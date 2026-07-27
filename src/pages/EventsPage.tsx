@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, ChevronRight, ChevronLeft, Trash2, Search, X, FolderTree } from 'lucide-react';
-import { eventsApi, EventTypeRef, EventTypeSelection } from '../services/api';
-import { EuromapEvent, MachineAlarm } from '../types';
+import { RefreshCw, ChevronRight, ChevronLeft, Trash2, Search, X, FolderTree, SlidersHorizontal, Loader2, Plus } from 'lucide-react';
+import { eventsApi, publishRulesApi, kafkaApi, EventTypeRef, EventTypeSelection, PublishRuleEntry } from '../services/api';
+import { EuromapEvent, MachineAlarm, KafkaConnector } from '../types';
 import { cn } from '@/lib/utils';
 
 type Tab = 'live' | 'history' | 'alarms' | 'types';
@@ -61,7 +61,7 @@ export function EventsPage() {
         {tab === 'live' && <LiveEvents machineId={machineId} />}
         {tab === 'history' && <HistoryEvents machineId={machineId} hours={hours} />}
         {tab === 'alarms' && <Alarms machineId={machineId} />}
-        {tab === 'types' && <MonitoredTypes machineId={machineId} />}
+        {tab === 'types' && <MonitoredTypes key={machineId} machineId={machineId} />}
       </div>
     </div>
   );
@@ -204,27 +204,28 @@ function EventList({ events, selection }: { events: EuromapEvent[]; selection?: 
 
 function LiveEvents({ machineId }: { machineId: string }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const { data = [] } = useQuery<EuromapEvent[]>({
     queryKey: ['events-recent', machineId],
     queryFn: () => eventsApi.recent(machineId),
     refetchInterval: 3000,
   });
-  // "Limpar" esconde o que já está na tela (só a visualização, como no UaExpert);
-  // eventos novos continuam aparecendo. Set de chaves evita depender de relógio.
-  const [hidden, setHidden] = useState<Set<string> | null>(null);
-  const visible = useMemo(
-    () => (hidden ? data.filter((e) => !hidden.has(eventKey(e))) : data),
-    [data, hidden],
-  );
-  const { slice, pager } = usePager(visible);
+  // "Limpar" apaga o buffer do feed ao vivo NO SERVIDOR (persiste entre
+  // páginas/refresh); eventos novos continuam aparecendo normalmente.
+  const clearMut = useMutation({
+    mutationFn: () => eventsApi.clearRecent(machineId),
+    onMutate: () => qc.setQueryData<EuromapEvent[]>(['events-recent', machineId], []),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['events-recent', machineId] }),
+  });
+  const { slice, pager } = usePager(data);
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] text-gray-400 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> {t('events.live.status')}</p>
         {data.length > 0 && (
           <button
-            onClick={() => setHidden(new Set(data.map(eventKey)))}
-            disabled={visible.length === 0}
+            onClick={() => clearMut.mutate()}
+            disabled={clearMut.isPending}
             className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-40"
             title={t('events.live.clearHint')}
           >
@@ -232,8 +233,7 @@ function LiveEvents({ machineId }: { machineId: string }) {
           </button>
         )}
       </div>
-      {data.length === 0 ? <EmptyState text={t('events.live.empty')} /> :
-        visible.length === 0 ? <EmptyState text={t('events.live.cleared')} /> : (
+      {data.length === 0 ? <EmptyState text={t('events.live.empty')} /> : (
         <>
           <EventList events={slice} />
           <Pager p={pager} />
@@ -317,116 +317,465 @@ const ghostBtn = 'px-3 py-1.5 text-[12px] font-medium rounded-lg border border-g
 function MonitoredTypes({ machineId }: { machineId: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { data, error } = useQuery({
+
+  const { data: selection, error } = useQuery({
     queryKey: ['event-selection', machineId],
     queryFn: () => eventsApi.getEventSelection(machineId),
     retry: false,
   });
-  const [draft, setDraft] = useState<EventTypeSelection[] | null>(null);
+  const { data: rules, isLoading: rulesLoading, error: rulesError } = useQuery({
+    queryKey: ['publish-rules', machineId],
+    queryFn: () => publishRulesApi.getRules(machineId),
+    retry: false,
+    enabled: !!selection,
+  });
+  const { data: connectors } = useQuery<KafkaConnector[], Error>({
+    queryKey: ['kafka-connectors'],
+    queryFn: kafkaApi.getConnectors,
+    refetchInterval: 5000,
+  });
+
   const [browserOpen, setBrowserOpen] = useState(false);
+  const [editing, setEditing] = useState<PublishRuleEntry | null>(null);
+  const [pendingOpen, setPendingOpen] = useState<string | null>(null);
 
-  const base = data?.eventTypes ?? [];
-  const selection = draft ?? base;
-  const dirty = draft !== null;
-  const isDefault = !!data?.isDefault && !dirty;
-
-  const toggle = (ref: EventTypeSelection) =>
-    setDraft((cur) => {
-      const list = cur ?? base;
-      return list.some((t) => t.nodeId === ref.nodeId)
-        ? list.filter((t) => t.nodeId !== ref.nodeId)
-        : [...list, ref];
-    });
-  const remove = (nodeId: string) => setDraft((cur) => (cur ?? base).filter((t) => t.nodeId !== nodeId));
+  const monitored = selection?.eventTypes ?? [];
+  const isDefault = !!selection?.isDefault;
 
   const save = useMutation({
     mutationFn: (types: EventTypeSelection[]) => eventsApi.saveEventSelection(machineId, types),
     onSuccess: async () => {
-      setDraft(null);
       await qc.invalidateQueries({ queryKey: ['event-selection', machineId] });
+      await qc.invalidateQueries({ queryKey: ['publish-rules', machineId] });
     },
   });
+
+  // Toggling builds the next selection from `monitored`; only allow it once the
+  // selection query has resolved (else `monitored` is [] and we'd wipe it) and
+  // no save is in flight (else a stale-cache second toggle is a lost update).
+  const canEdit = !!selection && !save.isPending;
+
+  // Picking a type persists right away and opens its publish config as soon as
+  // the rules list knows the new type (select -> model -> destination flow).
+  const addType = (ref: EventTypeSelection) => {
+    if (!canEdit) return;
+    setPendingOpen(ref.nodeId);
+    setBrowserOpen(false);
+    save.mutate([...monitored, ref], { onError: () => setPendingOpen(null) });
+  };
+  const removeType = (nodeId: string) => {
+    if (!canEdit) return;
+    const next = monitored.filter((m) => m.nodeId !== nodeId);
+    // The server reads an empty selection as "restore the default EUROMAP set",
+    // so removing the last type re-monitors the three defaults. Make that explicit.
+    if (next.length === 0 && !window.confirm(t('events.types.removeLastConfirm'))) return;
+    save.mutate(next);
+  };
+  const toggle = (ref: EventTypeSelection) =>
+    monitored.some((m) => m.nodeId === ref.nodeId) ? removeType(ref.nodeId) : addType(ref);
+
+  useEffect(() => {
+    if (!pendingOpen || !rules) return;
+    const entry = rules.eventTypes.find((e) => e.ruleKey === pendingOpen);
+    if (entry) {
+      setEditing(entry);
+      setPendingOpen(null);
+    }
+  }, [pendingOpen, rules]);
 
   if (error) {
     return <EmptyState text={t('events.types.connectFirst', { machineId })} />;
   }
 
+  const entries = rules?.eventTypes ?? [];
+  const platform = rules?.platformStreams ?? [];
+  const loading = rulesLoading || (!rules && !rulesError);
+
   return (
     <div className="space-y-3">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 p-5 sm:p-6 space-y-4">
-        <div>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{t('events.types.title')}</p>
-          <p className="text-[12px] text-gray-400 mt-0.5">
-            {t('events.types.desc1')}
-          </p>
-          <p className="text-[12px] text-gray-400 mt-1">
-            {t('events.types.desc2')}
-          </p>
+          <p className="text-[12px] text-gray-400 mt-0.5">{t('events.types.desc1')}</p>
+          <p className="text-[12px] text-gray-400 mt-1">{t('events.types.desc2')}</p>
+          {isDefault && (
+            <div className="inline-flex items-center gap-2 mt-2.5 text-[11px] text-gray-500 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-1.5">
+              {t('events.types.usingDefault')}
+            </div>
+          )}
         </div>
 
-        {isDefault && (
-          <div className="inline-flex items-center gap-2 text-[11px] text-gray-500 bg-gray-50 dark:bg-gray-800/60 rounded-lg px-3 py-1.5">
-            {t('events.types.usingDefault')}
+        {rulesError ? (
+          <div className="px-5 sm:px-6 py-4 text-[12px] text-red-500">{(rulesError as Error).message}</div>
+        ) : loading ? (
+          <div className="px-5 sm:px-6 py-4 space-y-2">
+            {[0, 1, 2].map((i) => <div key={i} className="h-10 rounded-lg bg-gray-100 dark:bg-gray-800/60 animate-pulse" />)}
           </div>
-        )}
-
-        {selection.length === 0 ? (
-          <p className="text-[12px] text-gray-400">{t('events.types.noneSelected')}</p>
+        ) : entries.length === 0 ? (
+          <div className="px-5 sm:px-6 py-5 text-[12px] text-gray-400">{t('events.types.noneSelected')}</div>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {selection.map((ty) => (
-              <span key={ty.nodeId} title={ty.nodeId} className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-[12px] text-gray-700 dark:text-gray-200">
-                {ty.name}
-                <button onClick={() => remove(ty.nodeId)} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-100" title={t('events.types.remove')}>
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+            {entries.map((e) => (
+              <PublishRuleRow
+                key={e.ruleKey}
+                entry={e}
+                label={e.name}
+                connectors={connectors ?? []}
+                onConfigure={() => setEditing(e)}
+                onRemove={() => removeType(e.ruleKey)}
+                busy={save.isPending}
+              />
             ))}
           </div>
         )}
 
-        <div className="flex items-center gap-2 pt-1">
-          <button onClick={() => setBrowserOpen(true)} className={cn(ghostBtn, 'inline-flex items-center gap-1.5')}>
+        <div className="px-5 sm:px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2 flex-wrap">
+          <button onClick={() => setBrowserOpen(true)} disabled={!canEdit} className={cn(ghostBtn, 'inline-flex items-center gap-1.5')}>
             <FolderTree className="w-3.5 h-3.5" /> {t('events.types.browse')}
           </button>
           {!isDefault && (
-            <button onClick={() => save.mutate([])} disabled={save.isPending} className={ghostBtn}>{t('events.types.restoreDefault')}</button>
+            <button onClick={() => save.mutate([])} disabled={save.isPending || !selection} className={ghostBtn}>{t('events.types.restoreDefault')}</button>
           )}
+          {save.isPending && <Loader2 className="w-3.5 h-3.5 text-gray-300 animate-spin" />}
           <div className="flex-1" />
-          {dirty && <button onClick={() => setDraft(null)} className={ghostBtn}>{t('events.types.discard')}</button>}
-          <button
-            onClick={() => save.mutate(selection)}
-            disabled={!dirty || save.isPending}
-            className={primaryBtn}
-          >
-            {save.isPending ? t('events.types.saving') : t('common.save')}
-          </button>
+          <p className="text-[11px] text-gray-400">{t('events.types.applyNote')}</p>
         </div>
+        {save.isError && <p className="px-5 sm:px-6 pb-3 text-[12px] text-red-500">{(save.error as Error)?.message}</p>}
+      </div>
 
-        {save.isError && <p className="text-[12px] text-red-500">{(save.error as Error)?.message}</p>}
-        <p className="text-[11px] text-gray-400">
-          {t('events.types.applyNote')}
-        </p>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{t('events.publish.platformTitle')}</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">{t('events.publish.platformDesc')}</p>
+        </div>
+        {loading || rulesError ? (
+          <div className="px-5 sm:px-6 py-4 space-y-2">
+            {[0, 1].map((i) => <div key={i} className="h-10 rounded-lg bg-gray-100 dark:bg-gray-800/60 animate-pulse" />)}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+            {platform.map((e) => (
+              <PublishRuleRow
+                key={e.ruleKey}
+                entry={e}
+                label={t(`events.publish.platform.${e.ruleKey}`)}
+                connectors={connectors ?? []}
+                onConfigure={() => setEditing(e)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {browserOpen && (
         <EventTypeBrowser
           machineId={machineId}
-          selectedIds={new Set(selection.map((t) => t.nodeId))}
+          selectedIds={new Set(monitored.map((m) => m.nodeId))}
           onToggle={toggle}
+          busy={save.isPending}
           onClose={() => setBrowserOpen(false)}
+        />
+      )}
+
+      {editing && (
+        <PublishRuleModal
+          key={`${machineId}:${editing.ruleKey}`}
+          machineId={machineId}
+          entry={editing}
+          label={platform.some((p) => p.ruleKey === editing.ruleKey) ? t(`events.publish.platform.${editing.ruleKey}`) : editing.name}
+          connectors={connectors ?? []}
+          onClose={() => setEditing(null)}
         />
       )}
     </div>
   );
 }
 
+function PublishRuleRow({
+  entry, label, connectors, onConfigure, onRemove, busy,
+}: {
+  entry: PublishRuleEntry;
+  label: string;
+  connectors: KafkaConnector[];
+  onConfigure: () => void;
+  onRemove?: () => void;
+  busy?: boolean;
+}) {
+  const { t } = useTranslation();
+  const modeled = entry.fieldModel?.fields?.length ?? 0;
+  const headerCount = Object.keys(entry.headers ?? {}).length;
+  const connectorName = entry.connectorId
+    ? connectors.find((c) => c.id === entry.connectorId)?.name ?? entry.connectorId
+    : t('events.publish.activeConnector');
+  return (
+    <div className="px-5 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{label}</p>
+          <span className={cn(
+            'text-[10px] px-1.5 py-0.5 rounded-md font-medium',
+            modeled > 0 ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-400',
+          )}>
+            {modeled > 0 ? t('events.publish.modeled', { count: modeled }) : t('events.publish.full')}
+          </span>
+          {headerCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-800 text-gray-500">
+              {t('events.publish.headersCount', { count: headerCount })}
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] font-mono text-gray-400 mt-0.5 truncate" title={entry.ruleKey}>{entry.ruleKey}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="text-right hidden sm:block mr-1">
+          <p className={cn('text-[11px] font-mono', entry.topic ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400')}>
+            {entry.topic ?? entry.defaultTopic}
+          </p>
+          <p className="text-[11px] text-gray-400">{connectorName}</p>
+        </div>
+        <button
+          onClick={onConfigure}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <SlidersHorizontal className="w-3 h-3" /> {t('events.types.configure')}
+        </button>
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            disabled={busy}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40"
+            title={t('events.types.remove')}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---- publish rule editor (payload model + Kafka destination) ---------------
+
+interface FieldRow {
+  source: string;
+  included: boolean;
+  target: string;
+}
+
+interface HeaderRow {
+  key: string;
+  value: string;
+}
+
+function initialFieldRows(entry: PublishRuleEntry): FieldRow[] {
+  const model = new Map((entry.fieldModel?.fields ?? []).map((f) => [f.source, f.target ?? '']));
+  const hasModel = model.size > 0;
+  const rows = entry.availableFields.map((source) => ({
+    source,
+    included: hasModel ? model.has(source) : true,
+    target: model.get(source) ?? '',
+  }));
+  // A stored model may reference fields the catalog no longer lists; keep them.
+  for (const [source, target] of model) {
+    if (!rows.some((r) => r.source === source)) rows.push({ source, included: true, target });
+  }
+  return rows;
+}
+
+function PublishRuleModal({
+  machineId, entry, label, connectors, onClose,
+}: {
+  machineId: string;
+  entry: PublishRuleEntry;
+  label: string;
+  connectors: KafkaConnector[];
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [rows, setRows] = useState<FieldRow[]>(() => initialFieldRows(entry));
+  const [topic, setTopic] = useState(entry.topic ?? '');
+  const [connectorId, setConnectorId] = useState(entry.connectorId ?? '');
+  const [headers, setHeaders] = useState<HeaderRow[]>(() =>
+    Object.entries(entry.headers ?? {}).map(([key, value]) => ({ key, value })));
+
+  const saveMut = useMutation({
+    mutationFn: (body: {
+      connectorId: string | null;
+      topic: string | null;
+      headers: Record<string, string> | null;
+      fieldModel: { fields: { source: string; target?: string }[] } | null;
+    }) => publishRulesApi.updateRule(machineId, entry.ruleKey, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['publish-rules', machineId] });
+      onClose();
+    },
+  });
+
+  const setRow = (i: number, patch: Partial<FieldRow>) =>
+    setRows((cur) => cur.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const included = rows.filter((r) => r.included);
+  const allIncluded = included.length === rows.length;
+  const toggleAll = () => setRows((cur) => cur.map((r) => ({ ...r, included: !allIncluded })));
+
+  const setHeader = (i: number, patch: Partial<HeaderRow>) =>
+    setHeaders((cur) => cur.map((h, j) => (j === i ? { ...h, ...patch } : h)));
+  const removeHeader = (i: number) => setHeaders((cur) => cur.filter((_, j) => j !== i));
+
+  const producers = connectors.filter((c) => c.direction !== 'consumer');
+  const sectionTitle = 'text-[11px] font-semibold uppercase tracking-wide text-gray-400';
+
+  const save = () => {
+    // Full selection without renames is the default: store null, stays
+    // forward-compatible when the mapper gains new fields.
+    const isDefaultModel = allIncluded && rows.every((r) => r.target.trim() === '');
+    const cleanHeaders = headers
+      .map((h) => ({ key: h.key.trim(), value: h.value }))
+      .filter((h) => h.key !== '');
+    saveMut.mutate({
+      fieldModel: isDefaultModel ? null : {
+        fields: included.map((r) => ({ source: r.source, ...(r.target.trim() !== '' ? { target: r.target.trim() } : {}) })),
+      },
+      topic: topic.trim() === '' ? null : topic.trim(),
+      connectorId: connectorId === '' ? null : connectorId,
+      headers: cleanHeaders.length === 0 ? null : Object.fromEntries(cleanHeaders.map((h) => [h.key, h.value])),
+    });
+  };
+  const reset = () => saveMut.mutate({ fieldModel: null, topic: null, connectorId: null, headers: null });
+
+  const selectCls = 'px-2.5 py-1.5 text-[12px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const textCls = 'w-full px-2.5 py-1.5 text-[12px] font-mono rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl max-h-[85vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">
+              {t('events.publish.modal.title')} <span className="font-mono">{label}</span>
+            </p>
+            <p className="text-[12px] text-gray-400 mt-0.5">{t('events.publish.modal.hint')}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-auto">
+          <div className="px-5 pt-4">
+            <p className={sectionTitle}>{t('events.publish.modal.payloadSection')}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{t('events.publish.modal.payloadHint')}</p>
+          </div>
+          <table className="w-full text-[12px] mt-2">
+            <thead className="text-gray-400 border-b border-gray-50 dark:border-gray-800/50">
+              <tr>
+                <th className="w-10 px-5 py-2">
+                  <input type="checkbox" checked={allIncluded} onChange={toggleAll} className="accent-gray-900 dark:accent-white" />
+                </th>
+                <th className="text-left py-2 font-medium">{t('events.publish.modal.field')}</th>
+                <th className="text-left py-2 font-medium pr-5">{t('events.publish.modal.renameTo')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+              {rows.map((r, i) => (
+                <tr key={r.source} className={cn(!r.included && 'opacity-40')}>
+                  <td className="px-5 py-1.5">
+                    <input
+                      type="checkbox"
+                      checked={r.included}
+                      onChange={(e) => setRow(i, { included: e.target.checked })}
+                      className="accent-gray-900 dark:accent-white"
+                    />
+                  </td>
+                  <td className="py-1.5 font-mono text-gray-700 dark:text-gray-300">{r.source}</td>
+                  <td className="py-1.5 pr-5">
+                    <input
+                      value={r.target}
+                      onChange={(e) => setRow(i, { target: e.target.value })}
+                      placeholder={r.source}
+                      disabled={!r.included}
+                      className={cn(textCls, 'py-1 disabled:opacity-50')}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="px-5 pt-5">
+            <p className={sectionTitle}>{t('events.publish.modal.destinationSection')}</p>
+            <div className="mt-2.5 grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 mb-1">{t('events.publish.modal.topic')}</label>
+                <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={entry.defaultTopic} className={textCls} />
+                <p className="text-[11px] text-gray-400 mt-1">{t('events.publish.modal.topicHint', { topic: entry.defaultTopic })}</p>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 mb-1">{t('events.publish.modal.connector')}</label>
+                <select value={connectorId} onChange={(e) => setConnectorId(e.target.value)} className={cn(selectCls, 'w-full')}>
+                  <option value="">{t('events.publish.activeConnector')}</option>
+                  {producers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 pt-5 pb-5">
+            <p className={sectionTitle}>{t('events.publish.modal.headersSection')}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{t('events.publish.modal.headersHint')}</p>
+            <div className="mt-2.5 space-y-2">
+              {headers.map((h, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input value={h.key} onChange={(e) => setHeader(i, { key: e.target.value })} placeholder={t('events.publish.modal.headerKey')} className={cn(textCls, 'flex-1')} />
+                  <input value={h.value} onChange={(e) => setHeader(i, { value: e.target.value })} placeholder={t('events.publish.modal.headerValue')} className={cn(textCls, 'flex-[1.4]')} />
+                  <button onClick={() => removeHeader(i)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setHeaders((cur) => [...cur, { key: '', value: '' }])}
+                disabled={headers.length >= 16}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-40"
+              >
+                <Plus className="w-3 h-3" /> {t('events.publish.modal.addHeader')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {saveMut.error && <p className="px-5 py-2 text-[12px] text-red-500">{(saveMut.error as Error).message}</p>}
+
+        <div className="px-5 py-3 flex items-center justify-between gap-3 border-t border-gray-100 dark:border-gray-800">
+          <button onClick={reset} disabled={saveMut.isPending} className={ghostBtn}>
+            {t('events.publish.modal.reset')}
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="px-3.5 py-2 text-[13px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">{t('common.cancel')}</button>
+            <button
+              onClick={save}
+              disabled={saveMut.isPending || included.length === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl disabled:opacity-50"
+            >
+              {saveMut.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t('common.save')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventTypeBrowser({
-  machineId, selectedIds, onToggle, onClose,
+  machineId, selectedIds, onToggle, busy, onClose,
 }: {
   machineId: string;
   selectedIds: Set<string>;
   onToggle: (ref: EventTypeSelection) => void;
+  busy?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -488,7 +837,7 @@ function EventTypeBrowser({
                     <p className="text-[11px] font-mono text-gray-400 mt-0.5">{current.nodeId}</p>
                   </div>
                   <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700 cursor-pointer select-none shrink-0">
-                    <input type="checkbox" checked={selectedIds.has(current.nodeId)} onChange={() => onToggle({ nodeId: current.nodeId, name: current.name })} className="accent-gray-900 dark:accent-white" />
+                    <input type="checkbox" checked={selectedIds.has(current.nodeId)} disabled={busy} onChange={() => onToggle({ nodeId: current.nodeId, name: current.name })} className="accent-gray-900 dark:accent-white disabled:opacity-40" />
                     <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200">{t('events.browser.monitorThis')}</span>
                   </label>
                 </div>
@@ -521,7 +870,7 @@ function EventTypeBrowser({
                   <div className="mt-2 border-y border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
                     {subtypes.map((s) => (
                       <div key={s.nodeId} className="px-5 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/40 group">
-                        <input type="checkbox" checked={selectedIds.has(s.nodeId)} onChange={() => onToggle({ nodeId: s.nodeId, name: nameOf(s) })} className="accent-gray-900 dark:accent-white shrink-0" title={t('events.browser.monitorTitle')} />
+                        <input type="checkbox" checked={selectedIds.has(s.nodeId)} disabled={busy} onChange={() => onToggle({ nodeId: s.nodeId, name: nameOf(s) })} className="accent-gray-900 dark:accent-white shrink-0 disabled:opacity-40" title={t('events.browser.monitorTitle')} />
                         <button onClick={() => drill(s)} className="flex-1 min-w-0 flex items-center gap-2 text-left">
                           <span className="text-[13px] text-gray-900 dark:text-gray-100 truncate">{nameOf(s)}</span>
                           {typeof s.namespace === 'number' && s.namespace > 0 && <span className={nsBadge}>ns={s.namespace}</span>}

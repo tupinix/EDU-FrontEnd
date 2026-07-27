@@ -478,9 +478,8 @@
     "live": {
       "status": "live · refreshes every 3s",
       "clear": "Clear",
-      "clearHint": "clears the view; nothing is deleted from the machine",
-      "empty": "No live events. Cycle the machine (cycles show up as soon as they close).",
-      "cleared": "Feed cleared. New events will show up here."
+      "clearHint": "clears the live feed (persists across pages); nothing is deleted from the machine",
+      "empty": "No live events. Cycle the machine (cycles show up as soon as they close)."
     },
     "history": {
       "loading": "reading history…",
@@ -497,15 +496,15 @@
       "connectFirst": "Connect machine {{machineId}} to configure the monitored event types.",
       "title": "Monitored event types",
       "desc1": "Choose which event types feed Live, History and Kafka. Monitoring a type already includes its subtypes (OfType filter, applied on the server).",
-      "desc2": "Each event's attributes (Message, Severity, counters) arrive automatically in the payload; you only pick the types, not the fields.",
+      "desc2": "For each monitored type you define the publishing: which fields go in the payload, the Kafka topic, the destination connector and the message headers.",
       "usingDefault": "using the default: the 3 mapped EUROMAP types (cycle, box change, alarm)",
       "noneSelected": "No type selected.",
       "remove": "remove",
       "browse": "Browse types",
       "restoreDefault": "Restore default",
-      "discard": "Discard",
-      "saving": "Saving…",
-      "applyNote": "Takes effect in History right away. For Live, reconnect the machine to reapply the subscription."
+      "applyNote": "Modeling and destination apply right away. A new type feeds History immediately; for Live, reconnect the machine.",
+      "configure": "Configure publishing",
+      "removeLastConfirm": "This is the last monitored type. Removing it makes EDU monitor the default EUROMAP set again (cycle, box change, alarm). Continue?"
     },
     "browser": {
       "title": "Event types",
@@ -522,7 +521,7 @@
       "noSubtypes": "{{name}} has no subtypes. It is a concrete type, the most specific level of the tree.",
       "attributes": "Event attributes",
       "informative": "informative",
-      "attributesDesc": "Fields that arrive in the payload of every event of this type. They all come together, no need to choose.",
+      "attributesDesc": "Fields that arrive in the payload of every event of this type. When you check the type, you pick and rename the published fields in the publishing config.",
       "noOwnAttributes": "This type declares no attributes of its own.",
       "inheritedNote": "Besides these, every event also carries the attributes inherited from the types above, such as EventId, Time, Message and Severity.",
       "selectedCount": "{{count}} type(s) checked for monitoring",
@@ -531,6 +530,36 @@
     },
     "alarms": {
       "empty": "No active alarms 🎉"
+    },
+    "publish": {
+      "full": "Full payload",
+      "modeled": "{{count}} fields",
+      "headersCount": "{{count}} header(s)",
+      "activeConnector": "Active connector (default)",
+      "platformTitle": "Platform streams",
+      "platformDesc": "Publications EDU produces for this machine beyond the event types: machine status and tag telemetry. Configurable the same way.",
+      "platform": {
+        "status": "Machine status",
+        "telemetry": "Telemetry (tags)"
+      },
+      "modal": {
+        "title": "Publishing:",
+        "hint": "Choose the published fields, the topic, the connector and the Kafka headers. Applies to live events and to history backfill.",
+        "payloadSection": "Payload",
+        "payloadHint": "The governance fields (schema, sequence, replay, idempotencyKey) are always included.",
+        "field": "Field",
+        "renameTo": "Publish as",
+        "destinationSection": "Kafka destination",
+        "topic": "Topic",
+        "topicHint": "Empty = default topic ({{topic}})",
+        "connector": "Connector",
+        "headersSection": "Kafka headers",
+        "headersHint": "Headers added to every published message of this type.",
+        "headerKey": "key",
+        "headerValue": "value",
+        "addHeader": "Add header",
+        "reset": "Restore default"
+      }
     }
   },
   "kafka": {
@@ -616,7 +645,10 @@
         "outputs": "Outputs",
         "timeout": "No response after 15s. Check the command log.",
         "arraySize": "Array size",
-        "emptyArray": "Empty array. Increase the size to fill in elements."
+        "emptyArray": "Empty array. Increase the size to fill in elements.",
+        "required": "required",
+        "optional": "optional",
+        "argResults": "Per-argument result"
       }
     }
   },

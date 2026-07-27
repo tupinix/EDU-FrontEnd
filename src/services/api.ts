@@ -766,6 +766,55 @@ export const kafkaApi = {
   },
 };
 
+// ── Per-monitored-type publish rules (PUB-01) ──
+export interface PublishRuleFieldEntry {
+  source: string;
+  target?: string;
+}
+export interface PublishRuleEntry {
+  /** Monitored event type NodeId, or 'status' / 'telemetry'. */
+  ruleKey: string;
+  name: string;
+  kind: string;
+  defaultTopic: string;
+  availableFields: string[];
+  /** null = active connector. */
+  connectorId: string | null;
+  /** null = the schema's default topic. */
+  topic: string | null;
+  /** null = no extra Kafka headers. */
+  headers: Record<string, string> | null;
+  /** null = full flex payload. */
+  fieldModel: { fields: PublishRuleFieldEntry[] } | null;
+}
+export interface PublishRules {
+  machineId: string;
+  eventTypes: PublishRuleEntry[];
+  platformStreams: PublishRuleEntry[];
+}
+
+export const publishRulesApi = {
+  getRules: async (machineId: string): Promise<PublishRules> => {
+    const { data } = await apiClient.get<ApiResponse<PublishRules>>('/columbus/publish-rules', { params: { machineId } });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to fetch publish rules');
+    return data.data;
+  },
+  updateRule: async (
+    machineId: string,
+    ruleKey: string,
+    body: {
+      connectorId?: string | null;
+      topic?: string | null;
+      headers?: Record<string, string> | null;
+      fieldModel?: { fields: PublishRuleFieldEntry[] } | null;
+    },
+  ): Promise<PublishRuleEntry> => {
+    const { data } = await apiClient.put<ApiResponse<PublishRuleEntry>>('/columbus/publish-rules', { machineId, ruleKey, ...body });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to save publish rule');
+    return data.data;
+  },
+};
+
 export const southboundApi = {
   getCommands: async (limit = 100, offset = 0): Promise<{ commands: SouthboundCommand[]; total: number }> => {
     const { data } = await apiClient.get<ApiResponse<{ commands: SouthboundCommand[]; total: number }>>('/southbound/commands', { params: { limit, offset } });
@@ -827,6 +876,8 @@ export interface DiscoveredMethodArgument {
   /** -1 scalar, >=1 array (OPC UA ValueRank). */
   valueRank: number;
   description?: string;
+  /** StructureDefinition optional-field flag. Absent = required. */
+  isOptional?: boolean;
   /** Fields of a custom structured type (from its DataTypeDefinition). */
   structure?: DiscoveredMethodArgument[];
   /** Options of a custom enumeration type. */
@@ -868,6 +919,8 @@ export interface MethodCallAck {
   status: string;
   statusCode?: string | number;
   outputs?: unknown;
+  /** Per-argument OPC UA verdicts, index-aligned with the sent arguments. */
+  inputArgumentResults?: string[];
   error?: string;
   ts?: string;
 }
@@ -1425,6 +1478,12 @@ export const eventsApi = {
       params: { machineId },
     });
     return data.data ?? [];
+  },
+  // Clears the server-side live feed buffer, so the trash button survives refresh.
+  clearRecent: async (machineId: string): Promise<number> => {
+    const { data } = await apiClient.post<ApiResponse<{ cleared: number }>>('/columbus/events/recent/clear', { machineId });
+    if (!data.success) throw new Error(data.error || 'Failed to clear live events');
+    return data.data?.cleared ?? 0;
   },
   alarms: async (machineId: string): Promise<MachineAlarm[]> => {
     const { data } = await apiClient.get<ApiResponse<MachineAlarm[]>>('/columbus/alarms', {
