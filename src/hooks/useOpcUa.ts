@@ -146,5 +146,18 @@ export function useOpcUaLiveValues(connectionId: string | null) {
 
   useSocket<NodeLiveValue>('opcua:value-change', handleValueChange, !!connectionId);
 
+  // A deleted subscription stops pushing on the server; drop its row immediately
+  // (a seed refetch would also drop it, but this makes removal instant).
+  const handleValueRemoved = useCallback((r: { connectionId: string; nodeId: string }) => {
+    if (connectionId && r.connectionId !== connectionId) return;
+    setLiveMap(prev => {
+      const next = new Map(prev);
+      next.delete(`${r.connectionId}::${r.nodeId}`);
+      return next;
+    });
+  }, [connectionId]);
+
+  useSocket<{ connectionId: string; nodeId: string }>('opcua:value-removed', handleValueRemoved, !!connectionId);
+
   return Array.from(liveMap.values());
 }
