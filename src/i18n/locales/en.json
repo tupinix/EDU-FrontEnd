@@ -365,7 +365,7 @@
   },
   "explorer": {
     "title": "UNS Explorer",
-    "subtitle": "Navigate through MQTT topics hierarchy",
+    "subtitle": "Navigate through the Unified Namespace topic hierarchy",
     "topics": "Topics",
     "messages": "Messages",
     "noTopics": "No topics found",
@@ -377,8 +377,9 @@
     "time": "Time",
     "value": "Value",
     "qos": "QoS",
-    "noBroker": "No Broker Connected",
-    "noBrokerDesc": "To explore Unified Namespace topics, you need to be connected to an MQTT broker."
+    "noBroker": "No data in the Unified Namespace yet",
+    "noBrokerDesc": "Connect an ingestion source (OPC UA, Modbus, MQTT) to start populating the Unified Namespace.",
+    "connectSource": "Connect a source"
   },
   "configuration": {
     "title": "Broker Configuration",
@@ -529,7 +530,7 @@
       "done": "Done"
     },
     "alarms": {
-      "empty": "No active alarms 🎉"
+      "empty": "No active alarms"
     },
     "publish": {
       "full": "Full payload",

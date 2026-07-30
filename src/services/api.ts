@@ -777,7 +777,9 @@ export interface PublishRuleEntry {
   name: string;
   kind: string;
   defaultTopic: string;
-  availableFields: string[];
+  /** Modelable fields: payload source (dot path) + browse-path segments so the
+   *  editor can render them as a folder tree instead of a flat list. */
+  availableFields: { source: string; path: string[] }[];
   /** null = active connector. */
   connectorId: string | null;
   /** null = the schema's default topic. */
@@ -1508,6 +1510,16 @@ export const eventsApi = {
     if (!data.success) throw new Error(data.error || 'Falha ao navegar tipos de evento');
     return data.data ?? { nodeId: nodeId ?? '', subtypes: [], fields: [] };
   },
+  getEventTypeAttributes: async (
+    machineId: string,
+    nodeId: string,
+  ): Promise<{ nodeId: string; fields: EventTypeAttribute[] }> => {
+    const { data } = await apiClient.get<ApiResponse<{ nodeId: string; fields: EventTypeAttribute[] }>>(
+      '/columbus/event-type-attributes',
+      { params: { machineId, nodeId } },
+    );
+    return data.data ?? { nodeId, fields: [] };
+  },
   getEventSelection: async (machineId: string): Promise<{ eventTypes: EventTypeSelection[]; isDefault: boolean }> => {
     const { data } = await apiClient.get<ApiResponse<{ eventTypes: EventTypeSelection[]; isDefault: boolean }>>(
       '/columbus/event-selection',
@@ -1523,6 +1535,14 @@ export const eventsApi = {
     if (!data.success) throw new Error(data.error || 'Falha ao salvar seleção de eventos');
     return data.data?.eventTypes ?? eventTypes;
   },
+  setEventEnabled: async (machineId: string, nodeId: string, enabled: boolean): Promise<EventTypeSelection[]> => {
+    const { data } = await apiClient.put<ApiResponse<{ eventTypes: EventTypeSelection[] }>>(
+      '/columbus/event-selection/enabled',
+      { machineId, nodeId, enabled },
+    );
+    if (!data.success) throw new Error(data.error || 'Falha ao alternar tipo de evento');
+    return data.data?.eventTypes ?? [];
+  },
 };
 
 export interface EventTypeRef {
@@ -1536,7 +1556,17 @@ export interface EventTypeTree {
   subtypes: EventTypeRef[];
   fields: EventTypeRef[];
 }
+/** One deep attribute of an event type: its full browse path (for the folder
+ *  tree) and the UaExpert-style key. This is exactly what the raw payload carries. */
+export interface EventTypeAttribute {
+  key: string;
+  path: string[];
+  nodeId: string;
+}
 export interface EventTypeSelection {
   nodeId: string;
   name: string;
+  /** Whether the type is actively monitored (live subscription). Missing =
+   *  enabled (legacy / default set); new additions come disabled until toggled. */
+  enabled?: boolean;
 }

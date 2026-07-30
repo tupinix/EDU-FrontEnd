@@ -2,23 +2,36 @@ import { useTranslation } from 'react-i18next';
 import { useDashboardMetrics, useActiveBroker } from '../hooks/useMetrics';
 import { HealthStatus, MetricsCards, ConnectionsStatus } from '../components/Dashboard';
 import { Loader2, RefreshCw, ArrowRight } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { kafkaApi } from '../services/api';
+import type { KafkaConnector } from '../types';
 
 export function Dashboard() {
   const { t } = useTranslation();
   const { data: metrics, isLoading, error, refetch } = useDashboardMetrics();
   const { data: activeBroker } = useActiveBroker();
+  const { data: kafkaConnectors } = useQuery<KafkaConnector[], Error>({
+    queryKey: ['kafka-connectors'],
+    queryFn: kafkaApi.getConnectors,
+    refetchInterval: 5000,
+  });
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
     queryClient.invalidateQueries({ queryKey: ['brokers-status'] });
     queryClient.invalidateQueries({ queryKey: ['active-broker'] });
+    queryClient.invalidateQueries({ queryKey: ['kafka-connectors'] });
     refetch();
   };
 
-  const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
+  // A Kafka connection is a broker too: the active + connected Kafka
+  // connector makes the dashboard "live" even when there's no MQTT broker
+  // (the Flex edge case, where Kafka/Redpanda is the destination).
+  const hasActiveMqtt = Boolean(activeBroker && activeBroker.status === 'connected');
+  const hasActiveKafka = (kafkaConnectors ?? []).some((c) => c.isActive && c.status === 'connected');
+  const hasActiveBroker = hasActiveMqtt || hasActiveKafka;
 
   if (isLoading) {
     return (
@@ -51,7 +64,7 @@ export function Dashboard() {
             {t('dashboard.title')}
           </h1>
           <p className="text-[12px] sm:text-[13px] text-gray-400 mt-0.5">
-            EDU Cloud &middot; {t('dashboard.overview')}
+            EDU Edge &middot; {t('dashboard.overview')}
           </p>
         </div>
         <div className="flex items-center gap-4">

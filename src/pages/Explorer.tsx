@@ -30,7 +30,11 @@ export function Explorer() {
   // Mobile: which panel is visible
   const [mobilePanel, setMobilePanel] = useState<'tree' | 'detail'>('tree');
 
-  const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
+  // The UNS is fed by any ingestion source (OPC UA, Modbus, EtherNet/IP,
+  // MQTT), not only an MQTT broker — and Kafka is an OUTPUT destination that
+  // never populates it. So gate on whether the tree actually has topics,
+  // not on an active MQTT broker.
+  const hasTopics = (topics?.length ?? 0) > 0;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['topics-tree'] });
@@ -52,8 +56,8 @@ export function Explorer() {
     return topic.fullPath.toLowerCase().includes(q) || topic.name.toLowerCase().includes(q);
   });
 
-  // No broker
-  if (!hasActiveBroker) {
+  // Nothing ingested into the UNS yet
+  if (!isLoadingTree && !hasTopics) {
     return (
       <div className="space-y-5">
         <div>
@@ -66,10 +70,10 @@ export function Explorer() {
           <p className="text-[15px] font-medium text-gray-900 dark:text-gray-100 mb-1">{t('explorer.noBroker')}</p>
           <p className="text-[13px] text-gray-400 mb-5 max-w-md mx-auto">{t('explorer.noBrokerDesc')}</p>
           <Link
-            to="/configuration"
+            to="/opcua"
             className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-900 dark:text-gray-100 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            {t('dashboard.configureBrokers')}
+            {t('explorer.connectSource')}
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>

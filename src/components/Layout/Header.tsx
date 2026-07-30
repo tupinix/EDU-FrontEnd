@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Wifi, WifiOff, Sun, Moon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useActiveBroker } from '../../hooks/useMetrics';
+import { kafkaApi } from '../../services/api';
+import type { KafkaConnector } from '../../types';
 import { useAuthStore, useUIStore } from '../../hooks/useStore';
 import { useSocketStatus } from '../../hooks/useSocket';
 import { cn } from '@/lib/utils';
@@ -19,10 +22,23 @@ export function Header() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { data: activeBroker } = useActiveBroker();
+  const { data: kafkaConnectors } = useQuery<KafkaConnector[], Error>({
+    queryKey: ['kafka-connectors'],
+    queryFn: kafkaApi.getConnectors,
+    refetchInterval: 5000,
+  });
   const { user, clearAuth } = useAuthStore();
   const { isConnected: wsConnected, mode } = useSocketStatus();
 
-  const hasActiveBroker = activeBroker && activeBroker.status === 'connected';
+  // A Kafka connection is a broker too: fall back to the active Kafka
+  // connector when there's no MQTT broker (the Flex edge case).
+  const activeKafka = (kafkaConnectors ?? []).find((c) => c.isActive) ?? null;
+  const broker = activeBroker
+    ? { name: activeBroker.name, status: activeBroker.status }
+    : activeKafka
+      ? { name: activeKafka.name, status: activeKafka.status }
+      : null;
+  const isConnected = broker?.status === 'connected';
 
   const handleLogout = () => {
     clearAuth();
@@ -33,22 +49,22 @@ export function Header() {
     <header className="sticky top-0 z-30 h-12 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors">
       {/* Left — Broker status */}
       <div className="flex items-center gap-2.5 pl-10 lg:pl-0">
-        {activeBroker ? (
+        {broker ? (
           <>
             <span
               className={cn(
                 'w-1.5 h-1.5 rounded-full',
-                hasActiveBroker && 'bg-emerald-400',
-                activeBroker.status === 'connecting' && 'bg-amber-400 animate-pulse',
-                activeBroker.status === 'error' && 'bg-red-400',
-                activeBroker.status === 'disconnected' && 'bg-gray-300'
+                isConnected && 'bg-emerald-400',
+                broker.status === 'connecting' && 'bg-amber-400 animate-pulse',
+                broker.status === 'error' && 'bg-red-400',
+                broker.status === 'disconnected' && 'bg-gray-300'
               )}
             />
             <span className="text-[13px] text-gray-500 hidden sm:inline">
-              <span className="font-medium text-gray-700">{activeBroker.name}</span>
-              {' — '}
-              <span className={cn(hasActiveBroker ? 'text-emerald-600' : 'text-gray-400')}>
-                {hasActiveBroker ? 'Connected' : activeBroker.status}
+              <span className="font-medium text-gray-700">{broker.name}</span>
+              {' · '}
+              <span className={cn(isConnected ? 'text-emerald-600' : 'text-gray-400')}>
+                {isConnected ? 'Connected' : broker.status}
               </span>
             </span>
           </>

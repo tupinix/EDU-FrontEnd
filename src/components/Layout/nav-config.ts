@@ -58,6 +58,7 @@ export const navGroups: NavGroup[] = [
       { path: '/opcua',      labelKey: 'sidebar.opcua',  icon: Server },
       { path: '/modbus',     labelKey: 'sidebar.modbus', icon: Cpu },
       { path: '/ethernetip', labelKey: 'sidebar.ethip',  icon: Network },
+      { path: '/kafka',      labelKey: 'sidebar.kafka',  icon: Send },
       { path: '/neo4j',      labelKey: 'sidebar.neo4j',  icon: Factory },
     ],
   },
@@ -65,7 +66,6 @@ export const navGroups: NavGroup[] = [
     key: 'integrations',
     labelKey: 'sidebar.groups.integrations',
     items: [
-      { path: '/kafka',      labelKey: 'sidebar.kafka',      icon: Send },
       { path: '/southbound', labelKey: 'sidebar.southbound', icon: Wrench },
       { path: '/api-rest',   labelKey: 'API REST',           icon: Globe },
       { path: '/i3x',      labelKey: 'i3X',           icon: Zap },

@@ -341,6 +341,7 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
 
   const monitored = selection?.eventTypes ?? [];
   const isDefault = !!selection?.isDefault;
+  const enabledByNode = new Map(monitored.map((m) => [m.nodeId, m.enabled !== false]));
 
   const save = useMutation({
     mutationFn: (types: EventTypeSelection[]) => eventsApi.saveEventSelection(machineId, types),
@@ -348,6 +349,14 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
       await qc.invalidateQueries({ queryKey: ['event-selection', machineId] });
       await qc.invalidateQueries({ queryKey: ['publish-rules', machineId] });
     },
+  });
+
+  // Enable/disable a single type without touching the selection. Applies to
+  // history immediately; the live subscription picks it up on the next reconnect.
+  const toggleEnabled = useMutation({
+    mutationFn: ({ nodeId, enabled }: { nodeId: string; enabled: boolean }) =>
+      eventsApi.setEventEnabled(machineId, nodeId, enabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['event-selection', machineId] }),
   });
 
   // Toggling builds the next selection from `monitored`; only allow it once the
@@ -421,9 +430,11 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
                 entry={e}
                 label={e.name}
                 connectors={connectors ?? []}
+                enabled={enabledByNode.get(e.ruleKey) ?? true}
+                onToggleEnabled={(v) => toggleEnabled.mutate({ nodeId: e.ruleKey, enabled: v })}
                 onConfigure={() => setEditing(e)}
                 onRemove={() => removeType(e.ruleKey)}
-                busy={save.isPending}
+                busy={save.isPending || toggleEnabled.isPending}
               />
             ))}
           </div>
@@ -492,7 +503,7 @@ function MonitoredTypes({ machineId }: { machineId: string }) {
 }
 
 function PublishRuleRow({
-  entry, label, connectors, onConfigure, onRemove, busy,
+  entry, label, connectors, onConfigure, onRemove, busy, enabled, onToggleEnabled,
 }: {
   entry: PublishRuleEntry;
   label: string;
@@ -500,8 +511,11 @@ function PublishRuleRow({
   onConfigure: () => void;
   onRemove?: () => void;
   busy?: boolean;
+  enabled?: boolean;
+  onToggleEnabled?: (enabled: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const isOn = enabled !== false;
   const modeled = entry.fieldModel?.fields?.length ?? 0;
   const headerCount = Object.keys(entry.headers ?? {}).length;
   const connectorName = entry.connectorId
@@ -509,7 +523,7 @@ function PublishRuleRow({
     : t('events.publish.activeConnector');
   return (
     <div className="px-5 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-      <div className="flex-1 min-w-0">
+      <div className={cn('flex-1 min-w-0', onToggleEnabled && !isOn && 'opacity-50')}>
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{label}</p>
           <span className={cn(
@@ -527,6 +541,23 @@ function PublishRuleRow({
         <p className="text-[11px] font-mono text-gray-400 mt-0.5 truncate" title={entry.ruleKey}>{entry.ruleKey}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
+        {onToggleEnabled && (
+          <button
+            onClick={() => onToggleEnabled(!isOn)}
+            disabled={busy}
+            title={isOn ? t('common.disable') : t('common.enable')}
+            aria-pressed={isOn}
+            className={cn(
+              'relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 disabled:opacity-50',
+              isOn ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700',
+            )}
+          >
+            <span className={cn(
+              'inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-gray-900 transition-transform',
+              isOn ? 'translate-x-4' : 'translate-x-1',
+            )} />
+          </button>
+        )}
         <div className="text-right hidden sm:block mr-1">
           <p className={cn('text-[11px] font-mono', entry.topic ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400')}>
             {entry.topic ?? entry.defaultTopic}
@@ -558,6 +589,7 @@ function PublishRuleRow({
 
 interface FieldRow {
   source: string;
+  path: string[];
   included: boolean;
   target: string;
 }
@@ -570,16 +602,118 @@ interface HeaderRow {
 function initialFieldRows(entry: PublishRuleEntry): FieldRow[] {
   const model = new Map((entry.fieldModel?.fields ?? []).map((f) => [f.source, f.target ?? '']));
   const hasModel = model.size > 0;
-  const rows = entry.availableFields.map((source) => ({
-    source,
-    included: hasModel ? model.has(source) : true,
-    target: model.get(source) ?? '',
+  const rows: FieldRow[] = entry.availableFields.map((f) => ({
+    source: f.source,
+    path: f.path,
+    included: hasModel ? model.has(f.source) : true,
+    target: model.get(f.source) ?? '',
   }));
-  // A stored model may reference fields the catalog no longer lists; keep them.
+  // A stored model may reference fields the browse no longer lists; keep them.
   for (const [source, target] of model) {
-    if (!rows.some((r) => r.source === source)) rows.push({ source, included: true, target });
+    if (!rows.some((r) => r.source === source)) {
+      rows.push({ source, path: source.startsWith('fields.') ? source.slice(7).split('_') : [source], included: true, target });
+    }
   }
   return rows;
+}
+
+// ---- payload field tree (folder view of the modelable fields) ---------------
+
+interface ModelNode {
+  name: string;
+  rowIndex?: number;
+  children: Map<string, ModelNode>;
+}
+
+function buildModelTree(rows: FieldRow[]): ModelNode {
+  const root: ModelNode = { name: '', children: new Map() };
+  rows.forEach((r, i) => {
+    const segs = r.path.length > 0 ? r.path : [r.source];
+    let node = root;
+    segs.forEach((seg, si) => {
+      let child = node.children.get(seg);
+      if (!child) {
+        child = { name: seg, children: new Map() };
+        node.children.set(seg, child);
+      }
+      if (si === segs.length - 1) child.rowIndex = i;
+      node = child;
+    });
+  });
+  return root;
+}
+
+function collectRows(node: ModelNode): number[] {
+  const out: number[] = [];
+  if (node.rowIndex !== undefined) out.push(node.rowIndex);
+  for (const c of node.children.values()) out.push(...collectRows(c));
+  return out;
+}
+
+interface ModelTreeProps {
+  node: ModelNode;
+  depth: number;
+  rows: FieldRow[];
+  onToggle: (idxs: number[], value: boolean) => void;
+  onTarget: (i: number, v: string) => void;
+  inputCls: string;
+}
+
+function ModelTree(props: ModelTreeProps) {
+  return <>{[...props.node.children.values()].map((c) => <ModelField key={c.name} {...props} node={c} />)}</>;
+}
+
+function ModelField({ node, depth, rows, onToggle, onTarget, inputCls }: ModelTreeProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false); // folders collapsed by default (many fields)
+  const hasChildren = node.children.size > 0;
+  const idxs = collectRows(node);
+  const allOn = idxs.length > 0 && idxs.every((i) => rows[i].included);
+  const someOn = idxs.some((i) => rows[i].included);
+  const isField = node.rowIndex !== undefined;
+  const row = isField ? rows[node.rowIndex as number] : undefined;
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 py-1 pr-4" style={{ paddingLeft: `${depth * 14 + 12}px` }}>
+        {hasChildren ? (
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-gray-400 hover:text-gray-600 shrink-0">
+            <ChevronRight className={cn('w-3 h-3 transition-transform', open && 'rotate-90')} />
+          </button>
+        ) : (
+          <span className="inline-block w-3 shrink-0" />
+        )}
+        <input
+          type="checkbox"
+          checked={allOn}
+          ref={(el) => { if (el) el.indeterminate = !allOn && someOn; }}
+          onChange={() => onToggle(idxs, !allOn)}
+          className="accent-gray-900 dark:accent-white shrink-0"
+        />
+        <span
+          className={cn(
+            'font-mono truncate',
+            hasChildren && !isField ? 'text-gray-700 dark:text-gray-200 font-medium' : 'text-gray-600 dark:text-gray-300',
+          )}
+          title={node.name}
+        >
+          {node.name}
+          {hasChildren && !isField && <span className="ml-1 text-gray-400 font-normal">({idxs.length})</span>}
+        </span>
+        {isField && row && (
+          <input
+            value={row.target}
+            onChange={(e) => onTarget(node.rowIndex as number, e.target.value)}
+            placeholder={t('events.publish.modal.renameTo')}
+            disabled={!row.included}
+            className={cn(inputCls, 'ml-auto w-28 sm:w-40 py-0.5 disabled:opacity-50')}
+          />
+        )}
+      </div>
+      {hasChildren && open && (
+        <ModelTree node={node} depth={depth + 1} rows={rows} onToggle={onToggle} onTarget={onTarget} inputCls={inputCls} />
+      )}
+    </div>
+  );
 }
 
 function PublishRuleModal({
@@ -614,6 +748,9 @@ function PublishRuleModal({
 
   const setRow = (i: number, patch: Partial<FieldRow>) =>
     setRows((cur) => cur.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const onToggleRows = (idxs: number[], value: boolean) =>
+    setRows((cur) => cur.map((r, j) => (idxs.includes(j) ? { ...r, included: value } : r)));
+  const modelTree = buildModelTree(rows);
   const included = rows.filter((r) => r.included);
   const allIncluded = included.length === rows.length;
   const toggleAll = () => setRows((cur) => cur.map((r) => ({ ...r, included: !allIncluded })));
@@ -669,41 +806,24 @@ function PublishRuleModal({
             <p className={sectionTitle}>{t('events.publish.modal.payloadSection')}</p>
             <p className="text-[11px] text-gray-400 mt-0.5">{t('events.publish.modal.payloadHint')}</p>
           </div>
-          <table className="w-full text-[12px] mt-2">
-            <thead className="text-gray-400 border-b border-gray-50 dark:border-gray-800/50">
-              <tr>
-                <th className="w-10 px-5 py-2">
-                  <input type="checkbox" checked={allIncluded} onChange={toggleAll} className="accent-gray-900 dark:accent-white" />
-                </th>
-                <th className="text-left py-2 font-medium">{t('events.publish.modal.field')}</th>
-                <th className="text-left py-2 font-medium pr-5">{t('events.publish.modal.renameTo')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-              {rows.map((r, i) => (
-                <tr key={r.source} className={cn(!r.included && 'opacity-40')}>
-                  <td className="px-5 py-1.5">
-                    <input
-                      type="checkbox"
-                      checked={r.included}
-                      onChange={(e) => setRow(i, { included: e.target.checked })}
-                      className="accent-gray-900 dark:accent-white"
-                    />
-                  </td>
-                  <td className="py-1.5 font-mono text-gray-700 dark:text-gray-300">{r.source}</td>
-                  <td className="py-1.5 pr-5">
-                    <input
-                      value={r.target}
-                      onChange={(e) => setRow(i, { target: e.target.value })}
-                      placeholder={r.source}
-                      disabled={!r.included}
-                      className={cn(textCls, 'py-1 disabled:opacity-50')}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-2 border-y border-gray-50 dark:border-gray-800/50">
+            <div className="px-5 py-2 flex items-center gap-2 border-b border-gray-50 dark:border-gray-800/50">
+              <input type="checkbox" checked={allIncluded} onChange={toggleAll} className="accent-gray-900 dark:accent-white" />
+              <span className="text-[11px] text-gray-400">
+                {t('events.publish.modal.field')} · {t('events.publish.modal.renameTo')}
+              </span>
+            </div>
+            <div className="py-1">
+              <ModelTree
+                node={modelTree}
+                depth={0}
+                rows={rows}
+                onToggle={onToggleRows}
+                onTarget={(i, v) => setRow(i, { target: v })}
+                inputCls={textCls}
+              />
+            </div>
+          </div>
 
           <div className="px-5 pt-5">
             <p className={sectionTitle}>{t('events.publish.modal.destinationSection')}</p>
@@ -769,6 +889,69 @@ function PublishRuleModal({
   );
 }
 
+// ---- event attribute tree (folder view of a type's full attribute set) -----
+
+interface AttrNode {
+  name: string;
+  key?: string;
+  children: Map<string, AttrNode>;
+}
+
+function buildAttrTree(fields: { key: string; path: string[] }[]): AttrNode {
+  const root: AttrNode = { name: '', children: new Map() };
+  for (const f of fields) {
+    let node = root;
+    f.path.forEach((seg, i) => {
+      let child = node.children.get(seg);
+      if (!child) {
+        child = { name: seg, children: new Map() };
+        node.children.set(seg, child);
+      }
+      if (i === f.path.length - 1) child.key = f.key;
+      node = child;
+    });
+  }
+  return root;
+}
+
+function AttrTree({ node, depth }: { node: AttrNode; depth: number }) {
+  return (
+    <>
+      {[...node.children.values()].map((child) => (
+        <AttrTreeNode key={child.name} node={child} depth={depth} />
+      ))}
+    </>
+  );
+}
+
+function AttrTreeNode({ node, depth }: { node: AttrNode; depth: number }) {
+  const [open, setOpen] = useState(depth < 1);
+  const hasChildren = node.children.size > 0;
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 py-0.5 text-[12px]" style={{ paddingLeft: `${depth * 14 + 8}px` }}>
+        {hasChildren ? (
+          <button onClick={() => setOpen((o) => !o)} className="text-gray-400 hover:text-gray-600 shrink-0">
+            <ChevronRight className={cn('w-3 h-3 transition-transform', open && 'rotate-90')} />
+          </button>
+        ) : (
+          <span className="inline-block w-3 shrink-0" />
+        )}
+        <span
+          className={cn(
+            'font-mono truncate',
+            hasChildren ? 'text-gray-700 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-400',
+          )}
+          title={node.key ?? node.name}
+        >
+          {node.name}
+        </span>
+      </div>
+      {hasChildren && open && <AttrTree node={node} depth={depth + 1} />}
+    </div>
+  );
+}
+
 function EventTypeBrowser({
   machineId, selectedIds, onToggle, busy, onClose,
 }: {
@@ -788,11 +971,20 @@ function EventTypeBrowser({
     queryFn: () => eventsApi.browseEventTypes(machineId, current.nodeId),
     retry: false,
   });
+  // Complete attribute set of the current type (deep: inherited + nested), for
+  // the folder tree. This is exactly what the raw payload carries.
+  const { data: attrData, isFetching: attrFetching } = useQuery({
+    queryKey: ['event-type-attributes', machineId, current.nodeId],
+    queryFn: () => eventsApi.getEventTypeAttributes(machineId, current.nodeId),
+    retry: false,
+  });
+  const attrTree = buildAttrTree(attrData?.fields ?? []);
+  const attrCount = attrData?.fields.length ?? 0;
+  const attrLoading = attrFetching && !attrData;
 
   const nameOf = (r: EventTypeRef): string => r.displayName || r.browseName;
   const q = filter.trim().toLowerCase();
   const subtypes = (data?.subtypes ?? []).filter((s) => !q || nameOf(s).toLowerCase().includes(q));
-  const fields = data?.fields ?? [];
   const drill = (r: EventTypeRef) => { setFilter(''); setPath((p) => [...p, { nodeId: r.nodeId, name: nameOf(r) }]); };
   const goTo = (i: number) => { setFilter(''); setPath((p) => p.slice(0, i + 1)); };
 
@@ -891,27 +1083,20 @@ function EventTypeBrowser({
 
               <div className="mt-5 pb-5">
                 <div className="px-5 flex items-center gap-2">
-                  <p className={sectionTitle}>{t('events.browser.attributes')}{loading ? '' : ` (${fields.length})`}</p>
+                  <p className={sectionTitle}>{t('events.browser.attributes')}{attrLoading ? '' : ` (${attrCount})`}</p>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400">{t('events.browser.informative')}</span>
                 </div>
                 <p className="px-5 text-[11px] text-gray-400 mt-0.5">
                   {t('events.browser.attributesDesc')}
                 </p>
-                {loading ? (
+                {attrLoading ? (
                   <div className="px-5 mt-3"><div className="h-16 rounded-lg bg-gray-100 dark:bg-gray-800/60 animate-pulse" /></div>
-                ) : fields.length > 0 ? (
-                  <div className="mx-5 mt-2.5 rounded-xl border border-gray-100 dark:border-gray-800 px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
-                    {fields.map((fld) => (
-                      <span key={fld.nodeId} className="text-[12px] font-mono text-gray-600 dark:text-gray-300 truncate" title={nameOf(fld)}>{nameOf(fld)}</span>
-                    ))}
+                ) : attrCount > 0 ? (
+                  <div className="mx-5 mt-2.5 rounded-xl border border-gray-100 dark:border-gray-800 py-2 max-h-72 overflow-auto">
+                    <AttrTree node={attrTree} depth={0} />
                   </div>
                 ) : (
                   <p className="px-5 mt-2.5 text-[12px] text-gray-400">{t('events.browser.noOwnAttributes')}</p>
-                )}
-                {!atRoot && (
-                  <p className="px-5 mt-2 text-[11px] text-gray-400">
-                    {t('events.browser.inheritedNote')}
-                  </p>
                 )}
               </div>
             </>

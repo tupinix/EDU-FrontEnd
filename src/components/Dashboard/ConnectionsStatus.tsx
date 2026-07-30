@@ -1,12 +1,14 @@
-import { Lock, Radio, Network, Cpu, CircuitBoard } from 'lucide-react';
+import { Lock, Radio, Network, Cpu, CircuitBoard, Send } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useBrokersStatus } from '../../hooks/useMetrics';
 import { useModbusConnections } from '../../hooks/useModbus';
 import { useOpcUaConnections } from '../../hooks/useOpcUa';
 import { useEthipConnections } from '../../hooks/useEthernetIp';
-import type { BrokerConfig, ModbusConnection, OpcUaConnection, EthipConnection } from '../../types';
+import { kafkaApi } from '../../services/api';
+import type { BrokerConfig, ModbusConnection, OpcUaConnection, EthipConnection, KafkaConnector } from '../../types';
 import { cn } from '@/lib/utils';
 
-type ProtoKind = 'mqtt' | 'modbus' | 'opcua' | 'ethip';
+type ProtoKind = 'mqtt' | 'modbus' | 'opcua' | 'ethip' | 'kafka';
 
 interface UnifiedConnection {
   id: string;
@@ -23,6 +25,7 @@ const META: Record<ProtoKind, { label: string; color: string; icon: typeof Radio
   modbus: { label: 'Modbus',      color: 'bg-blue-500',    icon: Cpu },
   opcua:  { label: 'OPC-UA',      color: 'bg-purple-500',  icon: Network },
   ethip:  { label: 'EtherNet/IP', color: 'bg-emerald-500', icon: CircuitBoard },
+  kafka:  { label: 'Kafka',       color: 'bg-slate-600',   icon: Send },
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -37,6 +40,11 @@ export function ConnectionsStatus() {
   const { data: modbusList } = useModbusConnections();
   const { data: opcuaList } = useOpcUaConnections();
   const { data: ethipList } = useEthipConnections();
+  const { data: kafkaList } = useQuery<KafkaConnector[], Error>({
+    queryKey: ['kafka-connectors'],
+    queryFn: kafkaApi.getConnectors,
+    refetchInterval: 5000,
+  });
 
   const all: UnifiedConnection[] = [
     ...(brokersData?.brokers ?? []).map((b: BrokerConfig): UnifiedConnection => ({
@@ -68,6 +76,15 @@ export function ConnectionsStatus() {
       name: c.name,
       host: `${c.host}/${c.slot}`,
       status: c.status,
+    })),
+    ...((kafkaList ?? []) as KafkaConnector[]).map((c): UnifiedConnection => ({
+      id: `kafka-${c.id}`,
+      kind: 'kafka',
+      name: c.name,
+      host: c.bootstrapServers,
+      status: c.status,
+      isActive: c.isActive,
+      useTls: c.securityProtocol === 'SSL' || c.securityProtocol === 'SASL_SSL',
     })),
   ];
 

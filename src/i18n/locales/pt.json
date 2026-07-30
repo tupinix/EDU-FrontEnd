@@ -365,7 +365,7 @@
   },
   "explorer": {
     "title": "UNS Explorer",
-    "subtitle": "Navegue pela hierarquia de topicos MQTT",
+    "subtitle": "Navegue pela hierarquia de topicos do Unified Namespace",
     "topics": "Topicos",
     "messages": "Mensagens",
     "noTopics": "Nenhum topico encontrado",
@@ -377,8 +377,9 @@
     "time": "Horario",
     "value": "Valor",
     "qos": "QoS",
-    "noBroker": "Nenhum Broker Conectado",
-    "noBrokerDesc": "Para explorar os topicos do Unified Namespace, voce precisa estar conectado a um broker MQTT."
+    "noBroker": "Nenhum dado na UNS ainda",
+    "noBrokerDesc": "Conecte uma fonte de ingestao (OPC UA, Modbus, MQTT) para comecar a popular o Unified Namespace.",
+    "connectSource": "Conectar uma fonte"
   },
   "configuration": {
     "title": "Configuracao de Brokers",

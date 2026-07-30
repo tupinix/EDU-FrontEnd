@@ -7,8 +7,6 @@ import { useTenant } from '../hooks/useTenant';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
 
-type ProductView = 'cloud' | 'edge';
-
 const ROOT_DOMAIN = 'espacodedadosunificado.com.br';
 
 /**
@@ -32,7 +30,6 @@ export function Login() {
   const { setAuth, isAuthenticated } = useAuthStore();
   const { isTenantSubdomain } = useTenant();
 
-  const [view, setView] = useState<ProductView>('cloud');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -48,9 +45,8 @@ export function Login() {
   // cookie is sitting in this browser." Otherwise the cross-subdomain
   // edu_token cookie outlives a logout (HttpOnly, can't be touched
   // from JS) and the next navigate('/') silently rehydrates the user
-  // via useCookieSessionRehydration — clicking the EDU logo or the
-  // Edge "Contact for installation" link to /#demo felt like an
-  // instant login because RootRoute re-ran /auth/me successfully.
+  // via useCookieSessionRehydration, so clicking the EDU logo felt
+  // like an instant login because RootRoute re-ran /auth/me.
   useEffect(() => {
     authApi.logout().catch(() => { /* fine if no session existed */ });
     localStorage.removeItem('edu_token');
@@ -162,53 +158,15 @@ export function Login() {
             />
           </button>
           <h1 className="text-[30px] font-semibold text-white tracking-tight leading-tight">
-            {view === 'cloud' ? t('auth.loginTitle') : t('auth.edge.title')}
+            {t('auth.edge.title')}
           </h1>
           <p className="text-[14.5px] text-gray-400 mt-2 font-light">
-            {view === 'cloud' ? t('auth.loginSubtitle') : t('auth.edge.subtitle')}
+            {t('auth.loginSubtitle')}
           </p>
         </div>
 
         {/* Form card — white island on dark */}
         <div className="bg-white rounded-2xl border border-white/10 shadow-2xl shadow-emerald-500/10 overflow-hidden">
-          {/* Product toggle (Cloud / Edge) */}
-          <div className="px-7 pt-6 pb-1">
-            <span className="text-[10px] font-semibold text-gray-500 tracking-[0.18em] uppercase block mb-2.5">
-              {t('auth.edition')}
-            </span>
-            <div className="flex rounded-xl bg-gray-100/80 p-1 gap-1">
-              {([
-                { mode: 'cloud' as ProductView, img: '/edu-cloud.png', alt: 'EDU Cloud' },
-                { mode: 'edge'  as ProductView, img: '/edu-edge.png',  alt: 'EDU Edge' },
-              ]).map(({ mode, img, alt }) => {
-                const isSelected = view === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setView(mode)}
-                    className={`flex-1 flex items-center justify-center py-2.5 rounded-lg transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-white shadow-sm'
-                        : 'opacity-40 hover:opacity-70'
-                    }`}
-                    aria-pressed={isSelected}
-                    aria-label={alt}
-                  >
-                    <img
-                      src={img}
-                      alt={alt}
-                      className="h-5 w-auto select-none"
-                      draggable={false}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {view === 'cloud' ? (
-            /* Cloud → login form */
             <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
               {error && (
                 <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">
@@ -276,91 +234,12 @@ export function Login() {
                 )}
               </button>
             </form>
-          ) : (
-            /* Edge → download panel */
-            <EdgeDownloadPanel />
-          )}
         </div>
 
         {/* Footer */}
         <p className="text-center text-[11px] text-gray-500 mt-7 tracking-[0.14em] uppercase font-mono">
           EDU Platform · v1.0
         </p>
-      </div>
-    </div>
-  );
-}
-
-function EdgeDownloadPanel() {
-  const { t } = useTranslation();
-
-  // Pitch points shown at the top of the Edge tab. Two short lines that
-  // sell what makes Edge different from Cloud: it's a real desktop app
-  // (or browser-accessible from any machine on the local network),
-  // and it processes data locally before forwarding to Cloud.
-  const pitch: string[] = [
-    t('auth.edge.pitchNative'),
-    t('auth.edge.pitchLocalFirst'),
-  ];
-
-  // Distribution is invite-only for now (the binary is gated behind a
-  // license server). We funnel interested users to the waitlist on the
-  // marketing page (Landing has an id="demo" section with the form).
-  const requirements: Array<{ label: string; min: string; rec: string }> = [
-    { label: t('auth.edge.reqCpu'), min: t('auth.edge.reqCpuMin'), rec: t('auth.edge.reqCpuRec') },
-    { label: t('auth.edge.reqRam'), min: t('auth.edge.reqRamMin'), rec: t('auth.edge.reqRamRec') },
-    { label: t('auth.edge.reqGpu'), min: t('auth.edge.reqGpuMin'), rec: t('auth.edge.reqGpuRec') },
-  ];
-
-  return (
-    <div className="px-7 py-6 space-y-5">
-      {/* Pitch — what is Edge? */}
-      <ul className="space-y-2 text-[13px] text-gray-600 leading-relaxed">
-        {pitch.map((line) => (
-          <li key={line} className="flex gap-2.5">
-            <span className="text-emerald-500 shrink-0" aria-hidden>·</span>
-            <span>{line}</span>
-          </li>
-        ))}
-      </ul>
-
-      {/* CTA — contact for installation (Landing #demo anchor hosts the
-          waitlist form; invite-only launch means we don't expose a
-          direct download). */}
-      <a
-        href="/#demo"
-        className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5"
-      >
-        {t('auth.edge.contactCta')}
-        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-      </a>
-
-      {/* Requirements table — CPU / RAM / GPU only */}
-      <div className="pt-2">
-        <div className="flex items-baseline justify-between mb-2.5">
-          <span className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-            {t('auth.edge.requirementsTitle')}
-          </span>
-        </div>
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3.5 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-            <span></span>
-            <span className="text-right w-[110px]">{t('auth.edge.min')}</span>
-            <span className="text-right w-[140px]">{t('auth.edge.recommended')}</span>
-          </div>
-          {requirements.map((row, i) => (
-            <div
-              key={row.label}
-              className={`grid grid-cols-[1fr_auto_auto] gap-x-3 px-3.5 py-2.5 text-[12.5px] ${
-                i < requirements.length - 1 ? 'border-b border-gray-100' : ''
-              }`}
-            >
-              <span className="text-gray-700 font-medium">{row.label}</span>
-              <span className="text-right text-gray-500 w-[110px] tabular-nums">{row.min}</span>
-              <span className="text-right text-gray-900 w-[140px] tabular-nums">{row.rec}</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
