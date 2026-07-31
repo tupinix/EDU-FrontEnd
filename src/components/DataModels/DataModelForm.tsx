@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Loader2, ArrowLeft, Plus, Trash2, ChevronRight, Search, ArrowRight, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCreateDataModel, useUpdateDataModel } from '../../hooks/useDataModels';
-import { DataModel, BrokerConfig, TopicNode, SmProfile } from '../../types';
+import { DataModel, BrokerConfig, KafkaConnector, TopicNode, SmProfile } from '../../types';
 import { topicsApi } from '../../services/api';
 import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
@@ -101,10 +101,20 @@ export function DataModelForm({ model, profile, onClose }: Props) {
   // Kept for backwards compatibility with legacy models that persisted a source topic
   const [sourceTopic] = useState(model?.sourceTopic ?? '');
   const [targetTopic, setTargetTopic] = useState(model?.targetTopic ?? '');
-  // Source broker — which broker to pull the source data from. The topic tree
-  // below is scoped to this broker so you browse/link only its tags.
-  const [sourceBrokerId, setSourceBrokerId] = useState(model?.sourceBrokerId ?? '');
-  const [targetBrokerId, setTargetBrokerId] = useState(model?.targetBrokerId ?? '');
+  // Source origin — an MQTT broker or a Kafka connector ('kind:id'). The topic
+  // tree below is scoped to it so you browse/link only its tags (kafka-consumed
+  // topics are stamped with the connector id in the tree's brokerId slot).
+  const [sourceOrigin, setSourceOrigin] = useState(() =>
+    model?.sourceKind === 'kafka'
+      ? (model.sourceConnectorId ? `kafka:${model.sourceConnectorId}` : 'kafka:')
+      : (model?.sourceBrokerId ? `mqtt:${model.sourceBrokerId}` : ''));
+  const [targetDest, setTargetDest] = useState(() =>
+    model?.targetKind === 'kafka'
+      ? (model.targetConnectorId ? `kafka:${model.targetConnectorId}` : 'kafka:')
+      : (model?.targetBrokerId ? `mqtt:${model.targetBrokerId}` : ''));
+  const sourceScopeId = sourceOrigin.startsWith('mqtt:') || sourceOrigin.startsWith('kafka:')
+    ? sourceOrigin.slice(sourceOrigin.indexOf(':') + 1)
+    : '';
   const [treeSearch, setTreeSearch] = useState('');
 
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -153,8 +163,8 @@ export function DataModelForm({ model, profile, onClose }: Props) {
 
   // Data fetching
   const { data: topicTree = [] } = useQuery<TopicNode[]>({
-    queryKey: ['topics-tree', sourceBrokerId || 'active'],
-    queryFn: () => topicsApi.getTree(sourceBrokerId || undefined),
+    queryKey: ['topics-tree', sourceScopeId || 'active'],
+    queryFn: () => topicsApi.getTree(sourceScopeId || undefined),
     staleTime: 15000,
   });
 
@@ -168,6 +178,13 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     staleTime: 15000,
   });
   const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
+
+  const { data: connectorsRaw } = useQuery<{ success: boolean; data?: KafkaConnector[] }>({
+    queryKey: ['kafka-connectors-modal'],
+    queryFn: async () => { const { data } = await apiClient.get('/kafka'); return data; },
+    staleTime: 15000,
+  });
+  const connectors: KafkaConnector[] = connectorsRaw?.data ?? [];
 
   // Fetch payload when source topic changes (used by output preview for legacy fromPayload attributes)
   useEffect(() => {
@@ -309,12 +326,18 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     const effectiveSourceTopic = sourceTopic.trim() || firstLinkedTopic;
 
     const extraFromAttrs = attributes.filter(a => !a.fromPayload && a.key);
+    const sourceIsKafka = sourceOrigin.startsWith('kafka:');
+    const targetIsKafka = targetDest.startsWith('kafka:');
     const body: Record<string, unknown> = {
       name: name.trim(),
       sourceTopic: effectiveSourceTopic,
       targetTopic: targetTopic.trim(),
-      sourceBrokerId: sourceBrokerId || undefined,
-      targetBrokerId: targetBrokerId || undefined,
+      sourceKind: sourceIsKafka ? 'kafka' : 'mqtt',
+      sourceBrokerId: !sourceIsKafka && sourceOrigin ? sourceOrigin.slice(5) : undefined,
+      sourceConnectorId: sourceIsKafka ? (sourceOrigin.slice(6) || undefined) : undefined,
+      targetKind: targetIsKafka ? 'kafka' : 'mqtt',
+      targetBrokerId: !targetIsKafka && targetDest ? targetDest.slice(5) : undefined,
+      targetConnectorId: targetIsKafka ? (targetDest.slice(6) || undefined) : undefined,
       fieldMappings,
       extraFields: Object.fromEntries(extraFromAttrs.filter(a => !['enterprise', 'site', 'area', 'line', 'equipment', 'unit', 'dataType', 'description', 'tagName'].includes(a.key)).map(a => [a.key, a.value])),
     };
@@ -378,17 +401,24 @@ export function DataModelForm({ model, profile, onClose }: Props) {
         <div className="w-56 lg:w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 flex flex-col overflow-hidden shrink-0 hidden md:flex">
           <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Topics</p>
-            {/* Source broker — which broker to pull source data from */}
-            <label className="text-[10px] text-gray-400 mb-1 block">Broker de origem</label>
+            {/* Source origin — MQTT broker or Kafka connector to pull source data from */}
+            <label className="text-[10px] text-gray-400 mb-1 block">Origem</label>
             <select
-              value={sourceBrokerId}
-              onChange={e => setSourceBrokerId(e.target.value)}
+              value={sourceOrigin}
+              onChange={e => setSourceOrigin(e.target.value)}
               className="w-full mb-2 px-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-200 dark:focus:border-gray-700"
             >
               <option value="">Broker ativo (principal)</option>
-              {brokers.filter(b => b.status === 'connected').map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
+              <optgroup label="MQTT Brokers">
+                {brokers.filter(b => b.status === 'connected').map(b => (
+                  <option key={b.id} value={`mqtt:${b.id}`}>{b.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Kafka Connectors">
+                {connectors.map(c => (
+                  <option key={c.id} value={`kafka:${c.id}`}>{c.name}</option>
+                ))}
+              </optgroup>
             </select>
             <p className="text-[10px] text-gray-300 mb-2">Arraste uma tag para um atributo pra linká-la</p>
             <div className="relative">
@@ -522,10 +552,17 @@ export function DataModelForm({ model, profile, onClose }: Props) {
                   placeholder="enterprise/site/area/equipment/tag" className="input-clean font-mono text-[12px]" />
               </div>
               <div className="w-full sm:w-56">
-                <label className="text-[11px] text-gray-400 mb-1 block">Broker Destination</label>
-                <select value={targetBrokerId} onChange={e => setTargetBrokerId(e.target.value)} className="input-clean text-[12px]">
-                  <option value="">Default</option>
-                  {brokers.map(b => <option key={b.id} value={b.id}>{b.name}{b.status === 'connected' ? ' ✓' : ''}</option>)}
+                <label className="text-[11px] text-gray-400 mb-1 block">Destination</label>
+                <select value={targetDest} onChange={e => setTargetDest(e.target.value)} className="input-clean text-[12px]">
+                  <option value="">Default (broker ativo)</option>
+                  <optgroup label="MQTT Brokers">
+                    {brokers.map(b => <option key={b.id} value={`mqtt:${b.id}`}>{b.name}{b.status === 'connected' ? ' ✓' : ''}</option>)}
+                  </optgroup>
+                  <optgroup label="Kafka Connectors">
+                    {connectors.filter(c => c.direction !== 'consumer').map(c => (
+                      <option key={c.id} value={`kafka:${c.id}`}>{c.name}{c.status === 'connected' ? ' ✓' : ''}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             </div>

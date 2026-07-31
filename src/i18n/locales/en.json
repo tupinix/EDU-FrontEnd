@@ -594,6 +594,15 @@
       "produceTopics": "Produce topics (csv)",
       "consumeTopics": "Consume topics (csv)",
       "create": "Create"
+    },
+    "nifi": {
+      "button": "NiFi",
+      "title": "NiFi Configuration",
+      "hint": "Topic on this connection that receives external method-call commands. Publishing a command to this topic invokes the matching OPC-UA method on the machine (same flow as REST southbound); the ACK/NACK is published to imm.method-call.acks.",
+      "topicLabel": "Command topic *",
+      "save": "Save",
+      "clear": "Remove",
+      "badge": "nifi"
     }
   },
   "southbound": {

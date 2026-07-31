@@ -594,6 +594,15 @@
       "produceTopics": "Produce topics (csv)",
       "consumeTopics": "Consume topics (csv)",
       "create": "Criar"
+    },
+    "nifi": {
+      "button": "NiFi",
+      "title": "NiFi Configuration",
+      "hint": "Topico desta conexao que recebe comandos externos de method-call. Quem publicar um comando nesse topico invoca o metodo OPC-UA correspondente na maquina (mesmo fluxo do REST southbound); o ACK/NACK sai em imm.method-call.acks.",
+      "topicLabel": "Topico de comandos *",
+      "save": "Salvar",
+      "clear": "Remover",
+      "badge": "nifi"
     }
   },
   "southbound": {

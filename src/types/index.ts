@@ -348,8 +348,14 @@ export interface KafkaConnector {
   consumeTopics: string[];
   enabled: boolean;
   isActive: boolean;
+  topicMap?: KafkaTopicMap;
   status: 'connected' | 'connecting' | 'disconnected' | 'error';
   messageCount: number;
+}
+
+export interface KafkaTopicMap {
+  northbound?: Record<string, string>;
+  southbound?: Record<string, string>;
 }
 
 export interface KafkaConnectorInput {
@@ -363,6 +369,7 @@ export interface KafkaConnectorInput {
   direction?: KafkaConnectorDirection;
   produceTopics?: string[];
   consumeTopics?: string[];
+  topicMap?: KafkaTopicMap;
 }
 
 export interface SouthboundCommand {
@@ -455,8 +462,14 @@ export interface DataModel {
   enabled: boolean;
   sourceTopic: string;
   sourceBrokerId?: string;
+  /** Where the source data comes from: an MQTT broker (default) or a Kafka connector. */
+  sourceKind?: 'mqtt' | 'kafka';
+  sourceConnectorId?: string;
   targetTopic: string;
   targetBrokerId?: string;
+  /** Where the modeled output is published: MQTT broker (default) or a Kafka connector. */
+  targetKind?: 'mqtt' | 'kafka';
+  targetConnectorId?: string;
   enterprise?: string;
   site?: string;
   area?: string;
