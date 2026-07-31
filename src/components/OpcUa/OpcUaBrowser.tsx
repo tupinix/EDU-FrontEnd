@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Loader2, Plus, ChevronRight, Search, X, Copy, Check, Eye, EyeOff, Rss } from 'lucide-react';
 import { useOpcUaBrowse, useCreateOpcUaSubscription, useOpcUaSubscriptions, useDeleteOpcUaSubscription } from '../../hooks/useOpcUa';
 import { useQuery } from '@tanstack/react-query';
-import { OpcUaConnection, BrokerConfig } from '../../types';
+import { OpcUaConnection, BrokerConfig, KafkaConnector } from '../../types';
 import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
 
@@ -39,26 +39,47 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   const [topic, setTopic] = useState(() => suggestTopic(path, node.displayName));
   const [interval, setInterval] = useState(1000);
   const [showPreview, setShowPreview] = useState(false);
+  const [destinationKind, setDestinationKind] = useState<'mqtt' | 'kafka'>('mqtt');
   const [brokerId, setBrokerId] = useState('');
+  const [connectorId, setConnectorId] = useState('');
 
   const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
     queryKey: ['brokers-list-modal'], queryFn: async () => { const { data } = await apiClient.get('/brokers'); return data; }, staleTime: 15000,
   });
   const brokers: BrokerConfig[] = brokersRaw?.data ?? [];
 
+  const { data: connectorsRaw } = useQuery<{ success: boolean; data?: KafkaConnector[] }>({
+    queryKey: ['kafka-connectors-modal'], queryFn: async () => { const { data } = await apiClient.get('/kafka'); return data; }, staleTime: 15000,
+  });
+  // Only connectors that can produce are valid publish targets.
+  const connectors: KafkaConnector[] = (connectorsRaw?.data ?? []).filter(c => c.direction === 'producer' || c.direction === 'both');
+
+  const destReady = destinationKind === 'mqtt' ? !!brokerId : !!connectorId;
+
   const handleSave = async () => {
-    if (!topic.trim()) return;
-    try { await createSub.mutateAsync({ connectionId, nodeId: node.nodeId, mqttTopic: topic.trim(), samplingIntervalMs: interval, brokerId: brokerId || undefined }); onClose(); } catch { /* handled */ }
+    if (!topic.trim() || !destReady) return;
+    try {
+      await createSub.mutateAsync({
+        connectionId,
+        nodeId: node.nodeId,
+        mqttTopic: topic.trim(),
+        samplingIntervalMs: interval,
+        destinationKind,
+        brokerId: destinationKind === 'mqtt' ? (brokerId || undefined) : undefined,
+        connectorId: destinationKind === 'kafka' ? (connectorId || undefined) : undefined,
+      });
+      onClose();
+    } catch { /* handled */ }
   };
 
-  const preview = JSON.stringify({ nodeId: node.nodeId, topic, value: '<live>', timestamp: new Date().toISOString() }, null, 2);
+  const preview = JSON.stringify({ nodeId: node.nodeId, value: '<live>', dataType: '<type>', quality: 'Good', source: 'opcua', timestamp: new Date().toISOString() }, null, 2);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-md">
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Publish to MQTT</h3>
+          <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Publish node</h3>
           <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
         </div>
         <div className="px-6 py-5 space-y-4">
@@ -72,20 +93,45 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             <p className="text-[11px] font-mono text-gray-400 break-all mt-0.5">{node.nodeId}</p>
           </div>
 
-          {/* Broker */}
-          <Field label="MQTT Broker *">
-            {brokers.length === 0 ? (
-              <p className="text-[12px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
-            ) : (
-              <select value={brokerId} onChange={(e) => setBrokerId(e.target.value)} className="input-clean" required>
-                <option value="">— Select a broker —</option>
-                {brokers.map(b => <option key={b.id} value={b.id}>{b.name} ({b.host}:{b.port}){b.status === 'connected' ? ' ✓' : ''}</option>)}
-              </select>
-            )}
+          {/* Destination */}
+          <Field label="Destination">
+            <div className="flex gap-1.5">
+              {(['mqtt', 'kafka'] as const).map(k => (
+                <button key={k} type="button" onClick={() => setDestinationKind(k)}
+                  className={cn('flex-1 py-1.5 text-[11px] font-medium rounded-lg border transition-colors', destinationKind === k ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700')}>
+                  {k === 'mqtt' ? 'MQTT Broker' : 'Kafka Connector'}
+                </button>
+              ))}
+            </div>
           </Field>
 
+          {/* Target: MQTT broker or Kafka connector */}
+          {destinationKind === 'mqtt' ? (
+            <Field label="MQTT Broker *">
+              {brokers.length === 0 ? (
+                <p className="text-[12px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
+              ) : (
+                <select value={brokerId} onChange={(e) => setBrokerId(e.target.value)} className="input-clean" required>
+                  <option value="">Select a broker</option>
+                  {brokers.map(b => <option key={b.id} value={b.id}>{b.name} ({b.host}:{b.port}){b.status === 'connected' ? ' ✓' : ''}</option>)}
+                </select>
+              )}
+            </Field>
+          ) : (
+            <Field label="Kafka Connector *">
+              {connectors.length === 0 ? (
+                <p className="text-[12px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">No producer connectors configured. Add one in Kafka.</p>
+              ) : (
+                <select value={connectorId} onChange={(e) => setConnectorId(e.target.value)} className="input-clean" required>
+                  <option value="">Select a connector</option>
+                  {connectors.map(c => <option key={c.id} value={c.id}>{c.name} ({c.bootstrapServers}){c.status === 'connected' ? ' ✓' : ''}</option>)}
+                </select>
+              )}
+            </Field>
+          )}
+
           {/* Topic */}
-          <Field label="MQTT Topic *">
+          <Field label={destinationKind === 'kafka' ? 'Kafka Topic *' : 'MQTT Topic *'}>
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} className="input-clean font-mono" placeholder="plant/area/equipment/tag" autoFocus />
             <p className="text-[11px] text-gray-300 mt-1">Auto-suggested from browsed path</p>
           </Field>
@@ -111,7 +157,7 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
         </div>
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2.5">
           <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={!topic.trim() || !brokerId || createSub.isPending}
+          <button onClick={handleSave} disabled={!topic.trim() || !destReady || createSub.isPending}
             className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30">
             <Rss className="w-3.5 h-3.5" /> {createSub.isPending ? 'Publishing...' : 'Publish'}
           </button>
@@ -177,6 +223,9 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
                     <p className="text-[11px] font-mono text-gray-600 truncate">{sub.nodeId}</p>
                     <p className="text-[11px] text-gray-400 truncate">→ {sub.mqttTopic}</p>
                   </div>
+                  <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0', sub.destinationKind === 'kafka' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
+                    {sub.destinationKind === 'kafka' ? 'Kafka' : 'MQTT'}
+                  </span>
                   <span className="text-[10px] text-gray-300 shrink-0">{sub.samplingIntervalMs}ms</span>
                   <button onClick={() => deleteSub.mutate(sub.id)} className="p-1 text-red-300 hover:text-red-500 transition-colors shrink-0"><X className="w-3 h-3" /></button>
                 </div>

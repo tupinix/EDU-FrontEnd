@@ -97,7 +97,7 @@ export function useDisconnectOpcUa() {
 export function useCreateOpcUaSubscription() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ connectionId, ...data }: { connectionId: string; nodeId: string; mqttTopic: string; samplingIntervalMs?: number; brokerId?: string }) =>
+    mutationFn: ({ connectionId, ...data }: { connectionId: string; nodeId: string; mqttTopic: string; samplingIntervalMs?: number; brokerId?: string; destinationKind?: 'mqtt' | 'kafka'; connectorId?: string }) =>
       opcuaApi.createSubscription(connectionId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['opcua-subscriptions'] });

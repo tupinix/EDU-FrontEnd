@@ -680,7 +680,14 @@ export const opcuaApi = {
 
   createSubscription: async (
     connectionId: string,
-    sub: { nodeId: string; mqttTopic: string; samplingIntervalMs?: number; brokerId?: string }
+    sub: {
+      nodeId: string;
+      mqttTopic: string;
+      samplingIntervalMs?: number;
+      brokerId?: string;
+      destinationKind?: 'mqtt' | 'kafka';
+      connectorId?: string;
+    }
   ): Promise<OpcUaSubscription> => {
     const { data } = await apiClient.post<ApiResponse<OpcUaSubscription>>(
       `/opcua/connections/${connectionId}/subscribe`,

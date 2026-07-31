@@ -386,6 +386,9 @@ export interface OpcUaSubscription {
   samplingIntervalMs: number;
   enabled: boolean;
   brokerId?: string;
+  /** Where the node value is published: MQTT/UNS (default) or a Kafka connector. */
+  destinationKind?: 'mqtt' | 'kafka';
+  connectorId?: string;
   createdAt: string;
 }
 
