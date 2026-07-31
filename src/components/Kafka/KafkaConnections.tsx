@@ -42,8 +42,9 @@ export function KafkaConnections() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<KafkaConnectorInput>(emptyForm);
   const [testResult, setTestResult] = useState<Record<string, string>>({});
-  const [nifiId, setNifiId] = useState<string | null>(null);
-  const [nifiTopic, setNifiTopic] = useState('');
+  const [cmdId, setCmdId] = useState<string | null>(null);
+  const [cmdMethodTopic, setCmdMethodTopic] = useState('');
+  const [cmdWriteTopic, setCmdWriteTopic] = useState('');
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['kafka-connectors'] });
 
@@ -62,26 +63,38 @@ export function KafkaConnections() {
     onError: (e: Error, id) => setTestResult((p) => ({ ...p, [id]: e.message })),
   });
 
-  // NiFi Configuration — which topic of this connection receives external
-  // method-call commands (inverse southbound: publish -> EDU invokes the method).
-  const nifiMut = useMutation({
-    mutationFn: ({ c, topic }: { c: KafkaConnector; topic: string }) => {
-      const prev = methodCallTopic(c);
-      const southbound: Record<string, string> = { ...(c.topicMap?.southbound ?? {}) };
-      if (prev) delete southbound[prev];
-      let consumeTopics = (c.consumeTopics ?? []).filter((t2) => t2 !== prev);
+  // External commands — which topics of this connection receive commands from
+  // outside (inverse southbound). method-call invokes an OPC-UA method;
+  // opc-write writes a Variable node. Empty field = remove that mapping.
+  const cmdMut = useMutation({
+    mutationFn: ({ c, methodTopic, writeTopic }: { c: KafkaConnector; methodTopic: string; writeTopic: string }) => {
+      const managed = new Set(['method-call', 'opc-write']);
+      const southbound: Record<string, string> = {};
+      for (const [topic, kind] of Object.entries(c.topicMap?.southbound ?? {})) {
+        if (!managed.has(kind)) southbound[topic] = kind;
+      }
+      const prevTopics = Object.entries(c.topicMap?.southbound ?? {})
+        .filter(([, kind]) => managed.has(kind)).map(([topic]) => topic);
+      let consumeTopics = (c.consumeTopics ?? []).filter((t2) => !prevTopics.includes(t2));
       const updates: Partial<KafkaConnectorInput> = {};
-      if (topic) {
-        southbound[topic] = 'method-call';
+      for (const [topic, kind] of [[methodTopic, 'method-call'], [writeTopic, 'opc-write']] as const) {
+        if (!topic) continue;
+        southbound[topic] = kind;
         if (!consumeTopics.includes(topic)) consumeTopics = [...consumeTopics, topic];
+      }
+      if (methodTopic || writeTopic) {
         if (c.direction === 'producer') updates.direction = 'both';
-        if (!c.consumerGroupId) updates.consumerGroupId = `edu-nifi-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        if (!c.consumerGroupId) updates.consumerGroupId = `edu-cmd-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
       }
       return kafkaApi.update(c.id, { ...updates, consumeTopics, topicMap: { ...(c.topicMap ?? {}), southbound } });
     },
-    onSuccess: () => { invalidate(); setNifiId(null); },
+    onSuccess: () => { invalidate(); setCmdId(null); },
   });
-  function openNifi(c: KafkaConnector) { setNifiId(nifiId === c.id ? null : c.id); setNifiTopic(methodCallTopic(c) ?? ''); }
+  function openCmd(c: KafkaConnector) {
+    setCmdId(cmdId === c.id ? null : c.id);
+    setCmdMethodTopic(commandTopic(c, 'method-call') ?? '');
+    setCmdWriteTopic(commandTopic(c, 'opc-write') ?? '');
+  }
 
   function closeForm() { setShowForm(false); setEditId(null); setForm(emptyForm); }
   function openCreate() { setForm(emptyForm); setEditId(null); setShowForm(true); }
@@ -181,7 +194,8 @@ export function KafkaConnections() {
                     <p className="text-[12px] text-gray-400 font-mono truncate mt-0.5">{c.bootstrapServers}</p>
                     <p className="text-[11px] text-gray-300 mt-0.5">
                       {c.securityProtocol}{c.hasSaslPassword ? ` · SASL ${c.saslMechanism}` : ''} · {c.messageCount} msgs
-                      {methodCallTopic(c) && <span className="ml-2 font-mono text-gray-400">· {t('kafka.nifi.badge')}: {methodCallTopic(c)}</span>}
+                      {commandTopic(c, 'method-call') && <span className="ml-2 font-mono text-gray-400">· {t('kafka.commands.methodBadge')}: {commandTopic(c, 'method-call')}</span>}
+                      {commandTopic(c, 'opc-write') && <span className="ml-2 font-mono text-gray-400">· {t('kafka.commands.writeBadge')}: {commandTopic(c, 'opc-write')}</span>}
                       {testResult[c.id] && <span className="ml-2 text-gray-400">· test: {testResult[c.id]}</span>}
                     </p>
                   </div>
@@ -190,8 +204,8 @@ export function KafkaConnections() {
                   <button onClick={() => testMut.mutate(c.id)} disabled={testMut.isPending} title={t('kafka.connections.testConnection')} className="px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-1">
                     <Gauge className="w-3 h-3" /> {t('kafka.connections.test')}
                   </button>
-                  <button onClick={() => openNifi(c)} title={t('kafka.nifi.title')} className={cn('px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors flex items-center gap-1', nifiId === c.id ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800')}>
-                    <Webhook className="w-3 h-3" /> {t('kafka.nifi.button')}
+                  <button onClick={() => openCmd(c)} title={t('kafka.commands.title')} className={cn('px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors flex items-center gap-1', cmdId === c.id ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800')}>
+                    <Webhook className="w-3 h-3" /> {t('kafka.commands.button')}
                   </button>
                   {!c.isActive && <button onClick={() => activateMut.mutate(c.id)} title={t('kafka.connections.setActive')} className="p-2 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"><Star className="w-3.5 h-3.5" /></button>}
                   {c.status === 'connected'
@@ -201,29 +215,25 @@ export function KafkaConnections() {
                   <button onClick={() => { if (confirm(t('kafka.connections.confirmDelete'))) deleteMut.mutate(c.id); }} disabled={deleteMut.isPending} title={t('common.delete')} className="p-2 rounded-lg text-red-300 hover:text-red-500 hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
-              {nifiId === c.id && (
+              {cmdId === c.id && (
                 <div className="px-5 sm:px-6 pb-4 pt-1 bg-gray-50/50 dark:bg-gray-800/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('kafka.nifi.title')}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5 max-w-2xl">{t('kafka.nifi.hint')}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('kafka.commands.title')}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5 max-w-2xl">{t('kafka.commands.hint')}</p>
                   <div className="mt-2.5 flex flex-col sm:flex-row gap-2 sm:items-end">
                     <div className="flex-1 max-w-sm">
-                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('kafka.nifi.topicLabel')}</span>
-                      <input value={nifiTopic} onChange={(e) => setNifiTopic(e.target.value)} placeholder="imm.method.nifi" className={cn(inputCls, 'font-mono')} />
+                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('kafka.commands.methodTopicLabel')}</span>
+                      <input value={cmdMethodTopic} onChange={(e) => setCmdMethodTopic(e.target.value)} placeholder="imm.method.nifi" className={cn(inputCls, 'font-mono')} />
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => nifiMut.mutate({ c, topic: nifiTopic.trim() })} disabled={nifiMut.isPending || !nifiTopic.trim()}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl disabled:opacity-40">
-                        {nifiMut.isPending && <Loader2 className="w-3 h-3 animate-spin" />} {t('kafka.nifi.save')}
-                      </button>
-                      {methodCallTopic(c) && (
-                        <button onClick={() => nifiMut.mutate({ c, topic: '' })} disabled={nifiMut.isPending}
-                          className="px-3.5 py-2 text-[12px] font-medium text-gray-500 hover:text-red-500 rounded-xl transition-colors">
-                          {t('kafka.nifi.clear')}
-                        </button>
-                      )}
+                    <div className="flex-1 max-w-sm">
+                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('kafka.commands.writeTopicLabel')}</span>
+                      <input value={cmdWriteTopic} onChange={(e) => setCmdWriteTopic(e.target.value)} placeholder="imm.tag.opcwrite" className={cn(inputCls, 'font-mono')} />
                     </div>
+                    <button onClick={() => cmdMut.mutate({ c, methodTopic: cmdMethodTopic.trim(), writeTopic: cmdWriteTopic.trim() })} disabled={cmdMut.isPending}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[12px] font-medium rounded-xl disabled:opacity-40">
+                      {cmdMut.isPending && <Loader2 className="w-3 h-3 animate-spin" />} {t('kafka.commands.save')}
+                    </button>
                   </div>
-                  {nifiMut.error && <p className="text-[12px] text-red-500 mt-2">{(nifiMut.error as Error).message}</p>}
+                  {cmdMut.error && <p className="text-[12px] text-red-500 mt-2">{(cmdMut.error as Error).message}</p>}
                 </div>
               )}
             </div>
@@ -249,8 +259,8 @@ function csv(v: string): string[] {
   return v.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
-/** The connector's method-call command topic, if configured (NiFi Configuration). */
-function methodCallTopic(c: KafkaConnector): string | undefined {
+/** The connector's command topic for a given kind (External commands section). */
+function commandTopic(c: KafkaConnector, kind: 'method-call' | 'opc-write'): string | undefined {
   const sb = c.topicMap?.southbound ?? {};
-  return Object.keys(sb).find((t) => sb[t] === 'method-call');
+  return Object.keys(sb).find((t) => sb[t] === kind);
 }

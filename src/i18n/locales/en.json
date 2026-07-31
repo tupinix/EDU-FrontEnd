@@ -595,14 +595,15 @@
       "consumeTopics": "Consume topics (csv)",
       "create": "Create"
     },
-    "nifi": {
-      "button": "NiFi",
-      "title": "NiFi Configuration",
-      "hint": "Topic on this connection that receives external method-call commands. Publishing a command to this topic invokes the matching OPC-UA method on the machine (same flow as REST southbound); the ACK/NACK is published to imm.method-call.acks.",
-      "topicLabel": "Command topic *",
+    "commands": {
+      "button": "Commands",
+      "title": "External commands",
+      "hint": "Topics on this connection that receive external commands. Method-call: publishing {machineId, objectNodeId, methodNodeId, arguments[]} invokes the OPC-UA method on the machine (ACK on imm.method-call.acks). OPC write: publishing {machineId, nodeId, value} writes the tag (ACK on imm.opc-write.acks). Both go through the arm gate and idempotency.",
+      "methodTopicLabel": "Method-call topic",
+      "writeTopicLabel": "OPC write topic",
       "save": "Save",
-      "clear": "Remove",
-      "badge": "nifi"
+      "methodBadge": "method-call",
+      "writeBadge": "opc-write"
     }
   },
   "southbound": {
