@@ -389,6 +389,8 @@ export interface OpcUaSubscription {
   /** Where the node value is published: MQTT/UNS (default) or a Kafka connector. */
   destinationKind?: 'mqtt' | 'kafka';
   connectorId?: string;
+  /** Kafka message headers stamped on every publish (kafka destination only). */
+  kafkaHeaders?: Record<string, string>;
   createdAt: string;
 }
 

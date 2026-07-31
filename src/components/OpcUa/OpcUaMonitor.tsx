@@ -3,12 +3,12 @@ import { ArrowLeft, RefreshCw, Search, Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useOpcUaLiveValues, useOpcUaSubscriptions } from '../../hooks/useOpcUa';
 import { useSocketStatus } from '../../hooks/useSocket';
-import { useBrokerNameMap, fmtFrequency } from '../shared/publishInfo';
+import { useBrokerNameMap, useConnectorNameMap, fmtFrequency } from '../shared/publishInfo';
 import { opcuaApi } from '../../services/api';
 import { OpcUaConnection, NodeLiveValue } from '../../types';
 import { cn } from '@/lib/utils';
 
-interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; }
+interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; destinationKind?: 'mqtt' | 'kafka'; connectorId?: string; }
 interface Props { connection: OpcUaConnection; onBack: () => void; }
 
 function fmtVal(v: unknown): string {
@@ -26,11 +26,12 @@ export function OpcUaMonitor({ connection, onBack }: Props) {
   const { isConnected: ws } = useSocketStatus();
   const { data: subs } = useOpcUaSubscriptions(connection.id);
   const brokerName = useBrokerNameMap();
+  const connectorName = useConnectorNameMap();
   const readMutation = useMutation({ mutationFn: () => opcuaApi.readNode(connection.id, readNodeId.trim()) });
 
   const cfgByNode = useMemo(() => {
     const m = new Map<string, PubCfg>();
-    for (const s of subs ?? []) m.set(s.nodeId, { topic: s.mqttTopic, brokerId: s.brokerId, intervalMs: s.samplingIntervalMs });
+    for (const s of subs ?? []) m.set(s.nodeId, { topic: s.mqttTopic, brokerId: s.brokerId, intervalMs: s.samplingIntervalMs, destinationKind: s.destinationKind ?? 'mqtt', connectorId: s.connectorId });
     return m;
   }, [subs]);
 
@@ -89,6 +90,7 @@ export function OpcUaMonitor({ connection, onBack }: Props) {
                 <th className="text-left px-5 py-2.5">Type</th>
                 <th className="text-left px-5 py-2.5">Value</th>
                 <th className="text-left px-5 py-2.5">Quality</th>
+                <th className="text-left px-5 py-2.5">Destino</th>
                 <th className="text-left px-5 py-2.5">Tópico</th>
                 <th className="text-left px-5 py-2.5">Broker</th>
                 <th className="text-left px-5 py-2.5">Freq</th>
@@ -97,8 +99,8 @@ export function OpcUaMonitor({ connection, onBack }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(v => <MonitorRow key={`${v.connectionId}::${v.nodeId}`} v={v} cfg={cfgByNode.get(v.nodeId)} brokerName={brokerName} />)}
-              {filtered.length === 0 && <tr><td colSpan={9} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>}
+              {filtered.map(v => <MonitorRow key={`${v.connectionId}::${v.nodeId}`} v={v} cfg={cfgByNode.get(v.nodeId)} brokerName={brokerName} connectorName={connectorName} />)}
+              {filtered.length === 0 && <tr><td colSpan={10} className="text-center py-6 text-gray-300">No results for "{search}"</td></tr>}
             </tbody>
           </table>
         </div>
@@ -108,18 +110,26 @@ export function OpcUaMonitor({ connection, onBack }: Props) {
   );
 }
 
-function MonitorRow({ v, cfg, brokerName }: { v: NodeLiveValue; cfg?: PubCfg; brokerName: (id?: string | null) => string }) {
+function MonitorRow({ v, cfg, brokerName, connectorName }: { v: NodeLiveValue; cfg?: PubCfg; brokerName: (id?: string | null) => string; connectorName: (id?: string | null) => string }) {
   const ts = v.timestamp ? (() => { const d = new Date(v.timestamp); return `${d.toLocaleTimeString('pt-BR', { hour12: false })}.${String(d.getMilliseconds()).padStart(3, '0')}`; })() : '—';
   const qGood = v.quality.toLowerCase().includes('good');
   const qColor = qGood ? 'text-emerald-500' : v.quality.toLowerCase().includes('uncertain') ? 'text-amber-500' : 'text-red-400';
+  const isKafka = cfg?.destinationKind === 'kafka';
   return (
     <tr className="border-t border-gray-50 dark:border-gray-800/50">
       <td className="px-5 py-2 font-mono text-gray-600 dark:text-gray-400 truncate max-w-[250px]" title={v.nodeId}>{v.nodeId}</td>
       <td className="px-5 py-2"><span className="text-[10px] font-mono text-gray-400 bg-gray-50 dark:bg-gray-800/50 px-1.5 py-0.5 rounded">{v.dataType}</span></td>
       <td className="px-5 py-2 font-mono font-semibold text-gray-900 dark:text-gray-100">{fmtVal(v.value)}</td>
       <td className={cn('px-5 py-2 font-medium', qColor)}>{v.quality.replace(/^StatusCodes_/, '')}</td>
+      <td className="px-5 py-2">
+        {cfg && (
+          <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded', isKafka ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
+            {isKafka ? 'Kafka' : 'MQTT'}
+          </span>
+        )}
+      </td>
       <td className="px-5 py-2 font-mono text-gray-400 truncate max-w-[200px]" title={cfg?.topic}>{cfg?.topic || '—'}</td>
-      <td className="px-5 py-2 text-gray-500">{brokerName(cfg?.brokerId)}</td>
+      <td className="px-5 py-2 text-gray-500">{isKafka ? connectorName(cfg?.connectorId) : brokerName(cfg?.brokerId)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{fmtFrequency(cfg?.intervalMs)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{ts}</td>
       <td className="px-5 py-2 text-right text-gray-300 tabular-nums">{v.updateCount}</td>

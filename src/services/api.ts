@@ -687,6 +687,7 @@ export const opcuaApi = {
       brokerId?: string;
       destinationKind?: 'mqtt' | 'kafka';
       connectorId?: string;
+      kafkaHeaders?: Record<string, string>;
     }
   ): Promise<OpcUaSubscription> => {
     const { data } = await apiClient.post<ApiResponse<OpcUaSubscription>>(

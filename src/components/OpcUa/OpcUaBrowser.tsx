@@ -42,6 +42,7 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   const [destinationKind, setDestinationKind] = useState<'mqtt' | 'kafka'>('mqtt');
   const [brokerId, setBrokerId] = useState('');
   const [connectorId, setConnectorId] = useState('');
+  const [headers, setHeaders] = useState<{ key: string; value: string }[]>([]);
 
   const { data: brokersRaw } = useQuery<{ success: boolean; data?: BrokerConfig[] }>({
     queryKey: ['brokers-list-modal'], queryFn: async () => { const { data } = await apiClient.get('/brokers'); return data; }, staleTime: 15000,
@@ -58,6 +59,9 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
 
   const handleSave = async () => {
     if (!topic.trim() || !destReady) return;
+    const cleanHeaders = headers
+      .map(h => ({ key: h.key.trim(), value: h.value }))
+      .filter(h => h.key !== '');
     try {
       await createSub.mutateAsync({
         connectionId,
@@ -67,6 +71,9 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
         destinationKind,
         brokerId: destinationKind === 'mqtt' ? (brokerId || undefined) : undefined,
         connectorId: destinationKind === 'kafka' ? (connectorId || undefined) : undefined,
+        kafkaHeaders: destinationKind === 'kafka' && cleanHeaders.length > 0
+          ? Object.fromEntries(cleanHeaders.map(h => [h.key, h.value]))
+          : undefined,
       });
       onClose();
     } catch { /* handled */ }
@@ -135,6 +142,30 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} className="input-clean font-mono" placeholder="plant/area/equipment/tag" autoFocus />
             <p className="text-[11px] text-gray-300 mt-1">Auto-suggested from browsed path</p>
           </Field>
+
+          {/* Kafka headers (stamped on every publish) */}
+          {destinationKind === 'kafka' && (
+            <Field label="Kafka Headers">
+              <div className="space-y-1.5">
+                {headers.map((h, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <input value={h.key} onChange={(e) => setHeaders(cur => cur.map((r, j) => j === i ? { ...r, key: e.target.value } : r))}
+                      placeholder="key" className="input-clean font-mono flex-1" />
+                    <input value={h.value} onChange={(e) => setHeaders(cur => cur.map((r, j) => j === i ? { ...r, value: e.target.value } : r))}
+                      placeholder="value" className="input-clean font-mono flex-[1.4]" />
+                    <button type="button" onClick={() => setHeaders(cur => cur.filter((_, j) => j !== i))}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={() => setHeaders(cur => [...cur, { key: '', value: '' }])} disabled={headers.length >= 16}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-40">
+                  <Plus className="w-3 h-3" /> Add header
+                </button>
+              </div>
+            </Field>
+          )}
 
           {/* Interval */}
           <Field label="Sampling interval">

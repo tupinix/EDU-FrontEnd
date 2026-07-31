@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { useBrokersStatus } from '../../hooks/useMetrics';
+import { kafkaApi } from '../../services/api';
 
 /**
  * Shared helpers for showing WHERE and HOW OFTEN a tag/register/subscription
@@ -18,6 +20,20 @@ export function useBrokerNameMap(): (brokerId?: string | null) => string {
     const b = brokers.find((x) => x.id === id);
     const name = b?.name ?? id;
     return brokerId ? name : `${name} (ativo)`;
+  };
+}
+
+// Resolves a Kafka connector id to its display name — the Kafka counterpart of
+// useBrokerNameMap, for kafka-destined subscriptions in the monitor tables.
+export function useConnectorNameMap(): (connectorId?: string | null) => string {
+  const { data } = useQuery({ queryKey: ['kafka-connectors'], queryFn: kafkaApi.getConnectors, staleTime: 15000 });
+  const connectors = data ?? [];
+  return (connectorId?: string | null) => {
+    if (!connectorId) {
+      const active = connectors.find((c) => c.isActive);
+      return active ? `${active.name} (ativo)` : 'Kafka';
+    }
+    return connectors.find((c) => c.id === connectorId)?.name ?? connectorId;
   };
 }
 
