@@ -55,8 +55,10 @@ export function OpcUaForm({ onClose, initialValues, editId }: OpcUaFormProps) {
     try {
       const payload = {
         ...form,
-        username: form.username || undefined,
-        password: form.password || undefined,
+        // Send username/password verbatim: an emptied field means "clear the
+        // credentials" (back to Anonymous), not "keep the old value".
+        username: form.username,
+        password: form.password,
         machineId: form.machineId || undefined,
         site: form.site || undefined,
         area: form.area || undefined,

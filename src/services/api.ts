@@ -727,6 +727,24 @@ export const opcuaApi = {
     }
     return data.data;
   },
+
+  // WRITE mode: write a scalar value to a Variable node. The backend coerces
+  // the value against the node's declared DataType and requires the connection
+  // to be southbound-armed.
+  writeNode: async (
+    connectionId: string,
+    nodeId: string,
+    value: string | number | boolean,
+  ): Promise<{ ok: boolean; statusCode?: string; dataType?: string; error?: string }> => {
+    const { data } = await apiClient.post<ApiResponse<{ ok: boolean; statusCode?: string; dataType?: string; error?: string }>>(
+      `/opcua/connections/${connectionId}/write`,
+      { nodeId, value }
+    );
+    if (!data.success) {
+      throw new Error(data.data?.error || data.error || 'Write failed');
+    }
+    return data.data as { ok: boolean; statusCode?: string; dataType?: string };
+  },
 };
 
 export default apiClient;

@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Loader2, Plus, ChevronRight, Search, X, Copy, Check, Eye, EyeOff, Rss } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, ChevronRight, Search, X, Copy, Check, Eye, EyeOff, Rss, PenLine, RefreshCw } from 'lucide-react';
 import { useOpcUaBrowse, useCreateOpcUaSubscription, useOpcUaSubscriptions, useDeleteOpcUaSubscription } from '../../hooks/useOpcUa';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { OpcUaConnection, BrokerConfig, KafkaConnector } from '../../types';
-import apiClient from '../../services/api';
+import apiClient, { opcuaApi } from '../../services/api';
 import { cn } from '@/lib/utils';
 
 interface BrowseNode { nodeId: string; browseName: string; displayName: string; nodeClass: string; isForward: boolean; }
@@ -198,6 +198,108 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   );
 }
 
+// ── Write Modal (UaExpert-style attribute write) ─────────────────────
+
+const NUMERIC_TYPES = new Set(['SByte', 'Byte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64', 'Float', 'Double']);
+
+function WriteModal({ node, connectionId, onClose }: { node: BrowseNode; connectionId: string; onClose: () => void }) {
+  const [input, setInput] = useState<string>('');
+  const [touched, setTouched] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const { data: current, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['opcua-write-read', connectionId, node.nodeId],
+    queryFn: () => opcuaApi.readNode(connectionId, node.nodeId),
+    refetchOnWindowFocus: false,
+  });
+
+  const dataType = current?.dataType ?? '';
+  const isBool = dataType === 'Boolean';
+  const isNumeric = NUMERIC_TYPES.has(dataType);
+  // Prefill with the live value once, so "edit and write" feels like UaExpert.
+  const shown = touched ? input : (current?.value != null && typeof current.value !== 'object' ? String(current.value) : '');
+
+  const writeMut = useMutation({
+    mutationFn: () => {
+      const value: string | number | boolean = isBool ? shown === 'true' : isNumeric ? Number(shown) : shown;
+      return opcuaApi.writeNode(connectionId, node.nodeId, value);
+    },
+    onSuccess: (r) => {
+      setResult({ ok: r.ok, text: r.statusCode ?? (r.ok ? 'Good' : 'Failed') });
+      if (r.ok) refetch();
+    },
+    onError: (e: Error) => setResult({ ok: false, text: e.message }),
+  });
+
+  const canWrite = !isLoading && shown.trim() !== '' && !writeMut.isPending && (!isNumeric || Number.isFinite(Number(shown)));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-xl w-full max-w-md">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <h3 className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">Write value</h3>
+          <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          {/* Node + current value (live read) */}
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-gray-400">Tag</span>
+              <button onClick={() => refetch()} className="p-1 text-gray-300 hover:text-gray-500 rounded" title="Re-read">
+                <RefreshCw className={cn('w-3 h-3', isFetching && 'animate-spin')} />
+              </button>
+            </div>
+            <p className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{node.displayName}</p>
+            <p className="text-[11px] font-mono text-gray-400 break-all mt-0.5">{node.nodeId}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2 text-[11px]">
+              <span className="text-gray-400">Value: <strong className="font-mono text-gray-700 dark:text-gray-200">{isLoading ? '...' : current?.value != null && typeof current.value === 'object' ? JSON.stringify(current.value).slice(0, 60) : String(current?.value ?? '')}</strong></span>
+              <span className="text-gray-400">Type: <span className="font-mono text-gray-600 dark:text-gray-300">{dataType || '...'}</span></span>
+              <span className="text-gray-400">Status: <span className={cn('font-medium', current?.quality?.toLowerCase().includes('good') ? 'text-emerald-500' : 'text-amber-500')}>{current?.quality ?? '...'}</span></span>
+            </div>
+          </div>
+
+          {/* New value */}
+          <Field label="New value *">
+            {isBool ? (
+              <div className="flex gap-1.5">
+                {(['true', 'false'] as const).map(v => (
+                  <button key={v} type="button" onClick={() => { setTouched(true); setInput(v); }}
+                    className={cn('flex-1 py-1.5 text-[11px] font-medium rounded-lg border transition-colors', shown === v ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white' : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700')}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <input
+                type={isNumeric ? 'number' : 'text'}
+                value={shown}
+                onChange={(e) => { setTouched(true); setInput(e.target.value); }}
+                onKeyDown={(e) => e.key === 'Enter' && canWrite && writeMut.mutate()}
+                className="input-clean font-mono"
+                autoFocus
+              />
+            )}
+          </Field>
+
+          {result && (
+            <p className={cn('text-[12px] rounded-xl px-3.5 py-2.5', result.ok ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'text-red-500 bg-red-50 dark:bg-red-900/20')}>
+              {result.ok ? `Write OK (${result.text})` : result.text}
+            </p>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2.5">
+          <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Close</button>
+          <button onClick={() => writeMut.mutate()} disabled={!canWrite}
+            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30">
+            <PenLine className="w-3.5 h-3.5" /> {writeMut.isPending ? 'Writing...' : 'Write'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Browser ──────────────────────────────────────────────────────────
 
 export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnection; onBack: () => void }) {
@@ -205,6 +307,7 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
   const [path, setPath] = useState<{ nodeId?: string; name: string }[]>([{ name: 'Root' }]);
   const [search, setSearch] = useState('');
   const [subscribeNode, setSubscribeNode] = useState<BrowseNode | null>(null);
+  const [writeTarget, setWriteTarget] = useState<BrowseNode | null>(null);
   const [showSubs, setShowSubs] = useState(false);
 
   const { data: nodes = [], isLoading } = useOpcUaBrowse(connection.id, currentNodeId);
@@ -226,6 +329,7 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
   return (
     <div className="space-y-4">
       {subscribeNode && <SubscribeModal node={subscribeNode} connectionId={connection.id} path={path} onClose={() => setSubscribeNode(null)} />}
+      {writeTarget && <WriteModal node={writeTarget} connectionId={connection.id} onClose={() => setWriteTarget(null)} />}
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -292,7 +396,7 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
           <div className="hidden sm:grid sm:grid-cols-[1fr_auto_auto] gap-2 px-5 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-            <span>Name / NodeID</span><span>Type</span><span className="w-8" />
+            <span>Name / NodeID</span><span>Type</span><span className="w-16" />
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
             {filteredNodes.map((node, i) => {
@@ -314,11 +418,16 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
                     </div>
                   </button>
                   <span className={cn('text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0', ncl.cls)}>{ncl.text}</span>
-                  <div className="w-8 shrink-0">
+                  <div className="w-16 shrink-0 flex items-center justify-end gap-0.5">
                     {isVariable(node) && (
-                      <button onClick={() => setSubscribeNode(node)} className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-colors">
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button onClick={() => setWriteTarget(node)} title="Write value" className="p-1.5 rounded-lg text-gray-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                          <PenLine className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setSubscribeNode(node)} title="Publish node" className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-colors">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
