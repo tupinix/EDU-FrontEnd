@@ -14,7 +14,7 @@ const DATA_TYPES = ['uint16', 'int16', 'int32', 'float32', 'boolean'] as const;
 const regLabel: Record<string, string> = { holding: 'Holding (FC03)', input: 'Input (FC04)', coil: 'Coil (FC01)', discrete_input: 'Discrete (FC02)' };
 const dtLabel: Record<string, string> = { uint16: 'UInt16', int16: 'Int16', int32: 'Int32', float32: 'Float32', boolean: 'Bool' };
 
-const defaultForm = { name: '', registerType: 'holding' as (typeof REGISTER_TYPES)[number], address: 0, dataType: 'uint16' as (typeof DATA_TYPES)[number], scaleFactor: 1, mqttTopic: '', samplingIntervalMs: 1000, brokerId: '', enabled: true };
+const defaultForm = { name: '', registerType: 'holding' as (typeof REGISTER_TYPES)[number], address: 0, dataType: 'uint16' as (typeof DATA_TYPES)[number], scaleFactor: 1, mqttTopic: '', samplingIntervalMs: 1000, brokerId: '', enabled: true, publishRaw: true };
 
 export function ModbusRegisterConfig({ connection, onBack }: Props) {
   const { data: registers, isLoading } = useModbusRegisters(connection.id);
@@ -32,8 +32,11 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.brokerId) return;
-    try { await createMutation.mutateAsync({ ...form }); setShowForm(false); setForm({ ...defaultForm }); } catch { /* handled */ }
+    if (form.publishRaw && !form.brokerId) return;
+    try {
+      await createMutation.mutateAsync({ ...form, brokerId: form.publishRaw ? form.brokerId : undefined });
+      setShowForm(false); setForm({ ...defaultForm });
+    } catch { /* handled */ }
   };
 
   return (
@@ -61,14 +64,23 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
               <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-300 hover:text-gray-500 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" checked={form.publishRaw} onChange={(e) => setForm({ ...form, publishRaw: e.target.checked })}
+                  className="mt-0.5 accent-gray-900 dark:accent-white" />
+                <span>
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 block">Publish raw data</span>
+                  <span className="text-[11px] text-gray-400 block mt-0.5">Off: the value is acquired for the Monitor and Data Models only. No raw topic in the UNS or MQTT.</span>
+                </span>
+              </label>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Name *"><input type="text" required placeholder="Motor Temperature" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-clean" /></Field>
+                {form.publishRaw && (
                 <Field label="MQTT Broker *">
                   {brokers.length === 0 ? (
                     <p className="text-[12px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
                   ) : (
                     <select value={form.brokerId} onChange={(e) => setForm({ ...form, brokerId: e.target.value })} className="input-clean" required>
-                      <option value="">— Select a broker —</option>
+                      <option value="">Select a broker</option>
                       {brokers.map(b => (
                         <option key={b.id} value={b.id}>
                           {b.name} ({b.host}:{b.port}){b.status === 'connected' ? ' ✓' : ''}
@@ -77,8 +89,9 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
                     </select>
                   )}
                 </Field>
+                )}
               </div>
-              <Field label="MQTT Topic *"><input type="text" required placeholder="Modbus/PLC1/Temperature" value={form.mqttTopic} onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })} className="input-clean font-mono" /></Field>
+              <Field label={form.publishRaw ? 'MQTT Topic *' : 'Tag Topic (internal identity) *'}><input type="text" required placeholder="Modbus/PLC1/Temperature" value={form.mqttTopic} onChange={(e) => setForm({ ...form, mqttTopic: e.target.value })} className="input-clean font-mono" /></Field>
               <div className="grid grid-cols-4 gap-3">
                 <Field label="Register Type">
                   <select value={form.registerType} onChange={(e) => setForm({ ...form, registerType: e.target.value as typeof form.registerType })} className="input-clean">
@@ -97,7 +110,7 @@ export function ModbusRegisterConfig({ connection, onBack }: Props) {
               {createMutation.isError && <p className="text-[13px] text-red-500">{createMutation.error instanceof Error ? createMutation.error.message : 'Error'}</p>}
               <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending || !form.brokerId} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
+                <button type="submit" disabled={createMutation.isPending || (form.publishRaw && !form.brokerId)} className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40">
                   {createMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
                 </button>
               </div>

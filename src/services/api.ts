@@ -1049,6 +1049,7 @@ export const modbusApi = {
       samplingIntervalMs?: number;
       brokerId?: string;
       enabled?: boolean;
+      publishRaw?: boolean;
     }
   ): Promise<ModbusRegister> => {
     const { data } = await apiClient.post<ApiResponse<ModbusRegister>>(
@@ -1134,6 +1135,7 @@ export const ethipApi = {
     samplingIntervalMs?: number;
     displayName?: string;
     brokerId?: string;
+    publishRaw?: boolean;
   }): Promise<EthipTag> => {
     const { data } = await apiClient.post<ApiResponse<EthipTag>>(`/ethip/connections/${connId}/tags`, body);
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to subscribe tag');

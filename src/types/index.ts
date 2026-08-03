@@ -294,6 +294,9 @@ export interface ModbusRegister {
   mqttTopic: string;
   samplingIntervalMs: number;
   brokerId?: string;
+  /** When false, the value is acquired (Monitor + internal modeling) but never
+   *  published to the broker. Default true. */
+  publishRaw?: boolean;
   enabled: boolean;
   createdAt: string;
 }
@@ -438,6 +441,9 @@ export interface EthipTag {
   mqttTopic: string;
   samplingIntervalMs: number;
   brokerId?: string;
+  /** When false, the value is acquired (Monitor + internal modeling) but never
+   *  published to the broker. Default true. */
+  publishRaw?: boolean;
   enabled: boolean;
 }
 

@@ -40,6 +40,7 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
   const [topic, setTopic] = useState(baseTopic);
   const [interval, setInterval] = useState(1000);
   const [brokerId, setBrokerId] = useState('');
+  const [publishRaw, setPublishRaw] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // Read the tag's current value so we can offer struct members to publish.
@@ -92,7 +93,7 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
   const nothingSelected = isStruct && !wholeStruct && selectedMembers.size === 0;
 
   const handleSave = async () => {
-    if (!topic.trim() || !brokerId || nothingSelected) return;
+    if (!topic.trim() || (publishRaw && !brokerId) || nothingSelected) return;
     setSaveError(null);
     try {
       // Whole struct / atomic tag → single subscription, no memberPath.
@@ -102,7 +103,8 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
           mqttTopic: topic.trim(),
           samplingIntervalMs: interval,
           displayName: tag.tag_name,
-          brokerId: brokerId || undefined,
+          brokerId: publishRaw ? (brokerId || undefined) : undefined,
+          publishRaw,
         });
       }
       // One subscription per selected member, each to its own sub-topic.
@@ -113,7 +115,8 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
           mqttTopic: `${topic.trim()}/${sanitizeTopicSeg(member)}`,
           samplingIntervalMs: interval,
           displayName: `${tag.tag_name}.${member}`,
-          brokerId: brokerId || undefined,
+          brokerId: publishRaw ? (brokerId || undefined) : undefined,
+          publishRaw,
         });
       }
       onClose();
@@ -166,13 +169,24 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
             </Field>
           )}
 
+          {/* Raw publication toggle — off = acquisition only (Monitor + Data Models) */}
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input type="checkbox" checked={publishRaw} onChange={(e) => setPublishRaw(e.target.checked)}
+              className="mt-0.5 accent-gray-900 dark:accent-white" />
+            <span>
+              <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 block">Publish raw data</span>
+              <span className="text-[11px] text-gray-400 block mt-0.5">Off: the value is acquired for the Monitor and Data Models only. No raw topic in the UNS or MQTT.</span>
+            </span>
+          </label>
+
           {/* Broker selector */}
+          {publishRaw && (
           <Field label="MQTT Broker *">
             {brokers.length === 0 ? (
               <p className="text-[12px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
             ) : (
               <select value={brokerId} onChange={(e) => setBrokerId(e.target.value)} className="input-clean" required>
-                <option value="">— Select a broker —</option>
+                <option value="">Select a broker</option>
                 {brokers.map(b => (
                   <option key={b.id} value={b.id}>
                     {b.name} ({b.host}:{b.port}){b.status === 'connected' ? ' ✓' : ''}
@@ -181,9 +195,10 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
               </select>
             )}
           </Field>
+          )}
 
           {/* Topic */}
-          <Field label={isStruct ? 'MQTT Topic base *' : 'MQTT Topic *'}>
+          <Field label={!publishRaw ? 'Tag Topic (internal identity) *' : isStruct ? 'MQTT Topic base *' : 'MQTT Topic *'}>
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} className="input-clean font-mono" placeholder="EthernetIP/tag_name" autoFocus />
             <p className="text-[11px] text-gray-300 mt-1">{isStruct ? 'Membros publicam em base/<membro>; struct inteiro publica na base' : 'Auto-suggested from tag name'}</p>
           </Field>
@@ -204,7 +219,7 @@ function SubscribeModal({ tag, connectionId, onClose }: { tag: EthipDiscoveredTa
         </div>
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2.5">
           <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
-          <button onClick={handleSave} disabled={!topic.trim() || !brokerId || nothingSelected || createTag.isPending}
+          <button onClick={handleSave} disabled={!topic.trim() || (publishRaw && !brokerId) || nothingSelected || createTag.isPending}
             className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-30">
             <Rss className="w-3.5 h-3.5" /> {createTag.isPending ? 'Publishing...' : 'Publish'}
           </button>
