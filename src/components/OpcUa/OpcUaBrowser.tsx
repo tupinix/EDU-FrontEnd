@@ -39,6 +39,7 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   const [topic, setTopic] = useState(() => suggestTopic(path, node.displayName));
   const [interval, setInterval] = useState(1000);
   const [showPreview, setShowPreview] = useState(false);
+  const [publishRaw, setPublishRaw] = useState(true);
   const [destinationKind, setDestinationKind] = useState<'mqtt' | 'kafka'>('mqtt');
   const [brokerId, setBrokerId] = useState('');
   const [connectorId, setConnectorId] = useState('');
@@ -55,7 +56,7 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
   // Only connectors that can produce are valid publish targets.
   const connectors: KafkaConnector[] = (connectorsRaw?.data ?? []).filter(c => c.direction === 'producer' || c.direction === 'both');
 
-  const destReady = destinationKind === 'mqtt' ? !!brokerId : !!connectorId;
+  const destReady = !publishRaw || (destinationKind === 'mqtt' ? !!brokerId : !!connectorId);
 
   const handleSave = async () => {
     if (!topic.trim() || !destReady) return;
@@ -68,10 +69,11 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
         nodeId: node.nodeId,
         mqttTopic: topic.trim(),
         samplingIntervalMs: interval,
-        destinationKind,
-        brokerId: destinationKind === 'mqtt' ? (brokerId || undefined) : undefined,
-        connectorId: destinationKind === 'kafka' ? (connectorId || undefined) : undefined,
-        kafkaHeaders: destinationKind === 'kafka' && cleanHeaders.length > 0
+        publishRaw,
+        destinationKind: publishRaw ? destinationKind : undefined,
+        brokerId: publishRaw && destinationKind === 'mqtt' ? (brokerId || undefined) : undefined,
+        connectorId: publishRaw && destinationKind === 'kafka' ? (connectorId || undefined) : undefined,
+        kafkaHeaders: publishRaw && destinationKind === 'kafka' && cleanHeaders.length > 0
           ? Object.fromEntries(cleanHeaders.map(h => [h.key, h.value]))
           : undefined,
       });
@@ -100,7 +102,20 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             <p className="text-[11px] font-mono text-gray-400 break-all mt-0.5">{node.nodeId}</p>
           </div>
 
+          {/* Raw publication toggle — off = acquisition only (Monitor + Data Models) */}
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input type="checkbox" checked={publishRaw} onChange={(e) => setPublishRaw(e.target.checked)}
+              className="mt-0.5 accent-gray-900 dark:accent-white" />
+            <span>
+              <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 block">Publish raw data</span>
+              <span className="text-[11px] text-gray-400 block mt-0.5">
+                Off: the value is acquired for the Monitor and Data Models only. No raw topic in the UNS, MQTT or Kafka.
+              </span>
+            </span>
+          </label>
+
           {/* Destination */}
+          {publishRaw && (
           <Field label="Destination">
             <div className="flex gap-1.5">
               {(['mqtt', 'kafka'] as const).map(k => (
@@ -111,9 +126,10 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
               ))}
             </div>
           </Field>
+          )}
 
           {/* Target: MQTT broker or Kafka connector */}
-          {destinationKind === 'mqtt' ? (
+          {!publishRaw ? null : destinationKind === 'mqtt' ? (
             <Field label="MQTT Broker *">
               {brokers.length === 0 ? (
                 <p className="text-[12px] text-amber-600 bg-amber-50 rounded-xl px-3 py-2">No brokers configured. Add one in MQTT Brokers.</p>
@@ -137,14 +153,14 @@ function SubscribeModal({ node, connectionId, path, onClose }: { node: BrowseNod
             </Field>
           )}
 
-          {/* Topic */}
-          <Field label={destinationKind === 'kafka' ? 'Kafka Topic *' : 'MQTT Topic *'}>
+          {/* Topic — with raw off it is still the tag's identity for Data Models */}
+          <Field label={!publishRaw ? 'Tag Topic (internal identity) *' : destinationKind === 'kafka' ? 'Kafka Topic *' : 'MQTT Topic *'}>
             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} className="input-clean font-mono" placeholder="plant/area/equipment/tag" autoFocus />
-            <p className="text-[11px] text-gray-300 mt-1">Auto-suggested from browsed path</p>
+            <p className="text-[11px] text-gray-300 mt-1">{!publishRaw ? 'Used to reference this tag as a Data Model source' : 'Auto-suggested from browsed path'}</p>
           </Field>
 
           {/* Kafka headers (stamped on every publish) */}
-          {destinationKind === 'kafka' && (
+          {publishRaw && destinationKind === 'kafka' && (
             <Field label="Kafka Headers">
               <div className="space-y-1.5">
                 {headers.map((h, i) => (
@@ -358,8 +374,8 @@ export function OpcUaBrowser({ connection, onBack }: { connection: OpcUaConnecti
                     <p className="text-[11px] font-mono text-gray-600 truncate">{sub.nodeId}</p>
                     <p className="text-[11px] text-gray-400 truncate">→ {sub.mqttTopic}</p>
                   </div>
-                  <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0', sub.destinationKind === 'kafka' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
-                    {sub.destinationKind === 'kafka' ? 'Kafka' : 'MQTT'}
+                  <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0', sub.publishRaw === false ? 'text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400' : sub.destinationKind === 'kafka' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
+                    {sub.publishRaw === false ? 'Interna' : sub.destinationKind === 'kafka' ? 'Kafka' : 'MQTT'}
                   </span>
                   <span className="text-[10px] text-gray-300 shrink-0">{sub.samplingIntervalMs}ms</span>
                   <button onClick={() => deleteSub.mutate(sub.id)} className="p-1 text-red-300 hover:text-red-500 transition-colors shrink-0"><X className="w-3 h-3" /></button>

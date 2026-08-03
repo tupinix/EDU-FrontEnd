@@ -3,7 +3,7 @@ import { Loader2, ArrowLeft, Plus, Trash2, ChevronRight, Search, ArrowRight, Sav
 import { useQuery } from '@tanstack/react-query';
 import { useCreateDataModel, useUpdateDataModel } from '../../hooks/useDataModels';
 import { DataModel, BrokerConfig, KafkaConnector, TopicNode, SmProfile } from '../../types';
-import { topicsApi } from '../../services/api';
+import { topicsApi, opcuaApi } from '../../services/api';
 import apiClient from '../../services/api';
 import { cn } from '@/lib/utils';
 
@@ -105,9 +105,11 @@ export function DataModelForm({ model, profile, onClose }: Props) {
   // tree below is scoped to it so you browse/link only its tags (kafka-consumed
   // topics are stamped with the connector id in the tree's brokerId slot).
   const [sourceOrigin, setSourceOrigin] = useState(() =>
-    model?.sourceKind === 'kafka'
-      ? (model.sourceConnectorId ? `kafka:${model.sourceConnectorId}` : 'kafka:')
-      : (model?.sourceBrokerId ? `mqtt:${model.sourceBrokerId}` : ''));
+    model?.sourceKind === 'internal'
+      ? 'internal'
+      : model?.sourceKind === 'kafka'
+        ? (model.sourceConnectorId ? `kafka:${model.sourceConnectorId}` : 'kafka:')
+        : (model?.sourceBrokerId ? `mqtt:${model.sourceBrokerId}` : ''));
   const [targetDest, setTargetDest] = useState(() =>
     model?.targetKind === 'kafka'
       ? (model.targetConnectorId ? `kafka:${model.targetConnectorId}` : 'kafka:')
@@ -185,6 +187,15 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     staleTime: 15000,
   });
   const connectors: KafkaConnector[] = connectorsRaw?.data ?? [];
+
+  // Internal source: every OPC-UA subscription is a modelable tag (published or
+  // not) — the acquisition bus fires on each read.
+  const { data: internalTags = [] } = useQuery({
+    queryKey: ['opcua-subscriptions-all'],
+    queryFn: () => opcuaApi.getSubscriptions(),
+    staleTime: 15000,
+    enabled: sourceOrigin === 'internal',
+  });
 
   // Fetch payload when source topic changes (used by output preview for legacy fromPayload attributes)
   useEffect(() => {
@@ -326,14 +337,15 @@ export function DataModelForm({ model, profile, onClose }: Props) {
     const effectiveSourceTopic = sourceTopic.trim() || firstLinkedTopic;
 
     const extraFromAttrs = attributes.filter(a => !a.fromPayload && a.key);
+    const sourceIsInternal = sourceOrigin === 'internal';
     const sourceIsKafka = sourceOrigin.startsWith('kafka:');
     const targetIsKafka = targetDest.startsWith('kafka:');
     const body: Record<string, unknown> = {
       name: name.trim(),
       sourceTopic: effectiveSourceTopic,
       targetTopic: targetTopic.trim(),
-      sourceKind: sourceIsKafka ? 'kafka' : 'mqtt',
-      sourceBrokerId: !sourceIsKafka && sourceOrigin ? sourceOrigin.slice(5) : undefined,
+      sourceKind: sourceIsInternal ? 'internal' : sourceIsKafka ? 'kafka' : 'mqtt',
+      sourceBrokerId: !sourceIsInternal && !sourceIsKafka && sourceOrigin ? sourceOrigin.slice(5) : undefined,
       sourceConnectorId: sourceIsKafka ? (sourceOrigin.slice(6) || undefined) : undefined,
       targetKind: targetIsKafka ? 'kafka' : 'mqtt',
       targetBrokerId: !targetIsKafka && targetDest ? targetDest.slice(5) : undefined,
@@ -409,6 +421,7 @@ export function DataModelForm({ model, profile, onClose }: Props) {
               className="w-full mb-2 px-2 py-1.5 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none focus:border-gray-200 dark:focus:border-gray-700"
             >
               <option value="">Broker ativo (principal)</option>
+              <option value="internal">Tags internas (aquisição)</option>
               <optgroup label="MQTT Brokers">
                 {brokers.filter(b => b.status === 'connected').map(b => (
                   <option key={b.id} value={`mqtt:${b.id}`}>{b.name}</option>
@@ -428,7 +441,32 @@ export function DataModelForm({ model, profile, onClose }: Props) {
             </div>
           </div>
           <div className="flex-1 overflow-auto py-1 px-1">
-            {filteredTree.length === 0 ? (
+            {sourceOrigin === 'internal' ? (
+              internalTags.length === 0 ? (
+                <p className="text-[11px] text-gray-300 text-center py-4">No internal tags</p>
+              ) : (
+                internalTags
+                  .filter(s => !treeSearch.trim() || s.mqttTopic.toLowerCase().includes(treeSearch.toLowerCase()) || s.nodeId.toLowerCase().includes(treeSearch.toLowerCase()))
+                  .map(s => (
+                    <div
+                      key={s.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', s.mqttTopic);
+                        e.dataTransfer.setData('application/x-edu-topic', s.mqttTopic);
+                        e.dataTransfer.effectAllowed = 'link';
+                      }}
+                      className="px-2 py-1.5 rounded-lg cursor-grab hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', s.publishRaw === false ? 'bg-gray-300' : 'bg-blue-400')} />
+                        <span className="text-[11px] font-mono text-gray-700 dark:text-gray-300 truncate">{s.mqttTopic}</span>
+                      </div>
+                      <p className="text-[10px] font-mono text-gray-300 truncate pl-3">{s.nodeId}</p>
+                    </div>
+                  ))
+              )
+            ) : filteredTree.length === 0 ? (
               <p className="text-[11px] text-gray-300 text-center py-4">No topics</p>
             ) : (
               filteredTree.map(node => (

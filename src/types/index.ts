@@ -398,6 +398,9 @@ export interface OpcUaSubscription {
   connectorId?: string;
   /** Kafka message headers stamped on every publish (kafka destination only). */
   kafkaHeaders?: Record<string, string>;
+  /** When false, the value is acquired (Monitor + internal modeling) but never
+   *  published to a destination nor ingested into the UNS. Default true. */
+  publishRaw?: boolean;
   createdAt: string;
 }
 
@@ -462,8 +465,9 @@ export interface DataModel {
   enabled: boolean;
   sourceTopic: string;
   sourceBrokerId?: string;
-  /** Where the source data comes from: an MQTT broker (default) or a Kafka connector. */
-  sourceKind?: 'mqtt' | 'kafka';
+  /** Where the source data comes from: an MQTT broker (default), a Kafka
+   *  connector, or the internal acquisition bus (tag store, no broker trip). */
+  sourceKind?: 'mqtt' | 'kafka' | 'internal';
   sourceConnectorId?: string;
   targetTopic: string;
   targetBrokerId?: string;

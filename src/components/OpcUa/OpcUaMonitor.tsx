@@ -8,7 +8,7 @@ import { opcuaApi } from '../../services/api';
 import { OpcUaConnection, NodeLiveValue } from '../../types';
 import { cn } from '@/lib/utils';
 
-interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; destinationKind?: 'mqtt' | 'kafka'; connectorId?: string; }
+interface PubCfg { topic?: string; brokerId?: string; intervalMs?: number; destinationKind?: 'mqtt' | 'kafka'; connectorId?: string; publishRaw?: boolean; }
 interface Props { connection: OpcUaConnection; onBack: () => void; }
 
 function fmtVal(v: unknown): string {
@@ -31,7 +31,7 @@ export function OpcUaMonitor({ connection, onBack }: Props) {
 
   const cfgByNode = useMemo(() => {
     const m = new Map<string, PubCfg>();
-    for (const s of subs ?? []) m.set(s.nodeId, { topic: s.mqttTopic, brokerId: s.brokerId, intervalMs: s.samplingIntervalMs, destinationKind: s.destinationKind ?? 'mqtt', connectorId: s.connectorId });
+    for (const s of subs ?? []) m.set(s.nodeId, { topic: s.mqttTopic, brokerId: s.brokerId, intervalMs: s.samplingIntervalMs, destinationKind: s.destinationKind ?? 'mqtt', connectorId: s.connectorId, publishRaw: s.publishRaw !== false });
     return m;
   }, [subs]);
 
@@ -123,13 +123,13 @@ function MonitorRow({ v, cfg, brokerName, connectorName }: { v: NodeLiveValue; c
       <td className={cn('px-5 py-2 font-medium', qColor)}>{v.quality.replace(/^StatusCodes_/, '')}</td>
       <td className="px-5 py-2">
         {cfg && (
-          <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded', isKafka ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
-            {isKafka ? 'Kafka' : 'MQTT'}
+          <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded', cfg.publishRaw === false ? 'text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400' : isKafka ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400')}>
+            {cfg.publishRaw === false ? 'Interna' : isKafka ? 'Kafka' : 'MQTT'}
           </span>
         )}
       </td>
       <td className="px-5 py-2 font-mono text-gray-400 truncate max-w-[200px]" title={cfg?.topic}>{cfg?.topic || '—'}</td>
-      <td className="px-5 py-2 text-gray-500">{isKafka ? connectorName(cfg?.connectorId) : brokerName(cfg?.brokerId)}</td>
+      <td className="px-5 py-2 text-gray-500">{cfg?.publishRaw === false ? '' : isKafka ? connectorName(cfg?.connectorId) : brokerName(cfg?.brokerId)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{fmtFrequency(cfg?.intervalMs)}</td>
       <td className="px-5 py-2 font-mono text-gray-400 tabular-nums">{ts}</td>
       <td className="px-5 py-2 text-right text-gray-300 tabular-nums">{v.updateCount}</td>
