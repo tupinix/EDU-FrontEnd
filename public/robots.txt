@@ -1,0 +1,11 @@
+# robots.txt · Espaço de Dados Unificado (EDU)
+# https://www.espacodedadosunificado.com.br/
+
+User-agent: *
+Allow: /
+
+# Rotas funcionais da aplicação (não são conteúdo de marketing)
+Disallow: /login
+Disallow: /view/
+
+Sitemap: https://www.espacodedadosunificado.com.br/sitemap.xml

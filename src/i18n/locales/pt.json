@@ -123,10 +123,10 @@
     },
     "hero": {
       "tag": "Por convite · Acesso antecipado",
-      "titleLine1": "Plataforma industrial para",
-      "titleLine2": "Inteligência Artificial.",
+      "titleLine1": "Espaço de Dados Unificado",
+      "titleLine2": "pronto para Inteligência Artificial.",
       "title": "Sua planta, em um Unified Namespace.",
-      "subtitle": "O EDU transforma dados industriais fragmentados em um sistema estruturado para aplicação de IA Industrial em todas as suas operações.",
+      "subtitle": "O Espaço de Dados Unificado (EDU) transforma dados industriais fragmentados em um Unified Namespace (UNS), a fonte única da verdade da sua planta, integrando OT e IT e pronta para IA.",
       "ctaPrimary": "Solicitar demonstração",
       "ctaSecondary": "Acesso antecipado",
       "note": "Programa de acesso antecipado · Curadoria por convite",
@@ -148,6 +148,44 @@
         "Acesso seguro de qualquer lugar, em qualquer dispositivo"
       ],
       "cta": "Veja rodando na sua planta"
+    },
+    "tour": {
+      "tag": "Por dentro do produto",
+      "title": "Veja o Espaço de Dados Unificado por dentro",
+      "subtitle": "Telas reais da plataforma. Do chão de fábrica ao Unified Namespace, com contexto e em tempo real.",
+      "overview": {
+        "chrome": "edu · Dashboard · Unified Namespace",
+        "title": "Toda a sua planta em uma visão só",
+        "desc": "Conecte brokers MQTT, servidores OPC-UA, CLPs Modbus e EtherNet/IP e acompanhe mensagens, tópicos e a saúde das conexões em tempo real, integrando OT e IT.",
+        "alt": "Dashboard do EDU mostrando conexões MQTT, OPC-UA e Modbus e a visão geral do Unified Namespace em tempo real",
+        "bullets": [
+          "Conexões MQTT, OPC-UA, Modbus e EtherNet/IP em um só lugar",
+          "Métricas ao vivo: mensagens por dia, tópicos ativos e taxa de erro",
+          "Os tópicos mais ativos do seu Unified Namespace"
+        ]
+      },
+      "graph": {
+        "chrome": "edu · Knowledge Graph · ISA-95",
+        "title": "Um Unified Namespace com contexto ISA-95",
+        "desc": "Modele empresa, planta, área, linha e equipamento em um grafo de conhecimento. Seus dados industriais ganham hierarquia e viram uma fonte única da verdade, prontos para IA.",
+        "alt": "Knowledge Graph do EDU com a hierarquia ISA-95 do Unified Namespace: Empresa, Site, Área, Equipamento e Tags",
+        "bullets": [
+          "Hierarquia ISA-95: Empresa, Site, Área, Linha, Equipamento e Tag",
+          "Knowledge Graph navegável da sua operação",
+          "Base semântica para agentes de IA industrial"
+        ]
+      },
+      "models": {
+        "chrome": "edu · Data Models · MQTT / Sparkplug B",
+        "title": "De tags brutas a modelos limpos",
+        "desc": "Transforme tags cruas de OPC-UA e EtherNet/IP em modelos padronizados, publicados no Unified Namespace via MQTT e Sparkplug B, com contexto e nomes que fazem sentido.",
+        "alt": "Tela de Data Models do EDU mapeando tags OPC-UA e EtherNet/IP para tópicos do Unified Namespace via MQTT e Sparkplug B",
+        "bullets": [
+          "Mapeie qualquer tag para um caminho de tópico do UNS",
+          "Publicação em MQTT e Sparkplug B",
+          "Contadores de mensagens por modelo, em tempo real"
+        ]
+      }
     },
     "protocols": {
       "title": "Padrões e protocolos suportados nativamente"
@@ -279,7 +317,8 @@
       "tagline": "Espaço de Dados Unificado",
       "rights": "Todos os direitos reservados.",
       "made": "Feito no Brasil",
-      "clientLogin": "Acesso de cliente"
+      "clientLogin": "Acesso de cliente",
+      "whatIsEdu": "O que é EDU?"
     }
   },
   "users": {
