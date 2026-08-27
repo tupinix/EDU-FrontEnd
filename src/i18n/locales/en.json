@@ -145,6 +145,44 @@
       ],
       "cta": "See it running on your plant"
     },
+    "tour": {
+      "tag": "Inside the product",
+      "title": "See the Unified Data Space from the inside",
+      "subtitle": "Real product screens. From the plant floor to the Unified Namespace, with context and in real time.",
+      "overview": {
+        "chrome": "edu · Dashboard · Unified Namespace",
+        "title": "Your whole plant in a single view",
+        "desc": "Connect MQTT brokers, OPC-UA servers, Modbus and EtherNet/IP PLCs and watch messages, topics and connection health in real time, bridging OT and IT.",
+        "alt": "EDU dashboard showing MQTT, OPC-UA and Modbus connections and the real-time Unified Namespace overview",
+        "bullets": [
+          "MQTT, OPC-UA, Modbus and EtherNet/IP connections in one place",
+          "Live metrics: messages per day, active topics and error rate",
+          "The most active topics in your Unified Namespace"
+        ]
+      },
+      "graph": {
+        "chrome": "edu · Knowledge Graph · ISA-95",
+        "title": "A Unified Namespace with ISA-95 context",
+        "desc": "Model enterprise, plant, area, line and equipment in a knowledge graph. Your industrial data gains hierarchy and becomes a single source of truth, ready for AI.",
+        "alt": "EDU Knowledge Graph with the ISA-95 Unified Namespace hierarchy: Enterprise, Site, Area, Equipment and Tags",
+        "bullets": [
+          "ISA-95 hierarchy: Enterprise, Site, Area, Line, Equipment and Tag",
+          "A navigable Knowledge Graph of your operation",
+          "A semantic base for industrial AI agents"
+        ]
+      },
+      "models": {
+        "chrome": "edu · Data Models · MQTT / Sparkplug B",
+        "title": "From raw tags to clean models",
+        "desc": "Turn raw OPC-UA and EtherNet/IP tags into standardized models, published to the Unified Namespace over MQTT and Sparkplug B, with context and meaningful names.",
+        "alt": "EDU Data Models screen mapping OPC-UA and EtherNet/IP tags to Unified Namespace topics over MQTT and Sparkplug B",
+        "bullets": [
+          "Map any tag to a UNS topic path",
+          "Publish over MQTT and Sparkplug B",
+          "Per-model message counters, in real time"
+        ]
+      }
+    },
     "protocols": {
       "title": "Standards and protocols supported natively"
     },
@@ -275,7 +313,8 @@
       "tagline": "Unified Data Space",
       "rights": "All rights reserved.",
       "made": "Made in Brazil",
-      "clientLogin": "Client sign-in"
+      "clientLogin": "Client sign-in",
+      "whatIsEdu": "What is EDU?"
     }
   },
   "users": {

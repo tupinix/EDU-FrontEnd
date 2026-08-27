@@ -44,7 +44,7 @@ export function Landing() {
           <nav className={`hidden md:flex items-center gap-8 text-[13px] transition-colors ${
             scrolled ? 'text-gray-500' : 'text-gray-300'
           }`}>
-            <a href="#showcase" className="hover:text-gray-900 hover:[--c:theme(colors.white)] transition-colors">
+            <a href="#product" className="hover:text-gray-900 hover:[--c:theme(colors.white)] transition-colors">
               {t('landing.nav.product')}
             </a>
             <a href="#features" className="hover:text-gray-900 transition-colors">
@@ -83,6 +83,9 @@ export function Landing() {
 
       {/* ── Hero ───────────────────────────────────────────────────── */}
       <DarkHero />
+
+      {/* ── Product tour (real screenshots) ────────────────────────── */}
+      <ProductTour />
 
       {/* ── Showcase ───────────────────────────────────────────────── */}
       <Showcase />
@@ -449,6 +452,114 @@ function MockChart() {
         <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
       ))}
     </svg>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Product tour — real product screenshots (marketing + SEO)
+// ─────────────────────────────────────────────────────────────────────
+function ProductTour() {
+  const { t } = useTranslation();
+  const rows = [
+    {
+      img: '/screenshots/edu-dashboard-unified-namespace.webp',
+      chrome: t('landing.tour.overview.chrome'),
+      title: t('landing.tour.overview.title'),
+      desc: t('landing.tour.overview.desc'),
+      alt: t('landing.tour.overview.alt'),
+      bullets: t('landing.tour.overview.bullets', { returnObjects: true }) as string[],
+    },
+    {
+      img: '/screenshots/edu-knowledge-graph-isa95.webp',
+      chrome: t('landing.tour.graph.chrome'),
+      title: t('landing.tour.graph.title'),
+      desc: t('landing.tour.graph.desc'),
+      alt: t('landing.tour.graph.alt'),
+      bullets: t('landing.tour.graph.bullets', { returnObjects: true }) as string[],
+    },
+    {
+      img: '/screenshots/edu-data-models-mqtt.webp',
+      chrome: t('landing.tour.models.chrome'),
+      title: t('landing.tour.models.title'),
+      desc: t('landing.tour.models.desc'),
+      alt: t('landing.tour.models.alt'),
+      bullets: t('landing.tour.models.bullets', { returnObjects: true }) as string[],
+    },
+  ];
+
+  return (
+    <section id="product" className="py-28 bg-white">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-emerald-50 border border-emerald-100 text-[11px] font-medium text-emerald-700 tracking-wider uppercase">
+            {t('landing.tour.tag')}
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-gray-900 leading-[1.08]">
+            {t('landing.tour.title')}
+          </h2>
+          <p className="mt-4 text-[15px] sm:text-[16px] text-gray-500 leading-relaxed">
+            {t('landing.tour.subtitle')}
+          </p>
+        </div>
+
+        <div className="space-y-20 lg:space-y-28">
+          {rows.map((r, i) => (
+            <TourRow key={r.img} row={r} flip={i % 2 === 1} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TourRow({
+  row, flip,
+}: {
+  row: { img: string; chrome: string; title: string; desc: string; alt: string; bullets: string[] };
+  flip: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+      {/* Screenshot in a browser frame */}
+      <figure className={`lg:col-span-7 relative ${flip ? 'lg:order-2' : ''}`}>
+        <div className="absolute -inset-8 bg-gradient-to-tr from-emerald-500/10 via-blue-500/5 to-transparent blur-3xl pointer-events-none" />
+        <div className="relative rounded-2xl border border-gray-200/80 shadow-2xl shadow-gray-300/40 bg-[#0B0F1A] overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400/60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/60" />
+            <span className="ml-3 text-[11px] text-gray-400 font-mono truncate">{row.chrome}</span>
+          </div>
+          <img
+            src={row.img}
+            alt={row.alt}
+            width={1760}
+            height={1100}
+            loading="lazy"
+            decoding="async"
+            className="block w-full h-auto"
+          />
+        </div>
+      </figure>
+
+      {/* Copy */}
+      <div className={`lg:col-span-5 ${flip ? 'lg:order-1' : ''}`}>
+        <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 leading-tight">
+          {row.title}
+        </h3>
+        <p className="mt-4 text-[15px] text-gray-500 leading-relaxed">
+          {row.desc}
+        </p>
+        <ul className="mt-7 space-y-3.5">
+          {row.bullets.map((b) => (
+            <li key={b} className="flex items-start gap-3 text-[14px] text-gray-700">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -1091,6 +1202,12 @@ function FooterBlock() {
         </div>
         <span className="font-mono">espacodedadosunificado.com.br</span>
         <div className="flex items-center gap-5">
+          <a
+            href="/conteudo/o-que-e-espaco-de-dados-unificado/"
+            className="hover:text-gray-600 transition-colors"
+          >
+            {t('landing.footer.whatIsEdu')}
+          </a>
           <Link to="/login" className="hover:text-gray-600 transition-colors">
             {t('landing.footer.clientLogin')}
           </Link>
