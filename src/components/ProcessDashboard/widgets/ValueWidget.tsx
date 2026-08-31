@@ -1,4 +1,5 @@
 import { evaluateThresholds } from '@/lib/widgetThresholds';
+import { V } from './visuals';
 
 interface Props {
   config: Record<string, unknown>;
@@ -25,13 +26,13 @@ export function ValueWidget({ config, value, width, height }: Props) {
       style={{ padding: '8px' }}
     >
       {label && (
-        <span className="text-gray-400 truncate w-full text-center" style={{ fontSize: Math.max(10, fontSize * 0.35) }}>
+        <span className="truncate w-full text-center" style={{ color: V.sub, fontSize: Math.max(10, fontSize * 0.35), letterSpacing: 0.3 }}>
           {label}
         </span>
       )}
       <span
         className={`font-bold tabular-nums truncate w-full text-center ${threshold?.blink ? 'animate-pulse' : ''}`}
-        style={{ fontSize, lineHeight: 1.1, color: threshold?.color ?? '#ffffff' }}
+        style={{ fontSize, lineHeight: 1.1, color: threshold?.color ?? V.text, textShadow: threshold?.color ? `0 0 18px ${threshold.color}55` : undefined }}
       >
         {displayValue}
       </span>
@@ -40,7 +41,7 @@ export function ValueWidget({ config, value, width, height }: Props) {
           {threshold.label}
         </span>
       ) : unit && (
-        <span className="text-gray-500 truncate w-full text-center" style={{ fontSize: Math.max(10, fontSize * 0.35) }}>
+        <span className="truncate w-full text-center" style={{ color: V.sub, fontSize: Math.max(10, fontSize * 0.35) }}>
           {unit}
         </span>
       )}

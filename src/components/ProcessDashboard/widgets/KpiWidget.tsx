@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { evaluateThresholds } from '@/lib/widgetThresholds';
+import { V } from './visuals';
 
 interface Props {
   config: Record<string, unknown>;
@@ -40,7 +41,7 @@ export function KpiWidget({ config, value, width, height }: Props) {
   const pct = delta !== null && base !== null && base !== 0 ? (delta / Math.abs(base)) * 100 : null;
   const up = delta !== null && delta > 0;
   const down = delta !== null && delta < 0;
-  const deltaColor = delta === null || delta === 0 ? '#9ca3af' : up ? '#10b981' : '#ef4444';
+  const deltaColor = delta === null || delta === 0 ? V.sub : up ? V.accent : V.bad;
 
   const display = num === null ? '--' : num.toFixed(decimals);
   const valueFont = Math.max(18, Math.min(height * 0.36, width * 0.26));
@@ -50,20 +51,23 @@ export function KpiWidget({ config, value, width, height }: Props) {
   return (
     <div
       className="flex flex-col justify-center h-full w-full select-none overflow-hidden"
-      style={{ padding: 10, paddingLeft: 12, borderLeft: `3px solid ${accent}` }}
+      style={{
+        padding: 12, paddingLeft: 14, borderLeft: `3px solid ${accent}`, borderRadius: 8,
+        background: `linear-gradient(180deg, ${accent}14, transparent 60%)`,
+      }}
     >
-      <span className="text-gray-400 uppercase tracking-wider truncate" style={{ fontSize: smallFont }}>
+      <span className="uppercase tracking-wider truncate" style={{ color: V.sub, fontSize: smallFont }}>
         {label}
       </span>
 
       <div className="flex items-baseline gap-1.5">
         <span
           className={`font-bold tabular-nums truncate ${threshold?.blink ? 'animate-pulse' : ''}`}
-          style={{ fontSize: valueFont, color: threshold?.color ?? '#ffffff', lineHeight: 1.1 }}
+          style={{ fontSize: valueFont, color: threshold?.color ?? V.text, lineHeight: 1.1 }}
         >
           {display}
         </span>
-        {unit && <span className="text-gray-500 shrink-0" style={{ fontSize: valueFont * 0.4 }}>{unit}</span>}
+        {unit && <span className="shrink-0" style={{ color: V.sub, fontSize: valueFont * 0.4 }}>{unit}</span>}
       </div>
 
       <div className="flex items-center gap-2 mt-0.5 flex-wrap" style={{ fontSize: smallFont }}>

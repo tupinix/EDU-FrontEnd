@@ -131,7 +131,7 @@ export function TrendWidget({ config, value }: Props) {
             type="monotone"
             dataKey="value"
             stroke={color}
-            strokeWidth={1.5}
+            strokeWidth={2}
             fillOpacity={1}
             fill={`url(#${gradientId})`}
             dot={false}

@@ -1,4 +1,4 @@
-import { evaluateThresholds } from '@/lib/widgetThresholds';
+import { V, toNum, stateDuo } from './visuals';
 
 interface Props {
   config: Record<string, unknown>;
@@ -14,53 +14,51 @@ export function BarWidget({ config, value, width, height }: Props) {
   const unit = String(config.unit ?? '');
   const label = String(config.label ?? '');
 
-  const numValue = typeof value === 'number' ? value : typeof value === 'string' ? parseFloat(value) : NaN;
-  const clampedValue = isNaN(numValue) ? min : Math.min(Math.max(numValue, min), max);
-  const percentage = max === min ? 0 : ((clampedValue - min) / (max - min)) * 100;
+  const n = toNum(value);
+  const clamped = n == null ? min : Math.min(Math.max(n, min), max);
+  const pct = max === min ? 0 : ((clamped - min) / (max - min)) * 100;
+  const frac = pct / 100;
+  const { main, light } = stateDuo(value, config.rules, frac);
 
-  const getColor = (pct: number) => {
-    if (pct < 60) return '#10b981';
-    if (pct < 85) return '#f59e0b';
-    return '#ef4444';
-  };
-
-  // Threshold rules override the default gradient when present.
-  const threshold = evaluateThresholds(value, config.rules);
-  const color = threshold?.color ?? getColor(percentage);
-  const displayValue = isNaN(numValue) ? '--' : numValue.toFixed(1);
-  const isHorizontal = orientation === 'horizontal';
+  const disp = n == null ? '--' : n.toFixed(1);
+  const isH = orientation === 'horizontal';
+  const grad = `linear-gradient(${isH ? '90deg' : '0deg'}, ${main}, ${light})`;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full p-2 gap-1 select-none">
-      {label && (
-        <span className="text-gray-400 text-[10px] truncate w-full text-center">{label}</span>
-      )}
+    <div className="flex flex-col items-center justify-center h-full w-full p-2 gap-1.5 select-none">
+      {label && <span className="truncate w-full text-center" style={{ color: V.sub, fontSize: 10 }}>{label}</span>}
 
       <div
-        className="relative rounded-md overflow-hidden"
+        className="relative overflow-hidden"
         style={{
-          width: isHorizontal ? '100%' : Math.min(width * 0.4, 30),
-          height: isHorizontal ? Math.min(height * 0.3, 20) : '100%',
-          backgroundColor: '#374151',
-          flex: isHorizontal ? undefined : 1,
+          width: isH ? '100%' : Math.min(width * 0.42, 34),
+          height: isH ? Math.min(height * 0.34, 22) : '100%',
+          flex: isH ? undefined : 1,
+          background: `linear-gradient(${isH ? '180deg' : '90deg'}, ${V.trackEdge}, ${V.track})`,
+          borderRadius: 999,
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,.6)',
+          border: `1px solid ${V.trackEdge}`,
         }}
       >
         <div
-          className={`absolute rounded-md transition-all duration-500 ${threshold?.blink ? 'animate-pulse' : ''}`}
-          style={isHorizontal ? {
-            left: 0, top: 0, bottom: 0,
-            width: `${percentage}%`,
-            backgroundColor: color,
+          className="absolute transition-all duration-500"
+          style={isH ? {
+            left: 0, top: 0, bottom: 0, width: `${pct}%`,
+            background: grad, borderRadius: 999,
+            boxShadow: `0 0 10px ${main}66`,
           } : {
-            left: 0, right: 0, bottom: 0,
-            height: `${percentage}%`,
-            backgroundColor: color,
+            left: 0, right: 0, bottom: 0, height: `${pct}%`,
+            background: grad, borderRadius: 999,
+            boxShadow: `0 0 10px ${main}66`,
           }}
-        />
+        >
+          {/* gloss */}
+          <div style={{ position: 'absolute', inset: 0, borderRadius: 999, background: `linear-gradient(${isH ? '180deg' : '90deg'}, rgba(255,255,255,.35), rgba(255,255,255,0) 55%)` }} />
+        </div>
       </div>
 
-      <span className="text-white font-semibold tabular-nums" style={{ fontSize: Math.max(11, Math.min(width, height) * 0.12) }}>
-        {displayValue}{unit ? ` ${unit}` : ''}
+      <span className="font-semibold tabular-nums" style={{ color: V.text, fontSize: Math.max(11, Math.min(width, height) * 0.12) }}>
+        {disp}{unit ? ` ${unit}` : ''}
       </span>
     </div>
   );

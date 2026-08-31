@@ -1,4 +1,5 @@
-import { evaluateThresholds } from '@/lib/widgetThresholds';
+import { useId } from 'react';
+import { V, toNum, stateDuo } from './visuals';
 
 interface Props {
   config: Record<string, unknown>;
@@ -12,102 +13,75 @@ export function GaugeWidget({ config, value, width, height }: Props) {
   const max = Number(config.max ?? 100);
   const unit = String(config.unit ?? '');
   const label = String(config.label ?? '');
-  const numValue = typeof value === 'number' ? value : typeof value === 'string' ? parseFloat(value) : NaN;
-  const clampedValue = isNaN(numValue) ? min : Math.min(Math.max(numValue, min), max);
-  const percentage = (clampedValue - min) / (max - min);
+  const decimals = Number(config.decimals ?? 1);
 
-  // SVG gauge dimensions
+  const n = toNum(value);
+  const clamped = n == null ? min : Math.min(Math.max(n, min), max);
+  const frac = max === min ? 0 : (clamped - min) / (max - min);
+  const { main, light } = stateDuo(value, config.rules, frac);
+  const id = useId();
+
   const cx = width / 2;
-  const cy = height * 0.6;
-  const radius = Math.min(width * 0.4, height * 0.5);
-  const strokeWidth = radius * 0.15;
+  const cy = height * 0.7;
+  const radius = Math.min(width * 0.42, height * 0.5);
+  const sw = Math.max(6, radius * 0.16);
 
-  // Arc from 180 degrees (left) to 0 degrees (right) — bottom semicircle
-  const startAngle = Math.PI; // 180 degrees
-  const endAngle = 0; // 0 degrees
-  const sweepAngle = startAngle - (startAngle - endAngle) * percentage;
+  const A0 = Math.PI, A1 = 0; // top semicircle, left -> right
+  const p = (a: number) => ({ x: cx + radius * Math.cos(a), y: cy - radius * Math.sin(a) });
+  const s = p(A0), e = p(A1);
+  const arc = `M ${s.x} ${s.y} A ${radius} ${radius} 0 0 1 ${e.x} ${e.y}`;
+  const sweep = A0 - (A0 - A1) * frac;
+  const tip = p(sweep);
 
-  // Helper to get point on arc
-  const pointOnArc = (angle: number) => ({
-    x: cx + radius * Math.cos(angle),
-    y: cy - radius * Math.sin(angle),
+  const ticks = Array.from({ length: 11 }, (_, i) => {
+    const a = A0 - (A0 - A1) * (i / 10);
+    const ro = radius + sw * 0.62, ri = radius + sw * 0.1;
+    return { x1: cx + ro * Math.cos(a), y1: cy - ro * Math.sin(a), x2: cx + ri * Math.cos(a), y2: cy - ri * Math.sin(a), major: i % 5 === 0 };
   });
 
-  // Background arc path
-  const bgStart = pointOnArc(startAngle);
-  const bgEnd = pointOnArc(endAngle);
-  const bgPath = `M ${bgStart.x} ${bgStart.y} A ${radius} ${radius} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
+  // needle base perpendicular to its direction, for a tapered look
+  const perp = sweep + Math.PI / 2, bw = sw * 0.32;
+  const nb1 = { x: cx + bw * Math.cos(perp), y: cy - bw * Math.sin(perp) };
+  const nb2 = { x: cx - bw * Math.cos(perp), y: cy + bw * Math.sin(perp) };
 
-  // Color segments
-  // Threshold rules override the default green/amber/red bands when present.
-  const threshold = evaluateThresholds(value, config.rules);
-  const getColor = (pct: number) => {
-    if (threshold) return threshold.color;
-    if (pct < 0.6) return '#10b981'; // green
-    if (pct < 0.85) return '#f59e0b'; // yellow
-    return '#ef4444'; // red
-  };
-
-  // Value arc path
-  const valEnd = pointOnArc(sweepAngle);
-  const largeArc = percentage > 0.5 ? 1 : 0;
-  const valPath = percentage > 0.005
-    ? `M ${bgStart.x} ${bgStart.y} A ${radius} ${radius} 0 ${largeArc} 1 ${valEnd.x} ${valEnd.y}`
-    : '';
-
-  // Needle
-  const needleLength = radius * 0.85;
-  const needleTip = {
-    x: cx + needleLength * Math.cos(sweepAngle),
-    y: cy - needleLength * Math.sin(sweepAngle),
-  };
-
-  const displayValue = isNaN(numValue) ? '--' : numValue.toFixed(1);
+  const disp = n == null ? '--' : n.toFixed(decimals);
+  const valFont = Math.max(14, Math.min(radius * 0.42, height * 0.16));
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      {/* Label */}
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`${id}-arc`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={main} /><stop offset="100%" stopColor={light} />
+        </linearGradient>
+        <filter id={`${id}-glow`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation={sw * 0.3} result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <radialGradient id={`${id}-hub`} cx="0.35" cy="0.35" r="0.8">
+          <stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#475569" />
+        </radialGradient>
+      </defs>
+
       {label && (
-        <text x={cx} y={14} textAnchor="middle" fill="#9ca3af" fontSize={Math.max(10, height * 0.08)}>
-          {label}
-        </text>
+        <text x={cx} y={14} textAnchor="middle" fill={V.sub} fontSize={Math.max(10, Math.min(height * 0.09, 14))} letterSpacing="0.4">{label}</text>
       )}
 
-      {/* Background arc */}
-      <path d={bgPath} fill="none" stroke="#374151" strokeWidth={strokeWidth} strokeLinecap="round" />
+      {ticks.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.major ? V.sub : V.dim} strokeWidth={t.major ? 1.6 : 1} strokeLinecap="round" />
+      ))}
 
-      {/* Value arc */}
-      {valPath && (
-        <path d={valPath} fill="none" stroke={getColor(percentage)} strokeWidth={strokeWidth} strokeLinecap="round" />
-      )}
+      <path d={arc} fill="none" stroke={V.track} strokeWidth={sw} strokeLinecap="round" />
+      <path d={arc} fill="none" stroke={`url(#${id}-arc)`} strokeWidth={sw} strokeLinecap="round"
+        pathLength={100} strokeDasharray={100} strokeDashoffset={100 * (1 - frac)}
+        filter={`url(#${id}-glow)`} style={{ transition: 'stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)' }} />
 
-      {/* Needle */}
-      <line
-        x1={cx} y1={cy}
-        x2={needleTip.x} y2={needleTip.y}
-        stroke="#e5e7eb" strokeWidth={2} strokeLinecap="round"
-      />
-      <circle cx={cx} cy={cy} r={4} fill="#e5e7eb" />
+      <polygon points={`${nb1.x},${nb1.y} ${nb2.x},${nb2.y} ${tip.x},${tip.y}`} fill="#e2e8f0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.6))' }} />
+      <circle cx={cx} cy={cy} r={sw * 0.44} fill={`url(#${id}-hub)`} stroke="#0f172a" strokeWidth={1} />
 
-      {/* Value text */}
-      <text x={cx} y={cy + radius * 0.3} textAnchor="middle" fill="#f9fafb" fontWeight="bold" fontSize={Math.max(14, height * 0.12)}>
-        {displayValue}
-      </text>
-
-      {/* Unit */}
-      {unit && (
-        <text x={cx} y={cy + radius * 0.5} textAnchor="middle" fill="#6b7280" fontSize={Math.max(9, height * 0.07)}>
-          {unit}
-        </text>
-      )}
-
-      {/* Min/Max labels */}
-      <text x={cx - radius - 2} y={cy + 14} textAnchor="middle" fill="#4b5563" fontSize={9}>
-        {min}
-      </text>
-      <text x={cx + radius + 2} y={cy + 14} textAnchor="middle" fill="#4b5563" fontSize={9}>
-        {max}
-      </text>
+      <text x={cx} y={cy + valFont * 0.95} textAnchor="middle" fill={V.text} fontWeight={700} fontSize={valFont} style={{ fontVariantNumeric: 'tabular-nums' }}>{disp}</text>
+      {unit && <text x={cx} y={cy + valFont * 1.6} textAnchor="middle" fill={V.sub} fontSize={valFont * 0.5}>{unit}</text>}
+      <text x={s.x} y={s.y + 14} textAnchor="middle" fill={V.dim} fontSize={9}>{min}</text>
+      <text x={e.x} y={e.y + 14} textAnchor="middle" fill={V.dim} fontSize={9}>{max}</text>
     </svg>
   );
 }
