@@ -89,7 +89,7 @@ export function useEthipSubscribedTags(connId: string | null) {
 export function useCreateEthipTag(connId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { tagName: string; memberPath?: string; mqttTopic: string; samplingIntervalMs?: number; displayName?: string; brokerId?: string }) =>
+    mutationFn: (body: { tagName: string; memberPath?: string; mqttTopic: string; samplingIntervalMs?: number; displayName?: string; brokerId?: string; publishRaw?: boolean }) =>
       ethipApi.subscribeTag(connId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ethip-subscribed-tags', connId] });
