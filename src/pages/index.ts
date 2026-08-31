@@ -23,3 +23,4 @@ export { SouthboundPage } from './SouthboundPage';
 export { VirtualSensorsPage } from './VirtualSensorsPage';
 export { EventsPage } from './EventsPage';
 export { NetworkScan } from './NetworkScan';
+export { Comando } from './Comando';

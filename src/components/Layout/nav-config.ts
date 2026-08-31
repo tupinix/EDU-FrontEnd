@@ -21,6 +21,7 @@ import {
   Activity,
   Sigma,
   Radar,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -45,6 +46,7 @@ export const dashboardItem: NavItem = {
 };
 
 export const standaloneItems: NavItem[] = [
+  { path: '/comando', labelKey: 'sidebar.comando', icon: Sparkles },
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
 ];
 
