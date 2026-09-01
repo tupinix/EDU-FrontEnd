@@ -146,6 +146,19 @@ function flattenTags(nodes: TopicNode[], out: string[] = []): string[] {
   return out;
 }
 
+// Flatten a payload object to its leaf paths ("raw.OEE", "raw.MTBF", ...), so the
+// field picker can offer NESTED data, not just top-level keys. Depth-capped.
+function flattenLeafPaths(obj: unknown, prefix = '', depth = 0): string[] {
+  if (depth > 4 || !obj || typeof obj !== 'object' || Array.isArray(obj)) return [];
+  const out: string[] = [];
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flattenLeafPaths(v, path, depth + 1));
+    else out.push(path);
+  }
+  return out;
+}
+
 // Tag binding = choose a BROKER, then a tag from that broker, then which payload
 // field to read — same pattern as the Models / Alerts / KG screens.
 function TagBindingPicker({ widget, onConfigChange }: {
@@ -184,9 +197,8 @@ function TagBindingPicker({ widget, onConfigChange }: {
     staleTime: 15000,
   });
   const fieldOptions = useMemo(() => {
-    const p = detail?.payload;
-    const keys = p && typeof p === 'object' && !Array.isArray(p) ? Object.keys(p as Record<string, unknown>) : [];
-    return keys.length ? Array.from(new Set([...keys, 'value'])) : ['value'];
+    const paths = flattenLeafPaths(detail?.payload);
+    return paths.length ? Array.from(new Set([...paths, 'value'])) : ['value'];
   }, [detail]);
 
   const selectCls = 'w-full px-3 py-1.5 text-[12px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg outline-none transition-all focus:border-gray-200 dark:focus:border-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-800 dark:text-gray-200';
