@@ -108,6 +108,7 @@ export function Comando() {
     () => (localStorage.getItem(PROVIDER_STORAGE) as AiProviderId) || 'groq',
   );
   const [keys, setKeys] = useState<UserKeys>(loadKeys);
+  const [keysSaved, setKeysSaved] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
 
   const [listening, setListening] = useState(false);
@@ -280,7 +281,16 @@ export function Comando() {
                 />
               </label>
             ))}
-            <p className="col-span-full text-[11px] text-gray-400">{t('comando.keysHint')}</p>
+            <div className="col-span-full flex items-center justify-between gap-3">
+              <p className="text-[11px] text-gray-400">{t('comando.keysHint')}</p>
+              <button
+                type="button"
+                onClick={() => { saveKeys(keys); setKeysSaved(true); setTimeout(() => setKeysSaved(false), 1800); }}
+                className="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+              >
+                {keysSaved ? 'Salvo' : 'Salvar chaves'}
+              </button>
+            </div>
           </div>
         )}
       </div>
