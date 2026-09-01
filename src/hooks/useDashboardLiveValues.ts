@@ -43,9 +43,22 @@ function coerce(v: unknown): unknown {
 // use it; otherwise fall back to the common value keys; else the raw scalar.
 export function extractValue(payload: unknown, field?: string): unknown {
   if (payload === null || payload === undefined) return null;
+  // A dot-path field lets a widget pull a NESTED datum, e.g. "raw.OEE" from
+  // { raw: { OEE: 0.53, ... } }. A plain key (e.g. "value") is just a 1-part path.
+  if (field) {
+    const parts = field.split('.');
+    let cur: unknown = payload;
+    let found = true;
+    for (const part of parts) {
+      if (cur && typeof cur === 'object' && !Array.isArray(cur) && part in (cur as Record<string, unknown>)) {
+        cur = (cur as Record<string, unknown>)[part];
+      } else { found = false; break; }
+    }
+    if (found) return coerce(cur);
+    // path not present — fall through to the common default keys below
+  }
   if (typeof payload === 'object' && !Array.isArray(payload)) {
     const obj = payload as Record<string, unknown>;
-    if (field && field in obj) return coerce(obj[field]);
     for (const key of ['value', 'Value', 'val', 'data', 'measurement']) {
       if (key in obj) return coerce(obj[key]);
     }
