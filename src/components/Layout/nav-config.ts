@@ -13,6 +13,7 @@ import {
   Zap,
   Building2,
   DatabaseBackup,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -77,6 +78,7 @@ export const navGroups: NavGroup[] = [
     key: 'aiTools',
     labelKey: 'sidebar.groups.aiTools',
     items: [
+      { path: '/comando', labelKey: 'AI Bot', icon: Sparkles },
       { path: '/connections', labelKey: 'sidebar.mcpServer', icon: Cable, adminOnly: true },
     ],
   },

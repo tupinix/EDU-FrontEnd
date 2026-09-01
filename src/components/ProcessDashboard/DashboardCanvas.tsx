@@ -561,6 +561,9 @@ function getDefaultConfig(type: DashboardWidget['type']): Record<string, unknown
     case 'pipe': return { direction: 'horizontal', color: '#3b82f6', thickness: 6, animated: true };
     case 'sparkline': return { color: '#10b981' };
     case 'alarm': return { label: 'Alarm', goodMin: 20, goodMax: 80, warnMin: 10, warnMax: 90 };
+    case 'kpi': return { label: 'KPI', unit: '', decimals: 0, color: '#3b82f6', rules: [] };
+    case 'radial': return { min: 0, max: 100, unit: '%', label: '', decimals: 0, rules: [] };
+    case 'table': return { rows: [], showHeader: true };
     default: return {};
   }
 }

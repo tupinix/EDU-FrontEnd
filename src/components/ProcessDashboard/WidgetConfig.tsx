@@ -4,6 +4,78 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardWidget, BrokerConfig, TopicNode } from '../../types';
 import { topicsApi, brokersApi } from '../../services/api';
 import { cn } from '@/lib/utils';
+import { ThresholdRule, ThresholdOp, normalizeRules } from '@/lib/widgetThresholds';
+import type { TableRow } from './widgets/TableWidget';
+
+// Widgets that support conditional-formatting rules ("regras de negócio").
+const RULES_SUPPORTED: DashboardWidget['type'][] = ['value', 'gauge', 'bar', 'kpi', 'radial'];
+
+const OP_OPTIONS: { value: ThresholdOp; label: string }[] = [
+  { value: 'lt', label: '<' },
+  { value: 'lte', label: '≤' },
+  { value: 'gt', label: '>' },
+  { value: 'gte', label: '≥' },
+  { value: 'eq', label: '=' },
+  { value: 'between', label: 'entre' },
+  { value: 'outside', label: 'fora' },
+];
+
+// Editor for a widget's ordered threshold rules. First match wins at runtime.
+function ThresholdRulesConfig({ rules, onChange }: { rules: unknown; onChange: (rules: ThresholdRule[]) => void }) {
+  const list = normalizeRules(rules);
+  const miniInp = 'px-2 py-1 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none dark:text-gray-200 tabular-nums w-full';
+  const miniSel = 'px-1.5 py-1 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none dark:text-gray-200';
+
+  const update = (i: number, patch: Partial<ThresholdRule>) =>
+    onChange(list.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const add = () =>
+    onChange([...list, { id: `rule_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, op: 'gt', value: 0, color: '#ef4444', blink: false }]);
+  const remove = (i: number) => onChange(list.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Regras (cor condicional)</label>
+        <button type="button" onClick={add} className="text-[10px] font-medium text-blue-500 hover:text-blue-600">+ regra</button>
+      </div>
+      {list.length === 0 && (
+        <p className="text-[10px] text-gray-400">Sem regras — usa a cor padrão do widget.</p>
+      )}
+      {list.map((r, i) => (
+        <div key={r.id} className="rounded-lg border border-gray-100 dark:border-gray-800 p-2 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <select value={r.op} onChange={(e) => update(i, { op: e.target.value as ThresholdOp })} className={miniSel}>
+              {OP_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <input type="number" value={r.value} onChange={(e) => update(i, { value: Number(e.target.value) })} className={miniInp} />
+            {(r.op === 'between' || r.op === 'outside') && (
+              <input type="number" value={r.value2 ?? r.value} onChange={(e) => update(i, { value2: Number(e.target.value) })} className={miniInp} />
+            )}
+            <input
+              type="color"
+              value={r.color}
+              onChange={(e) => update(i, { color: e.target.value })}
+              className="w-7 h-7 shrink-0 rounded cursor-pointer bg-transparent border border-gray-200 dark:border-gray-700"
+            />
+            <button type="button" onClick={() => remove(i)} className="shrink-0 text-red-400 hover:text-red-500 text-[12px] px-1">✕</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={r.label ?? ''}
+              onChange={(e) => update(i, { label: e.target.value })}
+              placeholder="rótulo (ex: CRÍTICO)"
+              className={cn(miniInp, 'flex-1')}
+            />
+            <label className="flex items-center gap-1 text-[10px] text-gray-400 shrink-0">
+              <input type="checkbox" checked={!!r.blink} onChange={(e) => update(i, { blink: e.target.checked })} /> piscar
+            </label>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface Props {
   widget: DashboardWidget;
@@ -186,6 +258,107 @@ function TagBindingPicker({ widget, onConfigChange }: {
   );
 }
 
+// One row of a Table widget: a tag binding plus display options.
+function TableRowEditor({ row, brokers, onChange, onRemove }: {
+  row: TableRow;
+  brokers: BrokerConfig[];
+  onChange: (patch: Partial<TableRow>) => void;
+  onRemove: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const selectCls = 'w-full px-2 py-1 text-[11px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none dark:text-gray-200';
+
+  const { data: tree = [], isLoading } = useQuery<TopicNode[]>({
+    queryKey: ['topics-tree-dash', row.brokerId || 'active'],
+    queryFn: () => topicsApi.getTree(row.brokerId || undefined),
+    staleTime: 15000,
+  });
+  const tags = useMemo(() => {
+    const all = flattenTags(tree);
+    const q = search.toLowerCase().trim();
+    return (q ? all.filter((t) => t.toLowerCase().includes(q)) : all).slice(0, 100);
+  }, [tree, search]);
+
+  return (
+    <div className="rounded-lg border border-gray-100 dark:border-gray-800 p-2 space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-mono text-gray-500 truncate">{row.topic || 'sem tag'}</span>
+        <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-500 text-[12px] px-1 shrink-0">✕</button>
+      </div>
+
+      <select value={row.brokerId ?? ''} onChange={(e) => onChange({ brokerId: e.target.value || undefined })} className={selectCls}>
+        <option value="">Broker ativo</option>
+        {brokers.filter((b) => b.status === 'connected').map((b) => (
+          <option key={b.id} value={b.id}>{b.name}</option>
+        ))}
+      </select>
+
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar tag…"
+        className="w-full px-2 py-1 text-[11px] font-mono bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-md outline-none placeholder:text-gray-300 dark:text-gray-200"
+      />
+      <div className="max-h-28 overflow-y-auto rounded-md border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800/50">
+        {isLoading ? (
+          <p className="text-center py-2 text-[10px] text-gray-300">Carregando…</p>
+        ) : tags.length === 0 ? (
+          <p className="text-center py-2 text-[10px] text-gray-300">Nenhuma tag</p>
+        ) : (
+          tags.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onChange({ topic: t })}
+              className={cn(
+                'w-full text-left px-2 py-1 text-[10px] font-mono truncate transition-colors',
+                t === row.topic ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
+              )}
+            >
+              {t}
+            </button>
+          ))
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-1.5">
+        <input type="text" value={row.label ?? ''} onChange={(e) => onChange({ label: e.target.value })} placeholder="rótulo" className={selectCls} />
+        <input type="text" value={row.unit ?? ''} onChange={(e) => onChange({ unit: e.target.value })} placeholder="un." className={selectCls} />
+        <input type="number" value={row.decimals ?? 2} onChange={(e) => onChange({ decimals: Number(e.target.value) })} placeholder="dec." className={selectCls} min={0} max={6} />
+      </div>
+
+      <ThresholdRulesConfig rules={row.rules} onChange={(rules) => onChange({ rules })} />
+    </div>
+  );
+}
+
+function TableRowsConfig({ rows, onChange }: { rows: unknown; onChange: (rows: TableRow[]) => void }) {
+  const list: TableRow[] = Array.isArray(rows) ? (rows as TableRow[]) : [];
+  const { data: brokers = [] } = useQuery<BrokerConfig[]>({
+    queryKey: ['brokers-list-dash'],
+    queryFn: brokersApi.getAll,
+    staleTime: 15000,
+  });
+
+  const add = () => onChange([...list, { id: `row_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, topic: '', decimals: 2 }]);
+  const update = (i: number, patch: Partial<TableRow>) => onChange(list.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const remove = (i: number) => onChange(list.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Linhas da tabela</label>
+        <button type="button" onClick={add} className="text-[10px] font-medium text-blue-500 hover:text-blue-600">+ linha</button>
+      </div>
+      {list.length === 0 && <p className="text-[10px] text-gray-400">Sem linhas — adicione tags.</p>}
+      {list.map((r, i) => (
+        <TableRowEditor key={r.id} row={r} brokers={brokers} onChange={(patch) => update(i, patch)} onRemove={() => remove(i)} />
+      ))}
+    </div>
+  );
+}
+
 // Type-specific config fields
 function TypeSpecificConfig({ widget, onConfigChange }: { widget: DashboardWidget; onConfigChange: (u: Record<string, unknown>) => void }) {
   const c = widget.config;
@@ -342,6 +515,50 @@ function TypeSpecificConfig({ widget, onConfigChange }: { widget: DashboardWidge
         </>
       );
 
+    case 'kpi':
+      return (
+        <>
+          <ConfigInput label="Label" value={String(c.label ?? 'KPI')} onChange={(v) => onConfigChange({ label: v })} placeholder="e.g. Produção/h" />
+          <div className="grid grid-cols-2 gap-2">
+            <ConfigInput label="Unit" value={String(c.unit ?? '')} onChange={(v) => onConfigChange({ unit: v })} placeholder="e.g. pç, %" />
+            <ConfigInput label="Decimals" value={String(c.decimals ?? 0)} onChange={(v) => onConfigChange({ decimals: Number(v) })} type="number" min={0} max={6} />
+          </div>
+          <ConfigInput label="Meta (target)" value={String(c.target ?? '')} onChange={(v) => onConfigChange({ target: v === '' ? undefined : Number(v) })} type="number" placeholder="opcional" />
+          <ConfigInput label="Cor de destaque" value={String(c.color ?? '#3b82f6')} onChange={(v) => onConfigChange({ color: v })} type="color" />
+        </>
+      );
+
+    case 'radial':
+      return (
+        <>
+          <ConfigInput label="Label" value={String(c.label ?? '')} onChange={(v) => onConfigChange({ label: v })} placeholder="Radial title" />
+          <div className="grid grid-cols-2 gap-2">
+            <ConfigInput label="Min" value={String(c.min ?? 0)} onChange={(v) => onConfigChange({ min: Number(v) })} type="number" />
+            <ConfigInput label="Max" value={String(c.max ?? 100)} onChange={(v) => onConfigChange({ max: Number(v) })} type="number" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <ConfigInput label="Unit" value={String(c.unit ?? '%')} onChange={(v) => onConfigChange({ unit: v })} placeholder="%, bar…" />
+            <ConfigInput label="Decimals" value={String(c.decimals ?? 0)} onChange={(v) => onConfigChange({ decimals: Number(v) })} type="number" min={0} max={6} />
+          </div>
+        </>
+      );
+
+    case 'table':
+      return (
+        <>
+          <label className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+            <input
+              type="checkbox"
+              checked={c.showHeader !== false}
+              onChange={(e) => onConfigChange({ showHeader: e.target.checked })}
+            />
+            Mostrar cabeçalho
+          </label>
+          <div className="border-t border-gray-100 dark:border-gray-800" />
+          <TableRowsConfig rows={c.rows} onChange={(rows) => onConfigChange({ rows })} />
+        </>
+      );
+
     default:
       return null;
   }
@@ -358,10 +575,16 @@ const WIDGET_TYPE_LABELS: Record<string, string> = {
   bar: 'Bar',
   image: 'Image',
   rectangle: 'Rectangle',
+  kpi: 'KPI / Stat',
+  radial: 'Radial / Donut',
+  table: 'Tabela',
+  sparkline: 'Sparkline',
+  alarm: 'Alarm',
+  pipe: 'Pipe',
 };
 
 export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Props) {
-  const needsBinding = !['text', 'rectangle', 'image'].includes(widget.type);
+  const needsBinding = !['text', 'rectangle', 'image', 'table'].includes(widget.type);
 
   return (
     <div className="w-64 shrink-0 bg-white dark:bg-gray-900 border-l border-gray-200/60 dark:border-gray-800 overflow-auto flex flex-col">
@@ -380,6 +603,14 @@ export function WidgetConfig({ widget, onChange, onConfigChange, onDelete }: Pro
 
         {/* Type-specific */}
         <TypeSpecificConfig widget={widget} onConfigChange={onConfigChange} />
+
+        {/* Conditional-formatting rules ("regras de negócio") */}
+        {RULES_SUPPORTED.includes(widget.type) && (
+          <>
+            <div className="border-t border-gray-100 dark:border-gray-800" />
+            <ThresholdRulesConfig rules={widget.config.rules} onChange={(rules) => onConfigChange({ rules })} />
+          </>
+        )}
 
         {/* Separator */}
         <div className="border-t border-gray-100 dark:border-gray-800" />

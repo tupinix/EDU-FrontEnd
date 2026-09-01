@@ -29,7 +29,7 @@ export function SparklineWidget({ config, value, width, height }: Props) {
   if (points.length < 2) {
     return (
       <div className="flex items-center justify-center w-full h-full">
-        <span className="text-[10px] text-gray-500">waiting...</span>
+        <span className="text-[10px]" style={{ color: '#5b6472' }}>waiting...</span>
       </div>
     );
   }
@@ -55,22 +55,27 @@ export function SparklineWidget({ config, value, width, height }: Props) {
     ` L ${padding.toFixed(1)} ${(padding + h).toFixed(1)} Z`;
 
   return (
-    <svg width={width} height={height}>
+    <svg width={width} height={height} style={{ overflow: 'visible' }}>
       <defs>
         <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+          <stop offset="0%" stopColor={color} stopOpacity={0.32} />
           <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
+        <filter id={`sparkglow-${color.replace('#', '')}`} x="-20%" y="-40%" width="140%" height="180%">
+          <feGaussianBlur stdDeviation={1.4} result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
       </defs>
       <path d={areaPath} fill={`url(#spark-${color.replace('#', '')})`} />
-      <path d={pathData} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={pathData} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" filter={`url(#sparkglow-${color.replace('#', '')})`} />
       {/* Current value dot */}
       {points.length > 0 && (
         <circle
           cx={padding + w}
           cy={padding + h - ((points[points.length - 1] - min) / range) * h}
-          r={3}
+          r={3.5}
           fill={color}
+          style={{ filter: `drop-shadow(0 0 4px ${color})` }}
         />
       )}
     </svg>

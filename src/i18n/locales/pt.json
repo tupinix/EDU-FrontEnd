@@ -106,7 +106,8 @@
       "analytics": "Análises",
       "aiTools": "AI Tools",
       "system": "Sistema"
-    }
+    },
+    "comando": "Comando IA"
   },
   "landing": {
     "nav": {
@@ -492,5 +493,30 @@
     "select": "Idioma",
     "pt": "Portugues",
     "en": "English"
+  },
+  "comando": {
+    "title": "Comando IA",
+    "subtitle": "Descreva a tela que voce quer e a IA monta pra voce, com os dados reais da sua planta.",
+    "placeholder": "O que voce quer ver? Ex.: dashboard de OEE da linha 3 com status dos motores",
+    "generate": "Gerar",
+    "voice": "Falar",
+    "model": "Modelo",
+    "needsKey": "Adicione sua chave para usar",
+    "keys": "Chaves de API",
+    "keysHint": "Suas chaves ficam salvas so no seu navegador e sao usadas apenas nas suas requisicoes. Nao ficam gravadas no servidor.",
+    "building": "Montando sua tela...",
+    "grounded": "{{count}} tags reais disponiveis",
+    "save": "Salvar tela",
+    "saved": "Salvo",
+    "savedFrom": "Gerado por IA: {{prompt}}",
+    "openInScreens": "Abrir em Telas",
+    "nearLimit": "Voce esta perto do limite de uso da IA. Depois do reset voce podera gerar novamente.",
+    "errors": {
+      "rateLimited": "Voce atingiu o limite de uso da IA por agora. Tente novamente apos o reset.",
+      "notConfigured": "Este provedor nao esta configurado. Adicione sua chave de API.",
+      "saveFailed": "Nao foi possivel salvar a tela.",
+      "noVoice": "Seu navegador nao suporta reconhecimento de voz.",
+      "generic": "Nao foi possivel gerar a tela. Tente reformular o pedido."
+    }
   }
 }

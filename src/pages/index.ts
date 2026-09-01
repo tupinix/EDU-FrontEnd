@@ -15,3 +15,4 @@ export { ProcessDashboard } from './ProcessDashboard';
 export { LicensesPage } from './LicensesPage';
 export { Landing } from './Landing';
 export { ConfigTransferPage } from './ConfigTransferPage';
+export { Comando } from './Comando';

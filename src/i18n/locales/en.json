@@ -106,7 +106,8 @@
       "analytics": "Analytics",
       "aiTools": "AI Tools",
       "system": "System"
-    }
+    },
+    "comando": "AI Command"
   },
   "landing": {
     "nav": {
@@ -442,7 +443,6 @@
     "activateHint": "Set as active (connects automatically)",
     "remove": "Remove",
     "saveChanges": "Save Changes",
-    "addBroker": "Add Broker",
     "noBrokers": "No brokers configured",
     "noBrokersHint": "Add a broker to get started",
     "confirmDelete": "Are you sure you want to remove this broker?",
@@ -493,5 +493,30 @@
     "select": "Language",
     "pt": "Portugues",
     "en": "English"
+  },
+  "comando": {
+    "title": "AI Command",
+    "subtitle": "Describe the screen you want and the AI builds it for you, with your plant's real data.",
+    "placeholder": "What do you want to see? e.g. an OEE dashboard for line 3 with motor status",
+    "generate": "Generate",
+    "voice": "Speak",
+    "model": "Model",
+    "needsKey": "Add your key to use it",
+    "keys": "API keys",
+    "keysHint": "Your keys are stored only in your browser and used only for your requests. They are never persisted on the server.",
+    "building": "Building your screen...",
+    "grounded": "{{count}} real tags available",
+    "save": "Save screen",
+    "saved": "Saved",
+    "savedFrom": "AI generated: {{prompt}}",
+    "openInScreens": "Open in Screens",
+    "nearLimit": "You are close to the AI usage limit. After it resets you will be able to generate again.",
+    "errors": {
+      "rateLimited": "You have reached the AI usage limit for now. Try again after it resets.",
+      "notConfigured": "This provider is not configured. Add your API key.",
+      "saveFailed": "Could not save the screen.",
+      "noVoice": "Your browser does not support voice recognition.",
+      "generic": "Could not generate the screen. Try rephrasing your request."
+    }
   }
 }

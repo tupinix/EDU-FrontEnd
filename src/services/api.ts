@@ -20,6 +20,7 @@ import {
   GraphProperties,
   GraphRelationship,
   RawGraph,
+  DashboardWidget,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -168,10 +169,28 @@ export const topicsApi = {
     return data.data;
   },
 
-  getHistory: async (topic: string, limit = 100): Promise<TopicHistory[]> => {
+  // Batched latest-value lookup for dashboard polling: one request for many
+  // topics instead of one request per widget. Returns a map keyed by topic.
+  // Skips Neo4j metadata (values only) — this is the hot path.
+  getBatchDetails: async (
+    topics: string[],
+    brokerId?: string,
+  ): Promise<Record<string, { payload: unknown; qos: number; retain: boolean; updatedAt: string }>> => {
+    if (topics.length === 0) return {};
+    const { data } = await apiClient.post<
+      ApiResponse<Record<string, { payload: unknown; qos: number; retain: boolean; updatedAt: string }>>
+    >('/topics/batch-details', { topics, brokerId });
+    if (!data.success || !data.data) {
+      throw new Error(data.error || 'Failed to fetch batch topic details');
+    }
+    return data.data;
+  },
+
+  // `from` is an ISO timestamp lower bound (defaults server-side to 1h ago).
+  getHistory: async (topic: string, limit = 100, from?: string): Promise<TopicHistory[]> => {
     const { data } = await apiClient.get<ApiResponse<TopicHistory[]>>(
       `/topics/${encodeURIComponent(topic)}/history`,
-      { params: { limit } }
+      { params: from ? { limit, from } : { limit } }
     );
     if (!data.success || !data.data) {
       throw new Error(data.error || 'Failed to fetch topic history');
@@ -502,25 +521,96 @@ export interface AIStatus {
   model: string;
 }
 
+export type AiProviderId = 'groq' | 'openai' | 'anthropic';
+
+export interface AiProviderInfo {
+  id: AiProviderId;
+  label: string;
+  native: boolean;
+  model: string;
+  ready: boolean;
+  needsUserKey: boolean;
+}
+
+export interface AiProvidersResponse {
+  default: AiProviderId;
+  providers: AiProviderInfo[];
+}
+
+export interface AiUsage {
+  provider: AiProviderId;
+  model: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  remainingRequests?: number;
+  remainingTokens?: number;
+  resetSeconds?: number;
+  nearLimit: boolean;
+}
+
+export interface GeneratedDashboard {
+  name: string;
+  backgroundColor: string;
+  canvasWidth: number;
+  canvasHeight: number;
+  widgets: DashboardWidget[];
+}
+
+export interface GenerateDashboardResult {
+  dashboard: GeneratedDashboard;
+  notes?: string;
+  usage: AiUsage;
+  savedId: string | null;
+  topicsGrounded: number;
+}
+
+// A user's own provider key travels as a header, is used for that one request,
+// and is never stored server-side.
+function userKeyHeaders(provider?: AiProviderId, apiKey?: string): Record<string, string> {
+  if (!provider || !apiKey) return {};
+  if (provider === 'openai') return { 'x-user-openai-key': apiKey };
+  if (provider === 'anthropic') return { 'x-user-anthropic-key': apiKey };
+  return {};
+}
+
 export const aiApi = {
-  chat: async (messages: ChatMessage[]): Promise<ChatMessage> => {
-    // Longer timeout for AI requests (5 minutes for CPU-only Ollama)
-    const { data } = await apiClient.post<ApiResponse<{ message: ChatMessage }>>(
-      '/ai/chat',
-      { messages },
-      { timeout: 300000 }
-    );
-    if (!data.success || !data.data) {
-      throw new Error(data.error || 'Failed to send chat message');
-    }
-    return data.data.message;
+  getProviders: async (keys?: Partial<Record<AiProviderId, string>>): Promise<AiProvidersResponse> => {
+    const headers: Record<string, string> = {
+      ...userKeyHeaders('openai', keys?.openai),
+      ...userKeyHeaders('anthropic', keys?.anthropic),
+    };
+    const { data } = await apiClient.get<ApiResponse<AiProvidersResponse>>('/ai/providers', { headers });
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to load AI providers');
+    return data.data;
   },
 
-  getStatus: async (): Promise<AIStatus> => {
-    const { data } = await apiClient.get<ApiResponse<AIStatus>>('/ai/status');
-    if (!data.success || !data.data) {
-      throw new Error(data.error || 'Failed to get AI status');
-    }
+  generateDashboard: async (params: {
+    prompt: string;
+    provider?: AiProviderId;
+    apiKey?: string;
+    save?: boolean;
+  }): Promise<GenerateDashboardResult> => {
+    const { data } = await apiClient.post<ApiResponse<GenerateDashboardResult>>(
+      '/ai/generate-dashboard',
+      { prompt: params.prompt, provider: params.provider, save: params.save },
+      { timeout: 120000, headers: userKeyHeaders(params.provider, params.apiKey) },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to generate dashboard');
+    return data.data;
+  },
+
+  chat: async (params: {
+    message: string;
+    provider?: AiProviderId;
+    apiKey?: string;
+  }): Promise<{ reply: string; usage: AiUsage }> => {
+    const { data } = await apiClient.post<ApiResponse<{ reply: string; usage: AiUsage }>>(
+      '/ai/chat',
+      { message: params.message, provider: params.provider },
+      { timeout: 120000, headers: userKeyHeaders(params.provider, params.apiKey) },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to chat');
     return data.data;
   },
 };

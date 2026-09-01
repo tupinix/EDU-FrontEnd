@@ -74,14 +74,29 @@ export function useDashboardLiveValues(bindings: LiveBinding[]): Map<string, unk
     let cancelled = false;
 
     const fetchAll = async () => {
+      // Group bindings by broker so we issue ONE batch request per distinct
+      // broker instead of one /details request per widget (was the N+1 storm
+      // that took the server down on large/shared dashboards).
+      const byBroker = new Map<string, LiveBinding[]>();
+      for (const b of active) {
+        const bk = b.brokerId ?? '';
+        const list = byBroker.get(bk);
+        if (list) list.push(b);
+        else byBroker.set(bk, [b]);
+      }
+
       const newMap = new Map<string, unknown>();
       await Promise.allSettled(
-        active.map(async (b) => {
+        Array.from(byBroker.entries()).map(async ([bk, group]) => {
           try {
-            const detail = await topicsApi.getDetails(b.topic, b.brokerId);
-            if (!cancelled) newMap.set(b.key, extractValue(detail.payload, b.field));
+            const topics = Array.from(new Set(group.map((b) => b.topic)));
+            const result = await topicsApi.getBatchDetails(topics, bk || undefined);
+            for (const b of group) {
+              const entry = result[b.topic];
+              if (entry) newMap.set(b.key, extractValue(entry.payload, b.field));
+            }
           } catch {
-            // Topic may not exist on that broker yet — skip silently.
+            // Broker/topic may not be reachable yet — skip silently.
           }
         }),
       );
