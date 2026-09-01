@@ -46,7 +46,6 @@ export const dashboardItem: NavItem = {
 };
 
 export const standaloneItems: NavItem[] = [
-  { path: '/comando', labelKey: 'sidebar.comando', icon: Sparkles },
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
 ];
 
@@ -95,6 +94,7 @@ export const navGroups: NavGroup[] = [
     key: 'aiTools',
     labelKey: 'sidebar.groups.aiTools',
     items: [
+      { path: '/comando', labelKey: 'AI Bot', icon: Sparkles },
       { path: '/connections', labelKey: 'sidebar.mcpServer', icon: Cable, adminOnly: true },
     ],
   },
