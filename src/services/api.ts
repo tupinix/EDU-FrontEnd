@@ -565,6 +565,44 @@ export interface GenerateDashboardResult {
   topicsGrounded: number;
 }
 
+export interface OrgFinding {
+  title: string;
+  severity: 'info' | 'warn' | 'critical';
+  detail: string;
+}
+
+export interface OrgSuggestion {
+  title: string;
+  detail: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
+export interface UnsMappingRow {
+  source: string;
+  target: string;
+  note?: string;
+}
+
+export interface OrganizationInventoryFlags {
+  topicCount: number;
+  hasBrokers: boolean;
+  hasModbus: boolean;
+  hasOpcUa: boolean;
+  hasEthernetIp: boolean;
+  hasKafka: boolean;
+  hasGraph: boolean;
+}
+
+export interface OrganizationAnalysisResult {
+  summary: string;
+  findings: OrgFinding[];
+  suggestions: OrgSuggestion[];
+  mermaid: string;
+  unsProposal: UnsMappingRow[];
+  usage: AiUsage;
+  inventory: OrganizationInventoryFlags;
+}
+
 // A user's own provider key travels as a header, is used for that one request,
 // and is never stored server-side.
 function userKeyHeaders(provider?: AiProviderId, apiKey?: string): Record<string, string> {
@@ -611,6 +649,20 @@ export const aiApi = {
       { timeout: 120000, headers: userKeyHeaders(params.provider, params.apiKey) },
     );
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to chat');
+    return data.data;
+  },
+
+  analyzeOrganization: async (params: {
+    prompt?: string;
+    provider?: AiProviderId;
+    apiKey?: string;
+  }): Promise<OrganizationAnalysisResult> => {
+    const { data } = await apiClient.post<ApiResponse<OrganizationAnalysisResult>>(
+      '/ai/analyze-organization',
+      { prompt: params.prompt, provider: params.provider },
+      { timeout: 180000, headers: userKeyHeaders(params.provider, params.apiKey) },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to analyze organization');
     return data.data;
   },
 };
