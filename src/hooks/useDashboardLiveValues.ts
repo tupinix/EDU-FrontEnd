@@ -50,8 +50,14 @@ export function extractValue(payload: unknown, field?: string): unknown {
     let cur: unknown = payload;
     let found = true;
     for (const part of parts) {
-      if (cur && typeof cur === 'object' && !Array.isArray(cur) && part in (cur as Record<string, unknown>)) {
-        cur = (cur as Record<string, unknown>)[part];
+      if (cur && typeof cur === 'object') {
+        if (Array.isArray(cur)) {
+          const idx = Number(part);
+          if (Number.isInteger(idx) && idx >= 0 && idx < cur.length) { cur = cur[idx]; }
+          else { found = false; break; }
+        } else if (part in (cur as Record<string, unknown>)) {
+          cur = (cur as Record<string, unknown>)[part];
+        } else { found = false; break; }
       } else { found = false; break; }
     }
     if (found) return coerce(cur);

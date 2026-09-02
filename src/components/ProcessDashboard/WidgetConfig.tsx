@@ -149,11 +149,18 @@ function flattenTags(nodes: TopicNode[], out: string[] = []): string[] {
 // Flatten a payload object to its leaf paths ("raw.OEE", "raw.MTBF", ...), so the
 // field picker can offer NESTED data, not just top-level keys. Depth-capped.
 function flattenLeafPaths(obj: unknown, prefix = '', depth = 0): string[] {
-  if (depth > 4 || !obj || typeof obj !== 'object' || Array.isArray(obj)) return [];
+  if (depth > 5 || obj === null || obj === undefined || typeof obj !== 'object') {
+    return prefix ? [prefix] : [];
+  }
+  // Arrays are indexed (arr.0, arr.1, ...), capped so a huge array doesn't flood the picker.
+  const entries: [string, unknown][] = Array.isArray(obj)
+    ? (obj as unknown[]).slice(0, 50).map((v, i) => [String(i), v])
+    : Object.entries(obj as Record<string, unknown>);
+  if (entries.length === 0) return prefix ? [prefix] : [];
   const out: string[] = [];
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+  for (const [k, v] of entries) {
     const path = prefix ? `${prefix}.${k}` : k;
-    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flattenLeafPaths(v, path, depth + 1));
+    if (v && typeof v === 'object') out.push(...flattenLeafPaths(v, path, depth + 1));
     else out.push(path);
   }
   return out;
