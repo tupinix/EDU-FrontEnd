@@ -22,13 +22,16 @@ import {
   AiProviderInfo,
   GenerateDashboardResult,
   OrganizationAnalysisResult,
+  InsightRunResult,
+  InsightItem,
+  InsightSchedule,
 } from '../services/api';
 
 const KEYS_STORAGE = 'edu.ai.keys';
 const PROVIDER_STORAGE = 'edu.ai.provider';
 const MODE_STORAGE = 'edu.ai.mode';
 
-type AiMode = 'screens' | 'organization';
+type AiMode = 'screens' | 'organization' | 'insight';
 type UserKeys = Partial<Record<AiProviderId, string>>;
 
 function loadKeys(): UserKeys {
@@ -240,10 +243,66 @@ function OrgAnalysisView({ result }: { result: OrganizationAnalysisResult }) {
           </div>
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400">
             <Info className="h-3 w-3" />
-            Em breve: publicar esse mapeamento no broker interno do EDU (você revisa antes).
+            Publicado na sua UNS em <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">&lt;tenant&gt;/AI/OrgData</code> (isolado por cliente).
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Severity styling shared by the Insight view ──
+const SEV_STYLE: Record<InsightItem['severity'], { badge: string; label: string }> = {
+  critical: { badge: 'bg-red-500/10 text-red-600 dark:text-red-400', label: 'Crítico' },
+  warn: { badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', label: 'Atenção' },
+  info: { badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', label: 'Info' },
+};
+
+// ── Read-only view of an Insight run ──
+function InsightView({ result }: { result: InsightRunResult }) {
+  if (result.insights.length === 0) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+        <Check className="mx-auto mb-2 h-6 w-6 text-emerald-500" />
+        Nenhuma anomalia relevante nas últimas {result.windowHours}h. Tudo dentro do esperado.
+        <p className="mt-1 text-[11px] text-gray-400">{result.candidateCount} sinais avaliados.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-400">
+        {result.insights.length} insight(s) a partir de {result.candidateCount} sinal(is) nas últimas {result.windowHours}h.
+      </p>
+      {result.insights.map((ins, i) => {
+        const s = SEV_STYLE[ins.severity];
+        return (
+          <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mb-1 flex items-center gap-2">
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${s.badge}`}>{s.label}</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{ins.title}</h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">{ins.detail}</p>
+            {ins.action && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+                <ListChecks className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {ins.action}
+              </p>
+            )}
+            {ins.topics.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {ins.topics.map((tp) => (
+                  <code key={tp} className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">{tp}</code>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <p className="flex items-center gap-1.5 text-[11px] text-gray-400">
+        <Info className="h-3 w-3" />
+        Publicado na sua UNS em <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">&lt;tenant&gt;/AI/Insights</code> (isolado por cliente).
+      </p>
     </div>
   );
 }
@@ -260,6 +319,9 @@ export function Comando() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateDashboardResult | null>(null);
   const [orgResult, setOrgResult] = useState<OrganizationAnalysisResult | null>(null);
+  const [insightResult, setInsightResult] = useState<InsightRunResult | null>(null);
+  const [schedule, setSchedule] = useState<InsightSchedule | null>(null);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
@@ -280,6 +342,23 @@ export function Comando() {
 
   useEffect(() => { localStorage.setItem(PROVIDER_STORAGE, provider); }, [provider]);
   useEffect(() => { localStorage.setItem(MODE_STORAGE, mode); }, [mode]);
+
+  // Load the background schedule the first time Insight mode is opened.
+  useEffect(() => {
+    if (mode === 'insight' && !schedule) {
+      aiApi.getInsightSchedule().then(setSchedule).catch(() => { /* ignore */ });
+    }
+  }, [mode, schedule]);
+
+  const updateSchedule = useCallback(async (patch: Partial<Pick<InsightSchedule, 'enabled' | 'intervalHours'>>) => {
+    if (scheduleBusy) return;
+    setScheduleBusy(true);
+    try {
+      setSchedule(await aiApi.setInsightSchedule(patch));
+    } catch { /* ignore */ } finally {
+      setScheduleBusy(false);
+    }
+  }, [scheduleBusy]);
 
   const applyAiError = useCallback((err: any) => {
     const data = err?.response?.data;
@@ -302,11 +381,15 @@ export function Comando() {
     setError(null);
     setResult(null);
     setOrgResult(null);
+    setInsightResult(null);
     setSavedId(null);
     try {
       if (mode === 'organization') {
         const res = await aiApi.analyzeOrganization({ prompt: p || undefined, provider, apiKey: keys[provider] });
         setOrgResult(res);
+      } else if (mode === 'insight') {
+        const res = await aiApi.runInsight({ prompt: p || undefined, provider, apiKey: keys[provider] });
+        setInsightResult(res);
       } else {
         const res = await aiApi.generateDashboard({ prompt: p, provider, apiKey: keys[provider] });
         setResult(res);
@@ -323,6 +406,7 @@ export function Comando() {
     setMode(next);
     setResult(null);
     setOrgResult(null);
+    setInsightResult(null);
     setError(null);
     setSavedId(null);
   }, [mode]);
@@ -404,11 +488,23 @@ export function Comando() {
         >
           <Network className="h-4 w-4" /> Organization Data
         </button>
+        <button
+          onClick={() => switchMode('insight')}
+          className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            mode === 'insight'
+              ? 'bg-emerald-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+          }`}
+        >
+          <Lightbulb className="h-4 w-4" /> Insight
+        </button>
       </div>
       <p className="mb-4 -mt-2 text-xs text-gray-500 dark:text-gray-400">
         {mode === 'screens'
           ? 'Descreva uma tela e a IA monta o dashboard com os seus dados reais.'
-          : 'A IA analisa suas conexões (MQTT, Modbus, OPC-UA, EtherNet/IP, Kafka), sugere melhorias e desenha um fluxograma de como organizar os dados.'}
+          : mode === 'insight'
+            ? 'A IA varre o histórico recente das suas tags, detecta anomalias e tendências, e publica os insights na sua UNS. Roda na hora ou em segundo plano.'
+            : 'A IA analisa suas conexões (MQTT, Modbus, OPC-UA, EtherNet/IP, Kafka), sugere melhorias e desenha um fluxograma de como organizar os dados.'}
       </p>
 
       {/* Ask box */}
@@ -423,7 +519,9 @@ export function Comando() {
             rows={2}
             placeholder={mode === 'organization'
               ? 'Opcional: foco da análise (ex: foca na linha de RO). Deixe vazio para analisar tudo.'
-              : t('comando.placeholder')}
+              : mode === 'insight'
+                ? 'Opcional: foco (ex: foca em temperatura e vibração). Deixe vazio para varrer tudo.'
+                : t('comando.placeholder')}
             className="flex-1 resize-none border-0 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
           />
           <button
@@ -442,8 +540,8 @@ export function Comando() {
             disabled={loading || (mode === 'screens' && !prompt.trim())}
             className="h-10 gap-2 bg-emerald-600 hover:bg-emerald-700"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === 'organization' ? <Network className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-            {mode === 'organization' ? 'Analisar' : t('comando.generate')}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === 'organization' ? <Network className="h-4 w-4" /> : mode === 'insight' ? <Lightbulb className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+            {mode === 'organization' ? 'Analisar' : mode === 'insight' ? 'Rodar agora' : t('comando.generate')}
           </Button>
         </div>
 
@@ -508,8 +606,53 @@ export function Comando() {
         )}
       </div>
 
+      {/* Insight: background schedule control */}
+      {mode === 'insight' && (
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+              <input
+                type="checkbox"
+                checked={!!schedule?.enabled}
+                disabled={scheduleBusy || !schedule}
+                onChange={(e) => updateSchedule({ enabled: e.target.checked })}
+                className="h-4 w-4 accent-emerald-600"
+              />
+              Rodar em segundo plano
+            </label>
+            {schedule?.enabled && (
+              <label className="flex items-center gap-2 text-xs text-gray-500">
+                a cada
+                <select
+                  value={schedule.intervalHours}
+                  disabled={scheduleBusy}
+                  onChange={(e) => updateSchedule({ intervalHours: Number(e.target.value) })}
+                  className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value={1}>1 hora</option>
+                  <option value={6}>6 horas</option>
+                  <option value={12}>12 horas</option>
+                  <option value={24}>24 horas</option>
+                  <option value={168}>7 dias</option>
+                </select>
+              </label>
+            )}
+            {scheduleBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />}
+            {schedule?.lastRunAt && (
+              <span className="ml-auto text-[11px] text-gray-400">
+                Última execução: {new Date(schedule.lastRunAt).toLocaleString('pt-BR')}
+              </span>
+            )}
+          </div>
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400">
+            <Info className="h-3 w-3" />
+            Em segundo plano usa o provedor nativo do servidor (Groq). O botão "Rodar agora" usa o provedor selecionado acima.
+          </p>
+        </div>
+      )}
+
       {/* Suggestions (empty state) */}
-      {!result && !orgResult && !loading && (
+      {mode !== 'insight' && !result && !orgResult && !loading && (
         <div className="mt-4 flex flex-wrap gap-2">
           {(mode === 'organization' ? ORG_SUGGESTIONS : SUGGESTIONS_FALLBACK).map((s) => (
             <button
@@ -537,7 +680,11 @@ export function Comando() {
           <div className="flex flex-col items-center gap-2 text-gray-400">
             <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
             <span className="text-sm">
-              {mode === 'organization' ? 'Analisando suas conexões e organizando os dados...' : t('comando.building')}
+              {mode === 'organization'
+                ? 'Analisando suas conexões e organizando os dados...'
+                : mode === 'insight'
+                  ? 'Varrendo o histórico e detectando anomalias...'
+                  : t('comando.building')}
             </span>
           </div>
         </div>
@@ -602,6 +749,21 @@ export function Comando() {
           )}
 
           <OrgAnalysisView result={orgResult} />
+        </div>
+      )}
+
+      {/* Insight result */}
+      {insightResult && !loading && (
+        <div className="mt-6">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Insights</h2>
+            {insightResult.usage?.nearLimit && (
+              <span className="flex items-center gap-1 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" /> {t('comando.nearLimit')}
+              </span>
+            )}
+          </div>
+          <InsightView result={insightResult} />
         </div>
       )}
     </div>
