@@ -603,6 +603,32 @@ export interface OrganizationAnalysisResult {
   inventory: OrganizationInventoryFlags;
 }
 
+export type InsightSeverity = 'info' | 'warn' | 'critical';
+
+export interface InsightItem {
+  title: string;
+  detail: string;
+  severity: InsightSeverity;
+  action?: string;
+  topics: string[];
+}
+
+export interface InsightRunResult {
+  insights: InsightItem[];
+  candidateCount: number;
+  windowHours: number;
+  usage?: AiUsage;
+  at: string;
+}
+
+export interface InsightSchedule {
+  tenantId: string;
+  enabled: boolean;
+  intervalHours: number;
+  windowHours: number;
+  lastRunAt: string | null;
+}
+
 // A user's own provider key travels as a header, is used for that one request,
 // and is never stored server-side.
 function userKeyHeaders(provider?: AiProviderId, apiKey?: string): Record<string, string> {
@@ -663,6 +689,37 @@ export const aiApi = {
       { timeout: 180000, headers: userKeyHeaders(params.provider, params.apiKey) },
     );
     if (!data.success || !data.data) throw new Error(data.error || 'Failed to analyze organization');
+    return data.data;
+  },
+
+  runInsight: async (params: {
+    windowHours?: number;
+    prompt?: string;
+    provider?: AiProviderId;
+    apiKey?: string;
+  }): Promise<InsightRunResult> => {
+    const { data } = await apiClient.post<ApiResponse<InsightRunResult>>(
+      '/ai/insights/run',
+      { windowHours: params.windowHours, prompt: params.prompt, provider: params.provider },
+      { timeout: 180000, headers: userKeyHeaders(params.provider, params.apiKey) },
+    );
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to run Insight');
+    return data.data;
+  },
+
+  getInsightSchedule: async (): Promise<InsightSchedule> => {
+    const { data } = await apiClient.get<ApiResponse<InsightSchedule>>('/ai/insights/schedule');
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to load Insight schedule');
+    return data.data;
+  },
+
+  setInsightSchedule: async (params: {
+    enabled?: boolean;
+    intervalHours?: number;
+    windowHours?: number;
+  }): Promise<InsightSchedule> => {
+    const { data } = await apiClient.put<ApiResponse<InsightSchedule>>('/ai/insights/schedule', params);
+    if (!data.success || !data.data) throw new Error(data.error || 'Failed to save Insight schedule');
     return data.data;
   },
 };
