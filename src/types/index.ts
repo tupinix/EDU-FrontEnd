@@ -223,6 +223,10 @@ export interface BrokerConfig {
   lastConnected?: string;
   messageCount?: number;
   isDefault?: boolean;
+  isActive?: boolean;
+  // True for the embedded internal UNS broker: ships by default, cannot be
+  // edited or deleted.
+  internal?: boolean;
 }
 
 export interface BrokerFormData {

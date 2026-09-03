@@ -351,6 +351,14 @@ export function Configuration() {
                             Default
                           </span>
                         )}
+                        {broker.internal && (
+                          <span
+                            title="Broker interno da UNS do EDU. Ligado por padrão, não pode ser editado nem apagado."
+                            className="text-[10px] font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded"
+                          >
+                            Interno (padrão)
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-gray-400 font-mono truncate mt-0.5">
                         {broker.host}:{broker.port}
@@ -392,12 +400,14 @@ export function Configuration() {
                           <Radio className="w-3.5 h-3.5" />
                         </IconBtn>
                       )}
-                      {/* Edit */}
-                      <IconBtn onClick={() => handleEdit(broker)} title="Edit">
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </IconBtn>
-                      {/* Delete */}
-                      {!broker.isDefault && (
+                      {/* Edit — not allowed on the internal broker */}
+                      {!broker.internal && (
+                        <IconBtn onClick={() => handleEdit(broker)} title="Edit">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </IconBtn>
+                      )}
+                      {/* Delete — not allowed on the default or internal broker */}
+                      {!broker.isDefault && !broker.internal && (
                         <IconBtn onClick={() => handleDelete(broker.id)} disabled={isBusy} title="Delete" danger>
                           <Trash2 className="w-3.5 h-3.5" />
                         </IconBtn>
