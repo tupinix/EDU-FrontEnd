@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LicenseGate } from './components/LicenseGate';
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, OpcUaPage, ModbusPage, EthernetIpPage, KafkaPage, SouthboundPage, VirtualSensorsPage, EventsPage, NetworkScan, Comando } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, OpcUaPage, ModbusPage, EthernetIpPage, KafkaPage, SouthboundPage, VirtualSensorsPage, EventsPage, NetworkScan, Comando, HowToStart } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { useAuthStore } from './hooks/useStore';
 import { useTenant } from './hooks/useTenant';
@@ -121,6 +122,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <LicenseGate>
       <SocketProvider>
       <BrowserRouter>
         <Routes>
@@ -131,6 +133,7 @@ function App() {
           {/* Root — Landing for guests, app shell for authed users */}
           <Route path="/" element={<RootRoute />}>
             <Route index element={<Dashboard />} />
+            <Route path="how-to-start" element={<HowToStart />} />
             <Route path="comando" element={<Comando />} />
             <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
@@ -194,6 +197,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       </SocketProvider>
+      </LicenseGate>
     </QueryClientProvider>
   );
 }

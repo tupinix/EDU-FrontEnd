@@ -1,4 +1,5 @@
 export { Dashboard } from './Dashboard';
+export { HowToStart } from './HowToStart';
 export { Discovery } from './Discovery';
 export { Explorer } from './Explorer';
 export { Configuration } from './Configuration';

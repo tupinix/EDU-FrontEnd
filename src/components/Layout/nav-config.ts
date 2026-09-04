@@ -22,6 +22,7 @@ import {
   Sigma,
   Radar,
   Sparkles,
+  Rocket,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -46,6 +47,7 @@ export const dashboardItem: NavItem = {
 };
 
 export const standaloneItems: NavItem[] = [
+  { path: '/how-to-start', labelKey: 'Como começar', icon: Rocket },
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
 ];
 
