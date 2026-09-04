@@ -15,6 +15,14 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# Edition / API base baked at build time (Vite inlines VITE_* at build).
+# Defaults keep the Cloud build unchanged; the Edge stack passes edition=edge.
+# VITE_API_URL=/api matches the nginx reverse-proxy in this image (same origin).
+ARG VITE_EDU_EDITION=cloud
+ARG VITE_API_URL=/api
+ENV VITE_EDU_EDITION=$VITE_EDU_EDITION \
+    VITE_API_URL=$VITE_API_URL
+
 # Build
 RUN npm run build
 
