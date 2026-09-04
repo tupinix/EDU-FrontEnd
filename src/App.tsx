@@ -127,13 +127,13 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/edu-edge" element={<InstallEdge />} />
           <Route path="/view/:token" element={<SharedDashboard />} />
 
           {/* Root — Landing for guests, app shell for authed users */}
           <Route path="/" element={<RootRoute />}>
             <Route index element={<Dashboard />} />
             <Route path="comando" element={<Comando />} />
-            <Route path="edu-edge" element={<InstallEdge />} />
             <Route path="neo4j" element={<Suspense fallback={<div>Loading...</div>}><PlantModel /></Suspense>} />
             <Route path="discovery" element={<Discovery />} />
             <Route path="explorer" element={<Explorer />} />

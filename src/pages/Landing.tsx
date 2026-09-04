@@ -53,6 +53,9 @@ export function Landing() {
             <a href="#editions" className="hover:text-gray-900 transition-colors">
               {t('landing.nav.editions')}
             </a>
+            <Link to="/edu-edge" className="hover:text-gray-900 transition-colors">
+              EDU Edge
+            </Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSelector variant="minimal" />
