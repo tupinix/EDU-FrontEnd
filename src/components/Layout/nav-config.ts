@@ -14,6 +14,7 @@ import {
   Building2,
   DatabaseBackup,
   Sparkles,
+  Server,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export const dashboardItem: NavItem = {
 
 export const standaloneItems: NavItem[] = [
   { path: '/explorer', labelKey: 'sidebar.explorer', icon: Search },
+  { path: '/edu-edge', labelKey: 'Instalar EDU Edge', icon: Server },
 ];
 
 // Groups in display order: Connections → Transformation → Analytics → AI Tools → System
