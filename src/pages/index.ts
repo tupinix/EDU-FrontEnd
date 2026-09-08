@@ -1,5 +1,6 @@
 export { Dashboard } from './Dashboard';
 export { InstallEdge } from './InstallEdge';
+export { Docs } from './Docs';
 export { Discovery } from './Discovery';
 export { Explorer } from './Explorer';
 export { Configuration } from './Configuration';

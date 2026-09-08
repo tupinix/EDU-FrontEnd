@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, InstallEdge } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, Docs } from './pages';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { Comando } from './pages/Comando';
 import { useAuthStore } from './hooks/useStore';
@@ -127,7 +127,8 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/edu-edge" element={<InstallEdge />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/edu-edge" element={<Navigate to="/docs" replace />} />
           <Route path="/view/:token" element={<SharedDashboard />} />
 
           {/* Root — Landing for guests, app shell for authed users */}
