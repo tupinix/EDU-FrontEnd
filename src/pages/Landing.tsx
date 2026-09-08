@@ -488,6 +488,14 @@ function ProductTour() {
       alt: t('landing.tour.models.alt'),
       bullets: t('landing.tour.models.bullets', { returnObjects: true }) as string[],
     },
+    {
+      img: '/edu-aibot-preview.jpg',
+      chrome: 'tupinix.espacodedadosunificado.com.br/comando',
+      title: 'AI Bot: a IA que monta os seus dashboards',
+      desc: 'Descreva uma tela e a IA monta o dashboard com os seus dados reais. Ela também sugere como organizar a UNS e traz insights automáticos sobre as suas tags, com modelo local no EDU Edge.',
+      alt: 'AI Bot do EDU com os modos Screens Creator, Organization Data e Insight',
+      bullets: ['Screens Creator: telas a partir de uma descrição', 'Organization Data: sugestões de UNS (ISA-95)', 'Insight: anomalias e tendências nas tags'],
+    },
   ];
 
   return (

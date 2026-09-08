@@ -2,7 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
-import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage, Docs } from './pages';
+import { Dashboard, Discovery, Explorer, Configuration, Login, Users, ConnectionsPage, DataModelsPage, AlertsPage, LicensesPage, Landing, ApiRestPage, I3xPage, OrganizationsPage, ConfigTransferPage } from './pages';
+import { DocsLayout } from './pages/docs/DocsLayout';
+import { DocsHome } from './pages/docs/DocsHome';
+import { DocsPlatform } from './pages/docs/DocsPlatform';
+import { DocsHttp } from './pages/docs/DocsHttp';
+import { DocsI3x } from './pages/docs/DocsI3x';
+import { DocsEdge } from './pages/docs/DocsEdge';
 import { SharedDashboard } from './pages/SharedDashboard';
 import { Comando } from './pages/Comando';
 import { useAuthStore } from './hooks/useStore';
@@ -127,8 +133,14 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/docs" element={<Docs />} />
-          <Route path="/edu-edge" element={<Navigate to="/docs" replace />} />
+          <Route path="/docs" element={<DocsLayout />}>
+            <Route index element={<DocsHome />} />
+            <Route path="plataforma" element={<DocsPlatform />} />
+            <Route path="http" element={<DocsHttp />} />
+            <Route path="i3x" element={<DocsI3x />} />
+            <Route path="edu-edge" element={<DocsEdge />} />
+          </Route>
+          <Route path="/edu-edge" element={<Navigate to="/docs/edu-edge" replace />} />
           <Route path="/view/:token" element={<SharedDashboard />} />
 
           {/* Root — Landing for guests, app shell for authed users */}
