@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowRight, Radar, Waypoints, Workflow, LayoutDashboard, Bell, Sparkles,
-  Activity, Gauge, Database, Zap,
   CheckCircle2, Loader2, AlertCircle,
   HeartHandshake, GitBranch, Headphones,
 } from 'lucide-react';
@@ -302,159 +301,16 @@ function Showcase() {
             </a>
           </div>
 
-          {/* Mock dashboard */}
+          {/* Real AI Bot screenshot */}
           <div className="lg:col-span-7">
-            <ProductMock />
+            <div className="relative">
+              <div className="absolute -inset-10 bg-gradient-to-tr from-emerald-500/20 via-blue-500/10 to-transparent blur-3xl pointer-events-none" />
+              <img src="/edu-aibot-preview.jpg" alt={t('landing.showcase.title')} className="relative w-full rounded-2xl border border-gray-200 shadow-2xl shadow-black/20" />
+            </div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function ProductMock() {
-  return (
-    <div className="relative">
-      {/* Glow behind */}
-      <div className="absolute -inset-12 bg-gradient-to-tr from-emerald-500/20 via-blue-500/10 to-transparent blur-3xl pointer-events-none" />
-
-      <div className="relative rounded-2xl border border-white/10 shadow-2xl shadow-black/40 bg-[#0F1320] overflow-hidden">
-        {/* Window chrome */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-[#0B0F1A]">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400/60" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/60" />
-          <span className="ml-3 text-[11px] text-gray-400 font-mono">edu &middot; Pronta para IA &middot; Cooling Tower BR-Plant2</span>
-          <div className="ml-auto flex items-center gap-2 text-[10px] text-emerald-400 font-mono">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-            </span>
-            LIVE
-          </div>
-        </div>
-
-        {/* Content — chat + dashboard side by side */}
-        <div className="grid grid-cols-12">
-          {/* Chat panel */}
-          <div className="col-span-5 border-r border-white/5 bg-[#0B0F1A] flex flex-col min-h-[420px]">
-            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-400/30 to-emerald-600/20 border border-emerald-400/30 flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-emerald-300" />
-              </span>
-              <span className="text-[11px] text-gray-300 font-medium tracking-wide">Pronta para IA</span>
-              <span className="ml-auto text-[9px] text-gray-500 font-mono uppercase tracking-[0.16em]">Local LLM</span>
-            </div>
-
-            <div className="flex-1 px-4 py-4 space-y-3 overflow-hidden">
-              <ChatBubble role="user">
-                Como está a torre de resfriamento agora?
-              </ChatBubble>
-              <ChatBubble role="ai">
-                <span className="text-emerald-300">Cooling Tower BR-Plant2</span> está estável.
-                Inlet 42.8 °C, Outlet 28.1 °C, ΔT de 14.7 °C — dentro do esperado nas últimas 12h.
-                Bombas P1 e P2 ON.
-              </ChatBubble>
-              <ChatBubble role="user">
-                Crie um dashboard com essas métricas.
-              </ChatBubble>
-              <ChatBubble role="ai" pending>
-                <span className="inline-flex items-center gap-1.5 text-emerald-300">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Construindo painel
-                </span>
-                <span className="block mt-1 text-gray-400">Process trend · KPIs · alarmes</span>
-              </ChatBubble>
-            </div>
-
-            <div className="px-4 py-3 border-t border-white/5">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1A1F2E] border border-white/5">
-                <span className="text-[11px] text-gray-500 flex-1 truncate font-mono">Pergunte algo sobre sua planta…</span>
-                <span className="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
-                  <ArrowRight className="w-2.5 h-2.5 text-emerald-300" />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Dashboard panel */}
-          <div className="col-span-7 p-5 grid grid-cols-2 gap-3 content-start">
-            <MockTile icon={<Gauge />}    label="Inlet T°"   value="42.8" unit="°C"   tone="emerald" small />
-            <MockTile icon={<Gauge />}    label="Outlet T°"  value="28.1" unit="°C"   tone="blue"    small />
-            <MockTile icon={<Activity />} label="Flow"       value="118"  unit="m³/h" tone="emerald" small />
-            <MockTile icon={<Bell />}     label="Alarms"     value="0"                tone="gray"    small />
-
-            <div className="col-span-2 bg-[#1A1F2E] border border-white/5 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-mono">Process trend · last 12h</div>
-                  <div className="mt-0.5 text-sm text-white font-medium tabular-nums">42.8 → 28.1 °C</div>
-                </div>
-                <div className="text-[10px] text-gray-500 font-mono">+ 0.3 °C/min</div>
-              </div>
-              <MockChart />
-            </div>
-
-            <div className="col-span-2 grid grid-cols-3 gap-3">
-              <MockTile icon={<Zap />}      label="Pump 1" value="ON"   tone="emerald" small />
-              <MockTile icon={<Zap />}      label="Pump 2" value="ON"   tone="emerald" small />
-              <MockTile icon={<Database />} label="Tags"   value="312"  tone="blue"    small />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ChatBubble({
-  role, pending, children,
-}: { role: 'user' | 'ai'; pending?: boolean; children: React.ReactNode }) {
-  if (role === 'user') {
-    return (
-      <div className="flex justify-end">
-        <div className="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-tr-sm bg-emerald-500/15 border border-emerald-400/20 text-[12px] text-emerald-100 leading-snug">
-          {children}
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="flex justify-start">
-      <div className={`max-w-[88%] px-3.5 py-2 rounded-2xl rounded-tl-sm bg-[#1A1F2E] border border-white/5 text-[12px] text-gray-300 leading-snug ${pending ? 'opacity-90' : ''}`}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function MockChart() {
-  // Static SVG sparkline to suggest a process trend
-  return (
-    <svg viewBox="0 0 400 90" className="w-full h-20">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#34D399" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#34D399" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0,55 L40,52 L80,46 L120,50 L160,38 L200,30 L240,42 L280,28 L320,18 L360,22 L400,12 L400,90 L0,90 Z"
-        fill="url(#g)"
-      />
-      <path
-        d="M0,55 L40,52 L80,46 L120,50 L160,38 L200,30 L240,42 L280,28 L320,18 L360,22 L400,12"
-        fill="none"
-        stroke="#34D399"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* gridlines */}
-      {[20, 40, 60, 80].map((y) => (
-        <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-      ))}
-    </svg>
   );
 }
 
@@ -487,14 +343,6 @@ function ProductTour() {
       desc: t('landing.tour.models.desc'),
       alt: t('landing.tour.models.alt'),
       bullets: t('landing.tour.models.bullets', { returnObjects: true }) as string[],
-    },
-    {
-      img: '/edu-aibot-preview.jpg',
-      chrome: 'tupinix.espacodedadosunificado.com.br/comando',
-      title: 'AI Bot: a IA que monta os seus dashboards',
-      desc: 'Descreva uma tela e a IA monta o dashboard com os seus dados reais. Ela também sugere como organizar a UNS e traz insights automáticos sobre as suas tags, com modelo local no EDU Edge.',
-      alt: 'AI Bot do EDU com os modos Screens Creator, Organization Data e Insight',
-      bullets: ['Screens Creator: telas a partir de uma descrição', 'Organization Data: sugestões de UNS (ISA-95)', 'Insight: anomalias e tendências nas tags'],
     },
   ];
 
@@ -1172,33 +1020,6 @@ function SuccessPanel({
 // ─────────────────────────────────────────────────────────────────────
 // Mock tile (used by Showcase)
 // ─────────────────────────────────────────────────────────────────────
-function MockTile({
-  icon, label, value, unit, tone, className = '', small,
-}: {
-  icon: React.ReactNode; label: string; value: string; unit?: string;
-  tone: 'emerald' | 'blue' | 'gray';
-  className?: string;
-  small?: boolean;
-}) {
-  const accent = {
-    emerald: 'text-emerald-400',
-    blue:    'text-blue-400',
-    gray:    'text-gray-400',
-  }[tone];
-  return (
-    <div className={`bg-[#1A1F2E] border border-white/5 rounded-xl p-4 ${className}`}>
-      <div className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider ${accent}`}>
-        <span className="block w-3 h-3">{icon}</span>
-        {label}
-      </div>
-      <p className={`mt-2 ${small ? 'text-xl' : 'text-2xl'} font-semibold text-white tabular-nums`}>
-        {value}
-        {unit && <span className="ml-1 text-sm font-normal text-gray-500">{unit}</span>}
-      </p>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────
 // Footer
 // ─────────────────────────────────────────────────────────────────────

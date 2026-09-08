@@ -1,5 +1,15 @@
 import { useState, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, Check } from 'lucide-react';
+
+/** Pick pt/en content based on the active i18n language. */
+export function useL() {
+  const { i18n } = useTranslation();
+  const lang: 'pt' | 'en' = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'pt';
+  return function L<T>(o: { pt: T; en: T }): T {
+    return o[lang];
+  };
+}
 
 /** Copyable code block. */
 export function Code({ children, lang }: { children: string; lang?: string }) {
