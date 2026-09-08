@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { topicsApi } from '../../../services/api';
 import { extractValue } from '../../../hooks/useDashboardLiveValues';
 
@@ -42,6 +42,15 @@ export function TrendWidget({ config, value }: Props) {
   const timeRange = String(config.timeRange ?? '5m');
   const rangeMs = RANGE_MS[timeRange] ?? RANGE_MS['5m'];
   const color = String(config.color ?? '#10b981');
+
+  // Axes (X = time, Y = scale). Labels and Y bounds are user-configurable.
+  const showAxes = config.showAxes !== false; // default on
+  const xAxisLabel = String(config.xAxisLabel ?? '');
+  const yAxisLabel = String(config.yAxisLabel ?? '');
+  const parseBound = (v: unknown): number | 'auto' =>
+    v === '' || v === undefined || v === null || Number.isNaN(Number(v)) ? 'auto' : Number(v);
+  const yMin = parseBound(config.yMin);
+  const yMax = parseBound(config.yMax);
 
   const [data, setData] = useState<DataPoint[]>([]);
   const lastValueRef = useRef<unknown>(undefined);
@@ -106,13 +115,47 @@ export function TrendWidget({ config, value }: Props) {
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+        <AreaChart
+          data={data}
+          margin={{
+            top: 6,
+            right: 8,
+            left: showAxes ? (yAxisLabel ? 6 : 0) : 4,
+            bottom: showAxes ? (xAxisLabel ? 14 : 2) : 4,
+          }}
+        >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.3} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
+          {showAxes && (
+            <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" strokeOpacity={0.25} vertical={false} />
+          )}
+          {showAxes && (
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 9, fill: '#9ca3af' }}
+              tickLine={false}
+              axisLine={{ stroke: '#4b5563' }}
+              minTickGap={40}
+              interval="preserveStartEnd"
+              height={xAxisLabel ? 28 : 16}
+              label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: 0, fontSize: 10, fill: '#9ca3af' } : undefined}
+            />
+          )}
+          {showAxes && (
+            <YAxis
+              tick={{ fontSize: 9, fill: '#9ca3af' }}
+              tickLine={false}
+              axisLine={{ stroke: '#4b5563' }}
+              width={yAxisLabel ? 46 : 32}
+              domain={[yMin, yMax]}
+              tickFormatter={(v: number) => (typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v))}
+              label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 10, fill: '#9ca3af', style: { textAnchor: 'middle' } } : undefined}
+            />
+          )}
           <Tooltip
             contentStyle={{
               backgroundColor: '#1f2937',

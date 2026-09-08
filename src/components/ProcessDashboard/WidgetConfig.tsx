@@ -431,17 +431,38 @@ function TypeSpecificConfig({ widget, onConfigChange }: { widget: DashboardWidge
 
     case 'trend':
       return (
-        <ConfigSelect
-          label="Time Range"
-          value={String(c.timeRange ?? '5m')}
-          onChange={(v) => onConfigChange({ timeRange: v })}
-          options={[
-            { value: '1m', label: '1 minute' },
-            { value: '5m', label: '5 minutes' },
-            { value: '30m', label: '30 minutes' },
-            { value: '1h', label: '1 hour' },
-          ]}
-        />
+        <>
+          <ConfigSelect
+            label="Time Range"
+            value={String(c.timeRange ?? '5m')}
+            onChange={(v) => onConfigChange({ timeRange: v })}
+            options={[
+              { value: '1m', label: '1 minute' },
+              { value: '5m', label: '5 minutes' },
+              { value: '30m', label: '30 minutes' },
+              { value: '1h', label: '1 hour' },
+            ]}
+          />
+          <label className="flex items-center gap-2 text-[12px] text-gray-500 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={c.showAxes !== false}
+              onChange={(e) => onConfigChange({ showAxes: e.target.checked })}
+              className="accent-emerald-600"
+            />
+            Mostrar eixos (X/Y)
+          </label>
+          {c.showAxes !== false && (
+            <>
+              <ConfigInput label="Eixo X (rótulo)" value={String(c.xAxisLabel ?? '')} onChange={(v) => onConfigChange({ xAxisLabel: v })} placeholder="Tempo" />
+              <ConfigInput label="Eixo Y (rótulo)" value={String(c.yAxisLabel ?? '')} onChange={(v) => onConfigChange({ yAxisLabel: v })} placeholder="Valor / escala" />
+              <div className="grid grid-cols-2 gap-2">
+                <ConfigInput label="Y mín" value={String(c.yMin ?? '')} onChange={(v) => onConfigChange({ yMin: v })} type="number" placeholder="auto" />
+                <ConfigInput label="Y máx" value={String(c.yMax ?? '')} onChange={(v) => onConfigChange({ yMax: v })} type="number" placeholder="auto" />
+              </div>
+            </>
+          )}
+        </>
       );
 
     case 'label':
