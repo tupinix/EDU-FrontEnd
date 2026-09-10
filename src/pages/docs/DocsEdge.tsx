@@ -41,12 +41,19 @@ export function DocsEdge() {
       <Section id="instalar" title={L({ pt: 'Instalar e rodar', en: 'Install and run' })}>
         <H3>{L({ pt: '1. Instale o Docker', en: '1. Install Docker' })}</H3>
         <p>{L({ pt: 'Docker Desktop (Windows/Mac) ou Docker Engine (Linux). Para empresas que precisam de alternativa gratuita ao Docker Desktop: Podman ou Rancher Desktop.', en: 'Docker Desktop (Windows/Mac) or Docker Engine (Linux). For companies needing a free alternative to Docker Desktop: Podman or Rancher Desktop.' })}</p>
-        <H3>{L({ pt: '2. Suba a stack', en: '2. Start the stack' })}</H3>
-        <p>{L({ pt: 'Descompacte o pacote e, dentro da pasta:', en: 'Unzip the package and, inside the folder:' })}</p>
-        <Code lang="bash">{`cd edu-edge
-./start.sh          # ${L({ pt: 'ou:', en: 'or:' })}  docker compose up -d`}</Code>
+
+        <H3>{L({ pt: '2. Autentique no registro', en: '2. Sign in to the registry' })}</H3>
+        <p>{L({ pt: 'As imagens do EDU Edge são privadas. Faça login uma vez com as credenciais que você recebeu junto com a licença:', en: 'The EDU Edge images are private. Sign in once with the credentials you received with your license:' })}</p>
+        <Code lang="bash">docker login ghcr.io</Code>
+        <p className="text-sm text-gray-500">{L({ pt: 'Informe o usuário e cole o token (ele funciona como senha). Sem esse passo o Docker retorna', en: 'Enter the username and paste the token (it acts as the password). Without this step Docker returns' })} <K>unauthorized</K> {L({ pt: 'ao baixar as imagens.', en: 'when pulling the images.' })}</p>
+
+        <H3>{L({ pt: '3. Suba a stack', en: '3. Start the stack' })}</H3>
+        <p>{L({ pt: 'Descompacte o pacote, abra um terminal na pasta e rode:', en: 'Unzip the package, open a terminal in the folder and run:' })}</p>
+        <Code lang="bash">docker compose up -d</Code>
+        <Callout tone="tip">{L({ pt: 'No Windows, abra o PowerShell na pasta do pacote e use o comando acima. O ./start.sh é um atalho apenas para Linux/Mac; ele não roda no PowerShell.', en: 'On Windows, open PowerShell in the package folder and use the command above. ./start.sh is a Linux/Mac-only shortcut; it does not run in PowerShell.' })}</Callout>
         <p>{L({ pt: 'Na primeira vez o Docker baixa as imagens (alguns minutos).', en: 'On the first run Docker downloads the images (a few minutes).' })}</p>
-        <H3>{L({ pt: '3. Abra e ative', en: '3. Open and activate' })}</H3>
+
+        <H3>{L({ pt: '4. Abra e ative', en: '4. Open and activate' })}</H3>
         <p>{L({ pt: 'Acesse http://localhost:8080, cole a sua chave de licença e faça login.', en: 'Open http://localhost:8080, paste your license key and log in.' })}</p>
         <Callout tone="warn">{L({ pt: 'Sem licença válida os recursos ficam bloqueados. A chave você recebe ao contratar.', en: 'Without a valid license the features are locked. You get the key when you sign up.' })}</Callout>
       </Section>
@@ -66,6 +73,14 @@ docker compose up -d`}</Code>
 docker compose down     # ${L({ pt: 'remove containers (mantém volumes)', en: 'remove containers (keeps volumes)' })}
 docker compose down -v  # ${L({ pt: 'remove tudo, inclusive os dados', en: 'remove everything, including data' })}`}</Code>
         <p>{L({ pt: 'Só a porta 8080 é exposta na sua máquina; bancos e IA ficam na rede interna do Docker.', en: 'Only port 8080 is exposed on your machine; databases and AI stay on Docker’s internal network.' })}</p>
+        <H3>{L({ pt: 'Porta 8080 ocupada?', en: 'Port 8080 already in use?' })}</H3>
+        <p>{L({ pt: 'Se algo já usa a 8080, rode em outra porta definindo EDU_HTTP_PORT:', en: 'If something already uses 8080, run on another port by setting EDU_HTTP_PORT:' })}</p>
+        <Code lang="bash">{`# Windows (PowerShell)
+$env:EDU_HTTP_PORT=18080; docker compose up -d
+
+# Linux / Mac
+EDU_HTTP_PORT=18080 docker compose up -d`}</Code>
+        <p className="text-sm text-gray-500">{L({ pt: 'Depois abra http://localhost:18080.', en: 'Then open http://localhost:18080.' })}</p>
       </Section>
     </>
   );
