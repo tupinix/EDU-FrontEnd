@@ -14,6 +14,8 @@ interface LicenseFormData {
   plan: 'demo' | 'starter' | 'professional' | 'enterprise';
   durationDays: number;
   maxDevices: number;
+  /** GHCR pull token sent in the license email (never stored). */
+  ghcrToken: string;
 }
 
 const PLANS = ['demo', 'starter', 'professional', 'enterprise'] as const;
@@ -42,11 +44,13 @@ export function LicensesPage() {
   const [formData, setFormData] = useState<LicenseFormData>({
     customerName: '',
     customerEmail: '',
+    ghcrToken: '',
     plan: 'starter',
     durationDays: 365,
     maxDevices: 10,
   });
   const [formError, setFormError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
@@ -75,6 +79,7 @@ export function LicensesPage() {
     setFormData({
       customerName: '',
       customerEmail: '',
+      ghcrToken: '',
       plan: 'starter',
       durationDays: 365,
       maxDevices: 10,
@@ -88,7 +93,10 @@ export function LicensesPage() {
     setFormError('');
     setIsSaving(true);
     try {
-      await licensesApi.create(formData);
+      const created = await licensesApi.create(formData);
+      setNotice(created?.emailSent
+        ? `Licença criada. E-mail com a chave enviado para ${formData.customerEmail}.`
+        : 'Licença criada. Nenhum e-mail enviado (sem e-mail ou envio indisponível).');
       setShowModal(false);
       fetchLicenses();
     } catch (err) {
@@ -165,6 +173,12 @@ export function LicensesPage() {
       </div>
 
       {/* Error */}
+      {notice && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')} className="text-emerald-700 hover:underline dark:text-emerald-300">fechar</button>
+        </div>
+      )}
       {error && (
         <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-xl px-4 py-3">
           <p className="text-[13px] text-red-500">{error}</p>
@@ -350,6 +364,21 @@ export function LicensesPage() {
                   required
                   className="w-full px-3.5 py-2.5 text-[14px] input-clean"
                 />
+                <p className="mt-1.5 text-[11.5px] text-gray-400">A chave de licença e o passo a passo de ativação serão enviados para este e-mail.</p>
+              </FormField>
+
+              {/* GHCR pull token (goes in the email, never stored) */}
+              <FormField label="GHCR token (optional)">
+                <input
+                  type="text"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={formData.ghcrToken}
+                  onChange={(e) => setFormData({ ...formData, ghcrToken: e.target.value })}
+                  placeholder="ghp_..."
+                  className="w-full px-3.5 py-2.5 text-[14px] input-clean font-mono"
+                />
+                <p className="mt-1.5 text-[11.5px] text-gray-400">Token de leitura do GHCR (usuário fixo: tupinix). Vai no e-mail com as instruções de <code>docker login</code>. Deixe vazio para usar o padrão do servidor. Não é armazenado.</p>
               </FormField>
 
               {/* Plan */}
