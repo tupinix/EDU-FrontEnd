@@ -105,8 +105,12 @@ export const navGroups: NavGroup[] = [
     labelKey: 'sidebar.groups.system',
     items: [
       { path: '/users',         labelKey: 'sidebar.users',     icon: Users,     adminOnly: true },
-      { path: '/organizations', labelKey: 'Organizations',     icon: Building2, adminOnly: true },
-      { path: '/licenses',        labelKey: 'sidebar.licenses',       icon: Key,            adminOnly: true },
+      // Organization management and license issuing are Cloud-only: EDU Edge
+      // is a single-tenant appliance that only activates a key.
+      ...(import.meta.env.VITE_EDU_EDITION === 'edge' ? [] : [
+        { path: '/organizations', labelKey: 'Organizations',     icon: Building2, adminOnly: true },
+        { path: '/licenses',        labelKey: 'sidebar.licenses',       icon: Key,            adminOnly: true },
+      ]),
       { path: '/config-transfer', labelKey: 'sidebar.configTransfer', icon: DatabaseBackup, adminOnly: true },
     ],
   },

@@ -121,15 +121,18 @@ export function Login() {
           that doesn't fit the in-org login context. */}
       {!isTenantSubdomain && (
         <>
-          <div className="absolute top-5 left-6 z-20">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              {t('auth.backToSite')}
-            </Link>
-          </div>
+          {/* EDU Edge has no marketing site to go back to. */}
+          {import.meta.env.VITE_EDU_EDITION !== 'edge' && (
+            <div className="absolute top-5 left-6 z-20">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                {t('auth.backToSite')}
+              </Link>
+            </div>
+          )}
           <div className="absolute top-5 right-6 z-20">
             <LanguageSelector variant="minimal" />
           </div>

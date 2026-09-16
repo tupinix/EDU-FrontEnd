@@ -172,22 +172,27 @@ function App() {
                 </AdminRoute>
               }
             />
-            <Route
-              path="organizations"
-              element={
-                <AdminRoute>
-                  <OrganizationsPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="licenses"
-              element={
-                <AdminRoute>
-                  <LicensesPage />
-                </AdminRoute>
-              }
-            />
+            {/* Cloud-only: organization management and license issuing. */}
+            {import.meta.env.VITE_EDU_EDITION !== 'edge' && (
+              <>
+                <Route
+                  path="organizations"
+                  element={
+                    <AdminRoute>
+                      <OrganizationsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="licenses"
+                  element={
+                    <AdminRoute>
+                      <LicensesPage />
+                    </AdminRoute>
+                  }
+                />
+              </>
+            )}
             <Route
               path="config-transfer"
               element={
