@@ -53,6 +53,9 @@ function RootRoute() {
   // onboarding path is apex → login → redirect to the user's tenant.
   if (isTenantSubdomain) return <Navigate to="/login" replace />;
 
+  // EDU Edge is a local appliance: a guest never sees the marketing Landing.
+  if (import.meta.env.VITE_EDU_EDITION === 'edge') return <Navigate to="/login" replace />;
+
   if (location.pathname === '/') return <Landing />;
   return <Navigate to="/" replace />;
 }

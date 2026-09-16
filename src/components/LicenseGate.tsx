@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { KeyRound, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { licensesApi } from '../services/api';
+import { useAuthStore } from '../hooks/useStore';
+import type { User } from '../types';
+
+const IS_EDGE = import.meta.env.VITE_EDU_EDITION === 'edge';
 
 interface LicenseStatus {
   valid: boolean;
@@ -18,6 +22,7 @@ const REASON_TEXT: Record<string, string> = {
   bad_signature: 'Chave de licença inválida.',
   wrong_edition: 'Esta licença não é para o EDU Edge.',
   no_public_key: 'Instalação sem chave pública de verificação. Contate o suporte.',
+  backend_unavailable: 'Não foi possível falar com o serviço local do EDU Edge. Confira se os containers estão de pé (docker compose ps) e tente de novo.',
 };
 
 /**
@@ -37,9 +42,10 @@ export function LicenseGate({ children }: { children: ReactNode }) {
       const s = await licensesApi.getStatus();
       setStatus(s as LicenseStatus);
     } catch {
-      // If the status endpoint itself fails, don't hard-block (fail open to the
-      // normal app / login, where the backend gate still applies per request).
-      setStatus({ valid: true });
+      // Cloud: don't hard-block if the status endpoint fails (the backend gate
+      // still applies per request). Edge: fail closed, never show the app or
+      // the marketing landing while the local backend is unreachable.
+      setStatus(IS_EDGE ? { valid: false, edition: 'edge', reason: 'backend_unavailable' } : { valid: true });
     } finally {
       setLoading(false);
     }
@@ -52,7 +58,13 @@ export function LicenseGate({ children }: { children: ReactNode }) {
     setActivating(true);
     setError(null);
     try {
-      await licensesApi.uploadKey(key.trim());
+      const result = (await licensesApi.uploadKey(key.trim())) as { session?: { token: string; user: User } } | undefined;
+      // Edge hands back a session for the local admin: go straight into the app.
+      if (result?.session?.token && result.session.user) {
+        useAuthStore.getState().setAuth(result.session.user, result.session.token);
+        window.location.replace('/');
+        return;
+      }
       await check();
     } catch (e: any) {
       setError(e?.response?.data?.error === 'expired' ? 'Licença expirada.' : 'Chave inválida. Confira e tente de novo.');
@@ -90,6 +102,15 @@ export function LicenseGate({ children }: { children: ReactNode }) {
         <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
           {REASON_TEXT[status.reason || 'missing'] || REASON_TEXT.missing}
         </p>
+
+        {status.reason === 'backend_unavailable' && (
+          <button
+            onClick={() => { setLoading(true); check(); }}
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Tentar de novo
+          </button>
+        )}
 
         <label className="mb-1 block text-xs font-medium text-gray-500">Chave de licença</label>
         <textarea
