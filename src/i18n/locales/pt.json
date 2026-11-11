@@ -56,6 +56,12 @@
     "loginError": "Erro ao fazer login",
     "defaultCredentials": "Credenciais de acesso padrão",
     "invalidCredentials": "Credenciais inválidas",
+    "heroTitle": "Entre e veja a sua planta inteira num só lugar.",
+    "heroBody": "Conexões OPC UA, MQTT, Modbus e EtherNet/IP organizadas num Unified Namespace, com dashboards, alertas e grafo da planta.",
+    "heroImageAlt": "Dashboard de ativos de armazenagem no EDU",
+    "signInHint": "Use o e-mail e a senha da sua conta.",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
     "backToSite": "Voltar para o site",
     "edition": "Escolha o produto",
     "edge": {
