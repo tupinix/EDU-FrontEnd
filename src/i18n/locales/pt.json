@@ -142,7 +142,8 @@
     "kafka": "Kafka",
     "southbound": "Southbound",
     "events": "Eventos",
-    "virtualSensors": "Sensores Virtuais"
+    "virtualSensors": "Sensores Virtuais",
+    "openMenu": "Abrir menu"
   },
   "landing": {
     "nav": {
@@ -388,13 +389,29 @@
     "brokerStatus": "Status do Broker",
     "recentActivity": "Atividade Recente",
     "overview": "Visao geral do Unified Namespace",
-    "errorLoading": "Erro ao carregar metricas",
-    "noBroker": "Nenhum Broker Ativo",
-    "noBrokerDesc": "Configure e conecte a um broker MQTT para visualizar os dados do Unified Namespace.",
-    "configureBrokers": "Configurar Brokers",
-    "topActiveTopics": "Topicos Mais Ativos",
-    "systemOnline": "Sistema online ha",
-    "msgs": "msgs"
+    "errorLoading": "Não foi possível carregar as métricas.",
+    "noBroker": "Nenhum broker ativo",
+    "noBrokerDesc": "Conecte um broker MQTT ou Kafka para os dados chegarem ao Unified Namespace.",
+    "configureBrokers": "Configurar broker",
+    "topActiveTopics": "Tópicos mais ativos",
+    "systemOnline": "Sistema online há",
+    "msgs": "msgs",
+    "heading": "Visão geral",
+    "subheading": "O que está chegando no Unified Namespace agora.",
+    "metrics": {
+      "perMinute": "Mensagens por minuto",
+      "perDay": "Mensagens hoje",
+      "topics": "Tópicos",
+      "errorRate": "Taxa de erro"
+    },
+    "connections": {
+      "title": "Conexões",
+      "summary": "{{connected}} de {{total}} conectadas",
+      "active": "Ativo",
+      "emptyTitle": "Nenhuma conexão ainda",
+      "emptyDesc": "Adicione um servidor OPC UA, um CLP Modbus ou EtherNet/IP, ou um broker MQTT para começar.",
+      "add": "Adicionar conexão"
+    }
   },
   "discovery": {
     "title": "UNS Discovery",
@@ -829,5 +846,15 @@
     "select": "Idioma",
     "pt": "Portugues",
     "en": "English"
+  },
+  "header": {
+    "realtime": "Tempo real",
+    "polling": "Atualização periódica",
+    "status": {
+      "connected": "conectado",
+      "connecting": "conectando",
+      "disconnected": "desconectado",
+      "error": "com erro"
+    }
   }
 }

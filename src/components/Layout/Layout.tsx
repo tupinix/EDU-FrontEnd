@@ -8,7 +8,7 @@ export function Layout() {
   const { sidebarCollapsed } = useUIStore();
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0f1117] transition-colors">
+    <div className="min-h-screen bg-[#f4f7f6] dark:bg-[#0f1117] transition-colors">
       <Sidebar />
 
       {/* Mobile overlay when sidebar is open */}
@@ -20,11 +20,13 @@ export function Layout() {
         onClick={() => useUIStore.getState().setSidebarCollapsed(true)}
       />
 
+      {/* The sidebar floats 12px from the window edge, so the content clears
+          its width plus that gap on both sides (64 + 24 collapsed, 240 + 24 open). */}
       <div
         className={cn(
           'transition-all duration-300',
-          'ml-0 lg:ml-16',
-          !sidebarCollapsed && 'lg:ml-64'
+          'ml-0 lg:ml-[88px]',
+          !sidebarCollapsed && 'lg:ml-[264px]'
         )}
       >
         <Header />
