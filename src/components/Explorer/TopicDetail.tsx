@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react';
 import { TopicDetail as TopicDetailType } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { extractDisplayValue, formatValue, isScalarPayload } from './value';
 
 interface TopicDetailProps {
   topic: string;
@@ -11,65 +13,73 @@ interface TopicDetailProps {
   onRefresh?: () => void;
 }
 
+// The topic's current state: where it lives in the namespace and what it reads now.
 export function TopicDetail({ topic, detail, isLoading, onRefresh }: TopicDetailProps) {
+  const { t, i18n } = useTranslation();
+  const parts = topic.split('/');
+  const leaf = parts.pop();
+  const unit = detail.metadata?.unit ? String(detail.metadata.unit) : '';
+  const equipment = detail.metadata?.equipment as Record<string, unknown> | undefined;
+  const scalar = isScalarPayload(detail.payload);
+  const value = extractDisplayValue(detail.payload);
+
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
-        <p className="text-[13px] font-mono text-gray-900 dark:text-gray-100 font-medium truncate">{topic}</p>
+    <section className="shrink-0 rounded-2xl border border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex items-start justify-between gap-3 px-6 pt-5">
+        <p className="min-w-0 break-all font-mono text-[12.5px] leading-relaxed" title={topic}>
+          {parts.length > 0 && <span className="text-gray-400 dark:text-gray-500">{parts.join('/')}/</span>}
+          <span className="font-semibold text-gray-950 dark:text-gray-50">{leaf}</span>
+        </p>
         {onRefresh && (
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shrink-0"
+            aria-label={t('common.refresh')}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
           >
-            <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
           </button>
         )}
       </div>
 
-      {/* Metadata */}
-      <div className="px-5 py-4 flex flex-wrap gap-x-6 gap-y-3">
-        <MetaField label="QoS" value={String(detail.qos)} />
-        <MetaField label="Retained" value={detail.retain ? 'Yes' : 'No'} />
-        <MetaField
-          label="Updated"
-          value={formatDistanceToNow(new Date(detail.updatedAt), { addSuffix: true, locale: ptBR })}
-        />
-        <MetaField label="Type" value={getPayloadType(detail.payload)} />
-        {detail.metadata?.unit ? (
-          <MetaField label="Unit" value={String(detail.metadata.unit)} />
-        ) : null}
-        {detail.metadata?.type ? (
-          <MetaField label="Tag Type" value={String(detail.metadata.type)} />
-        ) : null}
-      </div>
+      {/* Current value: the reason someone opens a topic. */}
+      <div className="px-6 pb-5 pt-3">
+        {scalar ? (
+          <p className="break-all text-[36px] font-semibold leading-tight tracking-tight text-gray-950 dark:text-gray-50">
+            {typeof value === 'boolean' ? String(value) : formatValue(detail.payload, i18n.language)}
+            {unit && <span className="ml-1.5 text-[18px] font-medium text-gray-400">{unit}</span>}
+          </p>
+        ) : (
+          <p className="text-[14px] text-gray-500 dark:text-gray-400">{t('explorer.structuredPayload')}</p>
+        )}
+        <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
+          {t('explorer.updated')}{' '}
+          {formatDistanceToNow(new Date(detail.updatedAt), { addSuffix: true, locale: i18n.language.startsWith('pt') ? ptBR : enUS })}
+        </p>
 
-      {/* Equipment */}
-      {detail.metadata?.equipment ? (
-        <div className="px-5 pb-4">
-          <div className="flex items-center gap-3 text-[12px] text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-4 py-2.5">
-            <span className="font-medium text-gray-500 dark:text-gray-400">Equipment</span>
-            <span>{String((detail.metadata.equipment as Record<string, unknown>).name ?? '')}</span>
-            {(detail.metadata.equipment as Record<string, unknown>).type ? (
-              <>
-                <span className="text-gray-200">&middot;</span>
-                <span>{String((detail.metadata.equipment as Record<string, unknown>).type)}</span>
-              </>
-            ) : null}
-          </div>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          <Tag label="QoS" value={String(detail.qos)} />
+          <Tag label={t('explorer.retained')} value={detail.retain ? t('common.yes', 'Sim') : t('common.no', 'Não')} />
+          <Tag label={t('explorer.type')} value={getPayloadType(detail.payload)} />
+          {detail.metadata?.type ? <Tag label={t('explorer.tagType')} value={String(detail.metadata.type)} /> : null}
+          {equipment?.name ? (
+            <Tag
+              label={t('explorer.equipment')}
+              value={[equipment.name, equipment.type].filter(Boolean).map(String).join(', ')}
+            />
+          ) : null}
         </div>
-      ) : null}
-    </div>
+      </div>
+    </section>
   );
 }
 
-function MetaField({ label, value }: { label: string; value: string }) {
+function Tag({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-[11px] text-gray-400">{label}</p>
-      <p className="text-[13px] font-medium text-gray-700 dark:text-gray-300 mt-0.5">{value}</p>
-    </div>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[12px] dark:bg-gray-800">
+      <span className="text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="font-medium text-gray-800 dark:text-gray-200">{value}</span>
+    </span>
   );
 }
 

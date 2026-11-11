@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import { TopicNode } from '../../types';
 import { useExplorerStore, useUIStore } from '../../hooks/useStore';
@@ -9,6 +10,7 @@ interface TopicTreeItemProps {
 }
 
 function TopicTreeItem({ node, level }: TopicTreeItemProps) {
+  const { i18n } = useTranslation();
   const { expandedNodes, toggleNode } = useExplorerStore();
   const { selectedTopic, setSelectedTopic } = useUIStore();
 
@@ -22,47 +24,49 @@ function TopicTreeItem({ node, level }: TopicTreeItemProps) {
   };
 
   return (
-    <div>
+    <div role="treeitem" aria-expanded={hasChildren ? isExpanded : undefined} aria-selected={isSelected}>
       <button
         onClick={handleClick}
         className={cn(
-          'flex items-center gap-1.5 w-full text-left py-1.5 pr-3 rounded-lg text-[13px] transition-colors group',
+          'group flex w-full items-center gap-1.5 rounded-full py-[5px] pr-2 text-left text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40',
           isSelected
-            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+            ? 'bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-900/30 dark:text-emerald-100'
+            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
         )}
-        style={{ paddingLeft: `${level * 16 + 10}px` }}
+        style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         <ChevronRight
           className={cn(
-            'w-3 h-3 shrink-0 transition-transform',
+            'h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform',
             isExpanded && 'rotate-90',
-            !hasChildren && 'invisible',
-            isSelected ? 'text-white/50' : 'text-gray-300'
+            !hasChildren && 'invisible'
           )}
         />
 
-        <span className={cn(
-          'w-1.5 h-1.5 rounded-full shrink-0',
-          node.hasValue
-            ? isSelected ? 'bg-emerald-400' : 'bg-emerald-300'
-            : isSelected ? 'bg-white/20 dark:bg-gray-900/20' : 'bg-gray-200 dark:bg-gray-700'
-        )} />
+        {/* Green: this level carries a value; grey: only a folder in the namespace. */}
+        <span
+          className={cn(
+            'h-1.5 w-1.5 shrink-0 rounded-full',
+            node.hasValue ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+          )}
+        />
 
-        <span className="truncate flex-1 font-mono">{node.name}</span>
+        <span className="flex-1 truncate font-mono">{node.name}</span>
 
         {node.messageCount > 0 && (
-          <span className={cn(
-            'text-[11px] tabular-nums shrink-0',
-            isSelected ? 'text-white/40' : 'text-gray-300'
-          )}>
-            {node.messageCount}
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-1.5 text-[11px] tabular-nums',
+              isSelected ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200' : 'text-gray-400'
+            )}
+          >
+            {node.messageCount.toLocaleString(i18n.language)}
           </span>
         )}
       </button>
 
       {isExpanded && hasChildren && (
-        <div>
+        <div role="group">
           {node.children.map((child) => (
             <TopicTreeItem key={child.fullPath} node={child} level={level + 1} />
           ))}
@@ -77,16 +81,18 @@ interface TopicTreeProps {
 }
 
 export function TopicTree({ topics }: TopicTreeProps) {
+  const { t } = useTranslation();
+
   if (!topics || topics.length === 0) {
     return (
       <div className="p-6 text-center">
-        <p className="text-[13px] text-gray-300">No topics found</p>
+        <p className="text-[13px] text-gray-400">{t('explorer.noTopics')}</p>
       </div>
     );
   }
 
   return (
-    <div className="py-1 px-1">
+    <div role="tree" className="space-y-px px-2 py-2">
       {topics.map((topic) => (
         <TopicTreeItem key={topic.fullPath} node={topic} level={0} />
       ))}
