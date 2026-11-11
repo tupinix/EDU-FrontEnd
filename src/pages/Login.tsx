@@ -1,13 +1,17 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../hooks/useStore';
 import { useTenant } from '../hooks/useTenant';
 import { authApi } from '../services/api';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 const ROOT_DOMAIN = 'espacodedadosunificado.com.br';
+
+// EDU Edge has no marketing site: the login is the entry point and there is no
+// home to go back to.
+const IS_EDGE = import.meta.env.VITE_EDU_EDITION === 'edge';
 
 /**
  * Decide whether the post-login flow should redirect to the tenant's
@@ -35,12 +39,6 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Reaching /login means "give me a fresh session, ignore whatever
   // cookie is sitting in this browser." Otherwise the cross-subdomain
   // edu_token cookie outlives a logout (HttpOnly, can't be touched
@@ -95,156 +93,137 @@ export function Login() {
     }
   };
 
+  const hasSite = !IS_EDGE && !isTenantSubdomain;
+
+  const field = 'w-full h-11 px-3.5 text-[14.5px] text-foreground bg-background border border-input rounded-lg outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/15 disabled:opacity-60';
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A0E14] text-white relative overflow-hidden py-10">
-      {/* Grid pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.07] pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,1) 0.5px, transparent 0.5px),' +
-            'linear-gradient(90deg, rgba(255,255,255,1) 0.5px, transparent 0.5px)',
-          backgroundSize: '64px 64px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black, transparent 80%)',
-        }}
-      />
-      {/* Glows */}
-      <div className="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full bg-blue-500/10 blur-[140px] pointer-events-none" />
-
-      {/* Top bar — back to site + language.
-          Only shown on the apex domain. On tenant subdomains
-          (highbyte.espaco…), "back to site" links to /, which would
-          land the user on /login again (RootRoute redirects guests
-          there), and the marketing language picker is decoration
-          that doesn't fit the in-org login context. */}
-      {!isTenantSubdomain && (
-        <>
-          {/* EDU Edge has no marketing site to go back to. */}
-          {import.meta.env.VITE_EDU_EDITION !== 'edge' && (
-            <div className="absolute top-5 left-6 z-20">
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2 text-[12px] text-gray-400 hover:text-white transition-colors group"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-                {t('auth.backToSite')}
-              </Link>
-            </div>
-          )}
-          <div className="absolute top-5 right-6 z-20">
-            <LanguageSelector variant="minimal" />
-          </div>
-        </>
-      )}
-
-      {/* Card */}
-      <div
-        className={`relative z-10 w-full max-w-[460px] mx-4 transition-all duration-700 ease-out ${
-          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`}
+    <div className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:flex-row lg:overflow-hidden">
+      {/* Painel da marca: degrade verde-petroleo com a tela real de um dashboard do EDU,
+          para quem chega ver o que vai encontrar depois de entrar. */}
+      <aside
+        className="relative overflow-hidden px-6 pb-8 pt-8 text-white sm:px-10 lg:w-[58%] lg:px-14 lg:pb-0 lg:pt-14"
+        style={{ background: 'radial-gradient(120% 90% at 0% 0%, #0d5c4a 0%, #063a33 40%, #03140c 100%)' }}
       >
-        {/* Header */}
-        <div className="text-center mb-7">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            aria-label="EDU Home"
-            className="block mx-auto mb-7 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-opacity hover:opacity-80"
-          >
-            <img
-              src="/edu-logo.png"
-              alt="EDU"
-              className="h-12 w-auto select-none"
-              draggable={false}
-            />
-          </button>
-          <h1 className="text-[30px] font-semibold text-white tracking-tight leading-tight">
-            {t('auth.edge.title')}
-          </h1>
-          <p className="text-[14.5px] text-gray-400 mt-2 font-light">
-            {t('auth.loginSubtitle')}
+        <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#12a8b7] opacity-40 blur-[120px]" />
+        <div className="relative">
+          {/* Only the apex Cloud domain has a site behind the logo. On Edge and on
+              tenant subdomains "/" sends guests straight back here. */}
+          {hasSite ? (
+            <Link to="/" aria-label={t('auth.backToSite')} className="block w-fit rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+              <img src="/edu-logo.png" alt="EDU" className="h-8 w-auto select-none lg:h-9" draggable={false} />
+            </Link>
+          ) : (
+            <img src="/edu-logo.png" alt="EDU" className="h-8 w-auto select-none lg:h-9" draggable={false} />
+          )}
+          <p className="mt-6 max-w-[18ch] text-[26px] font-semibold leading-[1.12] tracking-[-0.02em] lg:mt-10 lg:text-[42px]">
+            {t('auth.heroTitle')}
+          </p>
+          <p className="mt-4 hidden max-w-[46ch] text-[15px] leading-relaxed text-white/65 lg:block">
+            {t('auth.heroBody')}
           </p>
         </div>
+        <div className="relative mt-14 hidden lg:block">
+          <div className="origin-top-left rounded-t-xl border border-white/15 bg-white/5 p-1.5 shadow-[0_30px_80px_-20px_rgba(0,0,0,.6)] [transform:perspective(1800px)_rotateY(-8deg)_rotateX(4deg)] lg:w-[118%]">
+            <img
+              src="/screenshots/edu-dashboard-agri-products.webp"
+              alt={t('auth.heroImageAlt')}
+              className="block w-full rounded-t-lg"
+              draggable={false}
+            />
+          </div>
+        </div>
+      </aside>
 
-        {/* Form card — white island on dark */}
-        <div className="bg-white rounded-2xl border border-white/10 shadow-2xl shadow-emerald-500/10 overflow-hidden">
-            <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
-              {error && (
-                <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 border border-red-100 text-[13px] text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
+      <main className="relative flex flex-1 items-center justify-center px-6 py-16 sm:px-12">
+        {!isTenantSubdomain && (
+          <>
+            {hasSite && (
+              <Link
+                to="/"
+                className="group absolute left-6 top-5 inline-flex items-center gap-2 rounded text-[13px] text-muted-foreground transition-colors hover:text-foreground sm:left-12"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+                {t('auth.backToSite')}
+              </Link>
+            )}
+            <div className="absolute right-6 top-4 sm:right-12">
+              <LanguageSelector variant="minimal" />
+            </div>
+          </>
+        )}
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-                  {t('common.email')}
-                </label>
+        <div className="w-full max-w-[380px]">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">{t('auth.login')}</h1>
+          <p className="mt-2 text-[14.5px] text-muted-foreground">{t('auth.signInHint')}</p>
+
+          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+            {error && (
+              <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/[0.06] px-3.5 py-3 text-[13.5px] text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-[13.5px] font-medium">{t('common.email')}</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={field}
+                placeholder={t('auth.emailPlaceholder')}
+                required
+                disabled={isLoading}
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="text-[13.5px] font-medium">{t('common.password')}</label>
+              <div className="relative">
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
-                  placeholder={t('auth.emailPlaceholder')}
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${field} pr-11`}
+                  placeholder={t('auth.passwordPlaceholder')}
                   required
                   disabled={isLoading}
-                  autoComplete="email"
+                  autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                  aria-pressed={showPassword}
+                  className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="password" className="text-[10.5px] font-semibold text-gray-500 tracking-[0.14em] uppercase">
-                  {t('common.password')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-11 text-[14.5px] text-gray-900 bg-white border border-gray-200 rounded-xl outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
-                    placeholder={t('auth.passwordPlaceholder')}
-                    required
-                    disabled={isLoading}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group w-full flex items-center justify-center gap-2 py-3 bg-gray-900 text-white text-[14px] font-semibold rounded-xl hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-300/50 hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    {t('auth.loginTitle')}
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                  </>
-                )}
-              </button>
-            </form>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#03140c] text-[14.5px] font-semibold text-white outline-none transition-colors hover:bg-[#0b3a26] focus-visible:ring-4 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-primary dark:hover:bg-primary/90"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('auth.loggingIn')}
+                </>
+              ) : (
+                t('auth.login')
+              )}
+            </button>
+          </form>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-[11px] text-gray-500 mt-7 tracking-[0.14em] uppercase font-mono">
-          EDU Platform · v1.0
-        </p>
-      </div>
+      </main>
     </div>
   );
 }
-

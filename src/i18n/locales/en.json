@@ -56,6 +56,12 @@
     "loginError": "Login failed",
     "defaultCredentials": "Default access credentials",
     "invalidCredentials": "Invalid credentials",
+    "heroTitle": "Sign in and see your whole plant in one place.",
+    "heroBody": "OPC UA, MQTT, Modbus and EtherNet/IP connections organized in a Unified Namespace, with dashboards, alerts and a plant graph.",
+    "heroImageAlt": "Storage assets dashboard in EDU",
+    "signInHint": "Use your account email and password.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "backToSite": "Back to site",
     "edition": "Pick a product",
     "edge": {
