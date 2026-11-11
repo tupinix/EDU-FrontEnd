@@ -113,7 +113,8 @@
       "aiTools": "AI Tools",
       "system": "System"
     },
-    "comando": "AI Command"
+    "comando": "AI Command",
+    "openMenu": "Open menu"
   },
   "landing": {
     "nav": {
@@ -359,13 +360,29 @@
     "brokerStatus": "Broker Status",
     "recentActivity": "Recent Activity",
     "overview": "Unified Namespace Overview",
-    "errorLoading": "Error loading metrics",
-    "noBroker": "No Active Broker",
-    "noBrokerDesc": "Configure and connect to an MQTT broker to view Unified Namespace data.",
-    "configureBrokers": "Configure Brokers",
-    "topActiveTopics": "Most Active Topics",
+    "errorLoading": "Could not load the metrics.",
+    "noBroker": "No active broker",
+    "noBrokerDesc": "Connect an MQTT broker so data reaches the Unified Namespace.",
+    "configureBrokers": "Set up a broker",
+    "topActiveTopics": "Most active topics",
     "systemOnline": "System online for",
-    "msgs": "msgs"
+    "msgs": "msgs",
+    "heading": "Overview",
+    "subheading": "What is reaching the Unified Namespace right now.",
+    "metrics": {
+      "perMinute": "Messages per minute",
+      "perDay": "Messages today",
+      "topics": "Topics",
+      "errorRate": "Error rate"
+    },
+    "connections": {
+      "title": "Connections",
+      "summary": "{{connected}} of {{total}} connected",
+      "active": "Active",
+      "emptyTitle": "No connections yet",
+      "emptyDesc": "Add an OPC UA server, a Modbus or EtherNet/IP PLC, or an MQTT broker to get started.",
+      "add": "Add connection"
+    }
   },
   "discovery": {
     "title": "UNS Discovery",
@@ -523,6 +540,16 @@
       "saveFailed": "Could not save the screen.",
       "noVoice": "Your browser does not support voice recognition.",
       "generic": "Could not generate the screen. Try rephrasing your request."
+    }
+  },
+  "header": {
+    "realtime": "Real-time",
+    "polling": "Polling",
+    "status": {
+      "connected": "connected",
+      "connecting": "connecting",
+      "disconnected": "disconnected",
+      "error": "error"
     }
   }
 }
