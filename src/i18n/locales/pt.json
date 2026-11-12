@@ -424,7 +424,7 @@
   },
   "explorer": {
     "title": "UNS Explorer",
-    "subtitle": "Navegue pela hierarquia de tópicos do Unified Namespace e veja o valor de cada um.",
+    "subtitle": "Escolha um equipamento na árvore e veja todas as tags dele ao vivo.",
     "topics": "Tópicos",
     "messages": "Mensagens",
     "noTopics": "Nenhum tópico encontrado",
@@ -459,7 +459,20 @@
     "payloadTree": "Estrutura",
     "payloadRaw": "Texto",
     "copyPayload": "Copiar payload",
-    "copied": "Copiado"
+    "copied": "Copiado",
+    "equipments": "Equipamentos",
+    "tagsHere_one": "{{count}} tag",
+    "tagsHere_other": "{{count}} tags",
+    "subLevelsHere_one": "{{count}} subnível",
+    "subLevelsHere_other": "{{count}} subníveis",
+    "subLevels": "Subníveis",
+    "noTrend": "Sem leituras recentes",
+    "structuredShort": "Objeto com vários campos",
+    "updatedAgo": "Atualizado {{when}}",
+    "neverUpdated": "Sem atualização",
+    "closeDetails": "Fechar detalhes",
+    "expand": "Expandir",
+    "collapse": "Recolher"
   },
   "configuration": {
     "title": "Configuracao de Brokers",
