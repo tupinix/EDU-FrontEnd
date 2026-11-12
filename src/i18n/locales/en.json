@@ -453,7 +453,7 @@
   },
   "explorer": {
     "title": "UNS Explorer",
-    "subtitle": "Browse the Unified Namespace topic hierarchy and see the value of each topic.",
+    "subtitle": "Pick an equipment in the tree and see all its tags live.",
     "topics": "Topics",
     "messages": "Messages",
     "noTopics": "No topics found",
@@ -488,7 +488,20 @@
     "payloadTree": "Structure",
     "payloadRaw": "Text",
     "copyPayload": "Copy payload",
-    "copied": "Copied"
+    "copied": "Copied",
+    "equipments": "Equipment",
+    "tagsHere_one": "{{count}} tag",
+    "tagsHere_other": "{{count}} tags",
+    "subLevelsHere_one": "{{count}} sub-level",
+    "subLevelsHere_other": "{{count}} sub-levels",
+    "subLevels": "Sub-levels",
+    "noTrend": "No recent readings",
+    "structuredShort": "Object with several fields",
+    "updatedAgo": "Updated {{when}}",
+    "neverUpdated": "Not updated yet",
+    "closeDetails": "Close details",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "configuration": {
     "title": "Broker Configuration",
